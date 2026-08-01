@@ -73,7 +73,7 @@ Full step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md)
 
 1. Open the **DaVinchi** icon in the Activity Bar (left).
 2. Prefer the **Controls** tree (native UI — always works).
-3. **Open browser** → enter your app URL (e.g. `http://localhost:8090/`).
+3. **Open browser** → paste **any** URL (local or external — no preset).
 4. **Select mode** (or `Ctrl+Shift+E`) → hover (cyan outline) → **click** an element.
 5. Files land in:
 
@@ -162,7 +162,9 @@ Canvas metrics:
 | Setting | Default | Meaning |
 |---------|---------|---------|
 | `elementPicker.language` | `en` | UI language (`ca` … `zh-TW`) |
-| `elementPicker.defaultUrl` | `http://localhost:8090/` | Default open URL |
+| `elementPicker.defaultUrl` | *(empty)* | Optional preferred URL; leave empty and paste any link yourself |
+| `elementPicker.browserMode` | `auto` | `auto` / `cdp` / `launch` — Remote SSH uses local Chrome via CDP |
+| `elementPicker.cdpEndpoint` | `http://127.0.0.1:9222` | Chrome remote-debugging endpoint |
 | `elementPicker.browserChannel` | `chrome` | `chrome` / `msedge` / `chromium` |
 | `elementPicker.outputDir` | `.element-picks` | Save folder (workspace-relative) |
 | `elementPicker.autoAttach` | `true` | Terminal + clipboard after pick |

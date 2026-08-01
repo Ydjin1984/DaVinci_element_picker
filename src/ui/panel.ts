@@ -150,7 +150,8 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
     try {
       switch (msg?.type) {
         case "open": {
-          const url = String(msg.url || this.actions.getDefaultUrl());
+          // Empty → extension prompts for any user URL (no site presets)
+          const url = String(msg.url || "").trim();
           await this.actions.openBrowser(url);
           break;
         }
@@ -358,7 +359,7 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
 
   <div class="row">
     <label for="url" id="lblUrl">URL</label>
-    <input id="url" type="text" placeholder="http://localhost:8090/" />
+    <input id="url" type="text" placeholder="" autocomplete="off" spellcheck="false" />
   </div>
 
   <div class="btns">
@@ -446,7 +447,7 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       if (s.strings) applyStrings(s.strings);
       if (s.languages) fillLanguages(s.languages, s.language);
 
-      if (s.defaultUrl && !urlEl.value) urlEl.value = s.defaultUrl;
+      // Never force a preset site — only reflect live browser URL or what the user typed
       if (s.currentUrl) urlEl.value = s.currentUrl;
 
       btnSelect.classList.toggle('active', !!s.selectMode);

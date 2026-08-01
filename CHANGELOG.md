@@ -2,6 +2,15 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.12] — 2026-08-01
+
+### Changed
+- **No preset URL** — `defaultUrl` is empty; user pastes any local/external link
+- CDP failure shows a short action wizard (copy Chrome script / retry)
+
+### Fixed
+- Remote SSH flow messages (local Chrome + reverse port 9222)
+
 ## [0.1.11] — 2026-08-01
 
 ### Added

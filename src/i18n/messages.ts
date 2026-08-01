@@ -33,9 +33,17 @@ export type MessageKey =
   | "msgOpening"
   | "msgLanguageChanged"
   | "promptUrl"
+  | "urlPlaceholder"
   | "errUrlEmpty"
+  | "errBrowserNotOpen"
   | "errNoPick"
   | "errPrefix"
+  | "cdpNeedLocalChrome"
+  | "cdpActionStartChrome"
+  | "cdpActionRetry"
+  | "cdpActionCopyCmd"
+  | "cdpReadyRetry"
+  | "cdpReversePortHint"
   | "statusBarIdle"
   | "statusBarOn"
   | "statusBarBrowser"
@@ -100,11 +108,22 @@ const en: Dict = {
   msgCopied: "DaVinchi Element Picker: paths copied to clipboard.",
   msgOpening: "DaVinchi Element Picker: opening {0}",
   msgLanguageChanged: "DaVinchi Element Picker language: {0}",
-  promptUrl: "URL to open",
-  errUrlEmpty: "URL is empty.",
+  promptUrl: "URL to open (any local or external link)",
+  urlPlaceholder: "https://… or http://localhost:…",
+  errUrlEmpty: "URL is empty — paste any address you want to inspect.",
+  errBrowserNotOpen: "Browser is not connected. Open a URL first.",
   errNoPick:
     "No pick yet. Open browser, enable Select mode, click an element.",
   errPrefix: "DaVinchi Element Picker: {0}",
+  cdpNeedLocalChrome:
+    "Remote SSH: start Chrome on your Windows PC, reverse-forward port 9222, then retry.",
+  cdpActionStartChrome: "Copy Chrome start script",
+  cdpActionRetry: "Retry connect",
+  cdpActionCopyCmd: "Copy script only",
+  cdpReadyRetry:
+    "When Chrome is running with --remote-debugging-port=9222 and port 9222 is reverse-forwarded, press Retry.",
+  cdpReversePortHint:
+    "Remote SSH: Ports panel → reverse forward 9222 → 9222 (or SSH RemoteForward 9222 localhost:9222).",
   statusBarIdle: "$(inspect) Element Pick",
   statusBarOn: "$(target) Pick: ON",
   statusBarBrowser: "$(inspect) Pick: browser",
@@ -112,7 +131,7 @@ const en: Dict = {
   badgeSelectOn: "SELECT ON",
   badgeBrowserOpen: "browser open",
   lastLabel: "Last:",
-  hint: "1. Open browser → enable <b>Select mode</b> (or <code>Ctrl+Shift+E</code>).<br/>2. Hover to highlight, click an element.<br/>3. Files go to <code>.element-picks/</code>; paths are pasted into the terminal and clipboard.",
+  hint: "1. Paste <b>any URL</b> → Open browser (Remote SSH: Local Chrome CDP first).<br/>2. <b>Select mode</b> / <code>Ctrl+Shift+E</code> → click.<br/>3. Files in <code>.element-picks/</code>; paths → terminal + clipboard.",
   terminalName: "DaVinchi Element Picker",
   defaultTerminalPrompt:
     "UI context attached (screenshot + element HTML/CSS). Question: ",
@@ -176,11 +195,22 @@ const ru: Dict = {
   msgCopied: "DaVinchi Element Picker: пути скопированы в буфер.",
   msgOpening: "DaVinchi Element Picker: открытие {0}",
   msgLanguageChanged: "Язык DaVinchi Element Picker: {0}",
-  promptUrl: "URL для открытия",
-  errUrlEmpty: "URL пустой.",
+  promptUrl: "URL (любая локальная или внешняя ссылка)",
+  urlPlaceholder: "https://… или http://localhost:…",
+  errUrlEmpty: "URL пуст — вставьте любой адрес, который нужно разобрать.",
+  errBrowserNotOpen: "Браузер не подключён. Сначала откройте URL.",
   errNoPick:
     "Ещё нет выбора. Откройте браузер, включите режим выбора, кликните элемент.",
   errPrefix: "DaVinchi Element Picker: {0}",
+  cdpNeedLocalChrome:
+    "Remote SSH: запустите Chrome на Windows PC, reverse-forward порт 9222, затем Retry.",
+  cdpActionStartChrome: "Скопировать скрипт Chrome",
+  cdpActionRetry: "Повторить подключение",
+  cdpActionCopyCmd: "Только скопировать скрипт",
+  cdpReadyRetry:
+    "Когда Chrome с --remote-debugging-port=9222 запущен и порт 9222 reverse-forward — нажмите Retry.",
+  cdpReversePortHint:
+    "Remote SSH: Ports → reverse forward 9222 → 9222 (или SSH RemoteForward 9222 localhost:9222).",
   statusBarIdle: "$(inspect) Element Pick",
   statusBarOn: "$(target) Выбор: ВКЛ",
   statusBarBrowser: "$(inspect) Выбор: браузер",
@@ -188,7 +218,7 @@ const ru: Dict = {
   badgeSelectOn: "ВЫБОР ВКЛ",
   badgeBrowserOpen: "браузер",
   lastLabel: "Последний:",
-  hint: "1. Откройте браузер → <b>Режим выбора</b> (или <code>Ctrl+Shift+E</code>).<br/>2. Наведите — подсветка, клик по элементу.<br/>3. Файлы в <code>.element-picks/</code>; пути — в terminal и буфер.",
+  hint: "1. Вставьте любой URL → <b>Open browser</b> (Remote SSH: сначала Local Chrome CDP).<br/>2. <b>Select mode</b> / <code>Ctrl+Shift+E</code> → клик.<br/>3. Файлы в <code>.element-picks/</code>; пути — в terminal и буфер.",
   terminalName: "DaVinchi Element Picker",
   defaultTerminalPrompt:
     "Контекст UI прикреплён (скриншот + HTML/CSS). Вопрос: ",

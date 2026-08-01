@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "keywords": [
@@ -215,8 +215,8 @@
         },
         "elementPicker.defaultUrl": {
           "type": "string",
-          "default": "https://davinchi-crypto.com/coin_rebalancer/",
-          "description": "Default URL opened in the browser (e.g. production Coin Rebalancer or localhost)."
+          "default": "",
+          "description": "Optional last-used / preferred URL. Leave empty — you always paste any local or external link yourself."
         },
         "elementPicker.browserChannel": {
           "type": "string",

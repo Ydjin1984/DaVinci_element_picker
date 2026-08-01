@@ -42,13 +42,28 @@ let editorPanel: EditorControlPanel;
 let statusBar: StatusBarController;
 let pickingLock = false;
 
+/** User setting only — empty by default (no built-in site preset). */
 function defaultUrl(): string {
   return (
     vscode.workspace
       .getConfiguration("elementPicker")
-      .get<string>("defaultUrl", "https://davinchi-crypto.com/coin_rebalancer/") ||
-    "https://davinchi-crypto.com/coin_rebalancer/"
-  );
+      .get<string>("defaultUrl", "") || ""
+  ).trim();
+}
+
+/** Ask for any URL (local or remote) when none is known. */
+async function askUrl(initial?: string): Promise<string | undefined> {
+  const value = await vscode.window.showInputBox({
+    prompt: t("promptUrl"),
+    value: (initial || session.currentUrl || defaultUrl() || "").trim(),
+    placeHolder: t("urlPlaceholder"),
+    ignoreFocusOut: true,
+    validateInput: (v) =>
+      v.trim() ? undefined : t("errUrlEmpty"),
+  });
+  if (value === undefined) return undefined;
+  const trimmed = value.trim();
+  return trimmed || undefined;
 }
 
 function autoAttach(): boolean {
@@ -103,31 +118,121 @@ function showErr(e: unknown): void {
 }
 
 async function openBrowser(url?: string): Promise<void> {
-  const target = (url || defaultUrl()).trim();
+  let target = (url || "").trim();
+  if (!target) {
+    target = (await askUrl()) || "";
+  }
   if (!target) {
     throw new Error(t("errUrlEmpty"));
   }
   const finalUrl = /^https?:\/\//i.test(target) ? target : `http://${target}`;
 
-  await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: t("msgOpening", finalUrl),
-      cancellable: false,
-    },
-    async () => {
-      await session.open(finalUrl);
+  try {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: t("msgOpening", finalUrl),
+        cancellable: false,
+      },
+      async () => {
+        await session.open(finalUrl);
+      }
+    );
+  } catch (e) {
+    const err = e instanceof Error ? e.message : String(e);
+    // Remote CDP not ready → guided retry loop
+    if (
+      err.includes("CDP") ||
+      err.includes("ECONNREFUSED") ||
+      err.includes("9222") ||
+      err.includes("Remote SSH")
+    ) {
+      await handleCdpConnectFailure(finalUrl, err);
+      return;
     }
-  );
+    throw e;
+  }
 
   await ensureGitignoreEntry();
   syncUi(t("statusBrowserOpenUrl", finalUrl));
   void vscode.window.showInformationMessage(t("msgBrowserOpened"));
 }
 
+/**
+ * Help user start local Chrome + reverse port, then retry CDP.
+ */
+async function handleCdpConnectFailure(
+  finalUrl: string,
+  originalErr: string
+): Promise<void> {
+  const choice = await vscode.window.showErrorMessage(
+    t("cdpNeedLocalChrome"),
+    { modal: true, detail: originalErr } as vscode.MessageOptions,
+    t("cdpActionStartChrome"),
+    t("cdpActionRetry"),
+    t("cdpActionCopyCmd")
+  );
+
+  if (choice === t("cdpActionStartChrome") || choice === t("cdpActionCopyCmd")) {
+    const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
+    await vscode.env.clipboard.writeText(cmd);
+    if (choice === t("cdpActionStartChrome") && process.platform === "win32" && !vscode.env.remoteName) {
+      try {
+        const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
+        fs.writeFileSync(ps1, cmd, "utf8");
+        const term = vscode.window.createTerminal({
+          name: "DaVinchi Local Chrome",
+          shellPath: "powershell.exe",
+        });
+        term.show(true);
+        term.sendText(
+          `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`
+        );
+      } catch {
+        /* clipboard only */
+      }
+    }
+    void vscode.window.showInformationMessage(
+      t("msgLocalChromeStarted") +
+        (vscode.env.remoteName
+          ? "\n\n" + t("cdpReversePortHint")
+          : "")
+    );
+  }
+
+  if (
+    choice === t("cdpActionStartChrome") ||
+    choice === t("cdpActionRetry") ||
+    choice === t("cdpActionCopyCmd")
+  ) {
+    const again = await vscode.window.showInformationMessage(
+      t("cdpReadyRetry"),
+      t("cdpActionRetry")
+    );
+    if (again === t("cdpActionRetry")) {
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: t("msgOpening", finalUrl),
+          cancellable: false,
+        },
+        async () => {
+          await session.open(finalUrl);
+        }
+      );
+      await ensureGitignoreEntry();
+      syncUi(t("statusBrowserOpenUrl", finalUrl));
+      void vscode.window.showInformationMessage(t("msgBrowserOpened"));
+    }
+  }
+}
+
 async function toggleSelect(): Promise<boolean> {
   if (!session.isOpen) {
-    await openBrowser(defaultUrl());
+    await openBrowser();
+  }
+  if (!session.isOpen) {
+    throw new Error(t("errBrowserNotOpen"));
   }
   const on = await session.toggleSelectMode();
   syncUi(on ? t("statusSelectOnHover") : t("statusSelectOff"));
@@ -316,8 +421,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "elementPicker.copyLocalChromeCmd",
       async () => {
-        const url = session.currentUrl || defaultUrl();
-        const cmd = BrowserSession.localChromeDebugCommand(url, 9222);
+        const url = (await askUrl(session.currentUrl || defaultUrl())) || "";
+        if (!url) return;
+        const finalUrl = /^https?:\/\//i.test(url) ? url : `http://${url}`;
+        const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
         await vscode.env.clipboard.writeText(cmd);
         void vscode.window.showInformationMessage(t("msgLocalChromeStarted"));
       }
@@ -325,18 +432,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       "elementPicker.startLocalChrome",
       async () => {
-        const url = session.currentUrl || defaultUrl();
-        const cmd = BrowserSession.localChromeDebugCommand(url, 9222);
+        const url = (await askUrl(session.currentUrl || defaultUrl())) || "";
+        if (!url) return;
+        const finalUrl = /^https?:\/\//i.test(url) ? url : `http://${url}`;
+        const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
         await vscode.env.clipboard.writeText(cmd);
 
-        // Also try to open URL on the local machine (local browser, no inject)
-        try {
-          await vscode.env.openExternal(vscode.Uri.parse(url));
-        } catch {
-          /* ignore */
-        }
-
-        // Write a .ps1 the user can double-click on Windows if host is local
+        // Local workspace only: run PowerShell to start Chrome with CDP
         if (process.platform === "win32" && !vscode.env.remoteName) {
           try {
             const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
@@ -346,17 +448,17 @@ export function activate(context: vscode.ExtensionContext): void {
               shellPath: "powershell.exe",
             });
             term.show(true);
-            term.sendText(`powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`);
+            term.sendText(
+              `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`
+            );
           } catch {
             /* clipboard is enough */
           }
         }
 
-        const remoteHint = vscode.env.remoteName
-          ? "\n\nRemote SSH: ensure port 9222 is reverse-forwarded to this host (Ports panel or SSH RemoteForward 9222 localhost:9222)."
-          : "";
         void vscode.window.showInformationMessage(
-          t("msgLocalChromeStarted") + remoteHint
+          t("msgLocalChromeStarted") +
+            (vscode.env.remoteName ? "\n\n" + t("cdpReversePortHint") : "")
         );
       }
     ),
@@ -372,13 +474,9 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand("elementPicker.openBrowser", async () => {
       try {
-        const url = await vscode.window.showInputBox({
-          prompt: t("promptUrl"),
-          value: session.currentUrl || defaultUrl(),
-          placeHolder: "https://davinchi-crypto.com/coin_rebalancer/",
-        });
+        const url = await askUrl();
         if (url === undefined) return;
-        await openBrowser(url || defaultUrl());
+        await openBrowser(url);
       } catch (e) {
         showErr(e);
       }
