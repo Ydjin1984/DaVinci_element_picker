@@ -349,10 +349,17 @@ export function activate(context: vscode.ExtensionContext): void {
   session.setPickHandler(handlePick);
   session.setModeHandler(() => syncUi());
 
-  // Pin system Chrome/Edge path so Playwright never falls into empty cache
+  // Pin system Chrome/Edge path so Playwright uses a real executable
   void ensureBrowserPathSetting().then((p) => {
     if (p) {
-      console.log("[DaVinchi] browserPath →", p);
+      console.log(
+        "[DaVinchi] browserPath →",
+        p,
+        "| remoteName=",
+        vscode.env.remoteName || "(local)",
+        "| uiKind=",
+        vscode.env.uiKind
+      );
     }
   });
 

@@ -2,9 +2,13 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "publisher": "coin-rebalancer",
   "license": "MIT",
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
   "keywords": [
     "davinci",
     "element picker",
@@ -237,16 +241,16 @@
           "type": "string",
           "enum": [
             "auto",
-            "cdp",
-            "launch"
+            "launch",
+            "cdp"
           ],
           "default": "auto",
           "enumDescriptions": [
-            "Remote SSH → connect to local Chrome (CDP). Local workspace → launch Chrome.",
-            "Always connect to existing Chrome at cdpEndpoint (local Chrome + reverse port forward).",
-            "Always spawn a browser on the extension-host machine (server if Remote SSH)."
+            "Launch system Chrome/Edge on this PC if found; else try CDP. Works for local and Remote SSH (extension runs as UI on your machine).",
+            "Always spawn Chrome/Edge on this machine.",
+            "Only connect to an existing Chrome at cdpEndpoint (advanced)."
           ],
-          "description": "Prefer local Chrome via CDP when using Remote SSH — picks still save into the remote workspace."
+          "description": "How to attach the browser. Default auto works for both local folders and Remote SSH."
         },
         "elementPicker.cdpEndpoint": {
           "type": "string",

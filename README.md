@@ -163,8 +163,9 @@ Canvas metrics:
 |---------|---------|---------|
 | `elementPicker.language` | `en` | UI language (`ca` … `zh-TW`) |
 | `elementPicker.defaultUrl` | *(empty)* | Optional preferred URL; leave empty and paste any link yourself |
-| `elementPicker.browserMode` | `auto` | `auto` / `cdp` / `launch` — Remote SSH uses local Chrome via CDP |
-| `elementPicker.cdpEndpoint` | `http://127.0.0.1:9222` | Chrome remote-debugging endpoint |
+| `elementPicker.browserMode` | `auto` | `auto` (launch Chrome if found, else CDP) / `launch` / `cdp` |
+| `elementPicker.cdpEndpoint` | `http://127.0.0.1:9222` | Optional CDP endpoint for advanced attach |
+| `extensionKind` | `ui` + `workspace` | Runs on your PC even with Remote SSH; picks save to the open workspace |
 | `elementPicker.browserChannel` | `chrome` | `chrome` / `msedge` / `chromium` |
 | `elementPicker.outputDir` | `.element-picks` | Save folder (workspace-relative) |
 | `elementPicker.autoAttach` | `true` | Terminal + clipboard after pick |

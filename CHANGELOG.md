@@ -2,6 +2,13 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.13] — 2026-08-01
+
+### Fixed
+- **Works the same for local folders and Remote SSH**: `extensionKind: ["ui", "workspace"]` so the extension host prefers your **local PC** (Chrome launches here); workspace APIs still write picks into the remote project
+- Browser attach no longer forces CDP-only on Remote SSH when Chrome is available on the UI host
+- Unified auto strategy: **launch system Chrome if present → else CDP**
+
 ## [0.1.12] — 2026-08-01
 
 ### Changed

@@ -420,8 +420,20 @@ export class BrowserSession {
     );
   }
 
+  /** True if a system Chrome/Edge binary is available on THIS machine (extension host). */
+  private canLaunchSystemBrowserHere(): boolean {
+    const custom = this.configuredBrowserPath();
+    if (custom && fs.existsSync(custom)) return true;
+    return discoverBrowserExecutables().length > 0;
+  }
+
   /**
-   * Obtain a browser: prefer CDP (local Chrome) on Remote SSH; else launch.
+   * Obtain a browser — same path for local and Remote SSH when extensionKind includes "ui"
+   * (extension host runs on your PC; workspace files still write to remote folder).
+   *
+   * auto: launch system Chrome if present → else CDP
+   * launch: only launch
+   * cdp: only CDP
    */
   private async obtainBrowser(): Promise<{
     browser: Browser;
@@ -430,66 +442,80 @@ export class BrowserSession {
   }> {
     const mode = this.browserMode();
     const endpoint = this.cdpEndpoint();
-    const remote = this.isRemoteHost();
-    const preferCdp = mode === "cdp" || (mode === "auto" && remote);
+    const canLaunch = this.canLaunchSystemBrowserHere();
+    const errors: string[] = [];
 
-    const cdpErrors: string[] = [];
+    const tryLaunch = async (): Promise<{ browser: Browser; how: string; viaCdp: boolean } | null> => {
+      try {
+        const r = await this.launchLocalBrowser();
+        return { ...r, viaCdp: false };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push(`launch: ${msg.replace(/\s+/g, " ").slice(0, 240)}`);
+        return null;
+      }
+    };
 
-    // 1) CDP first when remote or mode=cdp
-    if (preferCdp) {
+    const tryCdp = async (): Promise<{ browser: Browser; how: string; viaCdp: boolean } | null> => {
       try {
         const r = await this.connectCdp(endpoint);
         return { ...r, viaCdp: true };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        cdpErrors.push(msg.replace(/\s+/g, " ").slice(0, 200));
-        // Never spawn Chrome on a remote Linux host in auto/cdp modes
-        if (mode === "cdp" || remote) {
-          throw this.cdpHelpError(endpoint, cdpErrors);
-        }
+        errors.push(`cdp ${endpoint}: ${msg.replace(/\s+/g, " ").slice(0, 200)}`);
+        return null;
       }
+    };
+
+    if (mode === "cdp") {
+      const cdp = await tryCdp();
+      if (cdp) return cdp;
+      throw this.unifiedBrowserError(errors, endpoint);
     }
 
-    // 2) Launch on extension host (local Windows/Mac/Linux desktop)
-    if (mode === "launch" || mode === "auto") {
-      try {
-        const r = await this.launchLocalBrowser();
-        return { ...r, viaCdp: false };
-      } catch (launchErr) {
-        try {
-          const r = await this.connectCdp(endpoint);
-          return { ...r, viaCdp: true };
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          cdpErrors.push(msg.replace(/\s+/g, " ").slice(0, 200));
-          const launchMsg =
-            launchErr instanceof Error ? launchErr.message : String(launchErr);
-          throw new Error(
-            `${launchMsg}\n\nAlso tried CDP ${endpoint}:\n  ${cdpErrors.join("\n  ")}\n` +
-              `Run “DaVinchi: Start Local Chrome (CDP)” on your PC, then retry.`
-          );
-        }
-      }
+    if (mode === "launch") {
+      const launched = await tryLaunch();
+      if (launched) return launched;
+      throw this.unifiedBrowserError(errors, endpoint);
     }
 
-    throw this.cdpHelpError(endpoint, cdpErrors);
+    // auto: launch first when Chrome exists on this host (local PC / UI extension host)
+    if (canLaunch) {
+      const launched = await tryLaunch();
+      if (launched) return launched;
+    }
+
+    const cdp = await tryCdp();
+    if (cdp) return cdp;
+
+    // Last resort: try launch even if discovery missed the binary
+    if (!canLaunch) {
+      const launched = await tryLaunch();
+      if (launched) return launched;
+    }
+
+    throw this.unifiedBrowserError(errors, endpoint);
   }
 
-  private cdpHelpError(endpoint: string, cdpErrors: string[]): Error {
-    const remote = this.isRemoteHost()
-      ? `You are on Remote SSH (${vscode.env.remoteName}). Browser must run on your PC.\n\n`
+  private unifiedBrowserError(errors: string[], endpoint: string): Error {
+    const hostNote = this.isRemoteHost()
+      ? `Workspace is Remote SSH (${vscode.env.remoteName}), but DaVinchi prefers the local UI host so Chrome opens on your PC.\n` +
+        `If this still fails, ensure the extension is not forced to “workspace” only, and Chrome is installed locally.\n\n`
       : "";
+    const found = discoverBrowserExecutables()
+      .map((d) => d.executablePath)
+      .join("\n  ");
     return new Error(
-      remote +
-        `Cannot connect to local Chrome via CDP (${endpoint}).\n\n` +
-        `Do this on your WINDOWS PC (not the server):\n` +
-        `1. Command Palette → “DaVinchi: Start Local Chrome (CDP)”\n` +
-        `   (copies & can open a PowerShell that starts Chrome with port 9222)\n` +
-        `2. If Remote SSH: reverse-forward port 9222 so the server reaches your PC:\n` +
-        `   • VS Code/Cursor Ports: “Forward a Port” reverse 9222 → 9222\n` +
-        `   • or SSH config: RemoteForward 9222 localhost:9222\n` +
-        `3. DaVinchi → Open browser again (picks still save into the SSH workspace).\n\n` +
-        `CDP errors:\n  ${cdpErrors.join("\n  ") || "(connection refused)"}`
+      `Could not open a browser.\n` +
+        hostNote +
+        `Platform: ${process.platform} ${os.arch()}\n` +
+        `Browsers found here:\n  ${found || "(none)"}\n\n` +
+        `Fix:\n` +
+        `1) Install Google Chrome or Edge on this PC\n` +
+        `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
+        `3) Optional advanced: start Chrome with --remote-debugging-port=9222 and set browserMode=cdp\n\n` +
+        `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
+        `(CDP endpoint tried: ${endpoint})`
     );
   }
 
