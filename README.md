@@ -47,7 +47,7 @@ Agent-agnostic. No Copilot lock-in.
 
 ### From VSIX (recommended)
 
-1. Download the latest **`element-picker-*.vsix`** from [Releases](../../releases) (or build locally — see below).
+1. Download the latest **`element-picker-*.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) (or build locally — see below).
 2. **VS Code / Cursor** → Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…**
 3. Reload the window.
 
@@ -174,8 +174,8 @@ Canvas metrics:
 ## Develop
 
 ```powershell
-git clone https://github.com/<you>/davinci-element-picker.git
-cd davinci-element-picker
+git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
+cd DaVinci_element_picker
 npm install
 npm run compile
 ```

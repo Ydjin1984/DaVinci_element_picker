@@ -12,19 +12,19 @@
   GitHub user or org (e.g. myuser). Required for remote URL.
 
 .PARAMETER RepoName
-  Repository name. Default: davinci-element-picker
+  Repository name. Default: DaVinci_element_picker
 
 .PARAMETER Private
   Create a private repo (default public).
 
 .EXAMPLE
-  .\scripts\publish-github.ps1 -Owner myuser
+  .\scripts\publish-github.ps1 -Owner Ydjin1984
 #>
 param(
   [Parameter(Mandatory = $true)]
   [string] $Owner,
 
-  [string] $RepoName = "davinci-element-picker",
+  [string] $RepoName = "DaVinci_element_picker",
 
   [switch] $Private
 )

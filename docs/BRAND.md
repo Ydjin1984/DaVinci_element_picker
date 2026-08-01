@@ -5,7 +5,7 @@
 | Role | Value |
 |------|--------|
 | **Product** | DaVinchi |
-| **Repo** | `davinci-element-picker` |
+| **Repo** | [`Ydjin1984/DaVinci_element_picker`](https://github.com/Ydjin1984/DaVinci_element_picker) |
 | **Package id** | `coin-rebalancer.element-picker` (extension) |
 | **Tagline (EN)** | Pick the element. Feed the agent. |
 | **Tagline (RU)** | Выбери элемент — отдай агенту. |

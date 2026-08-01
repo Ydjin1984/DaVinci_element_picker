@@ -17,13 +17,13 @@
     "copilot alternative",
     "playwright"
   ],
-  "homepage": "https://github.com/YOUR_GITHUB/davinci-element-picker#readme",
+  "homepage": "https://github.com/Ydjin1984/DaVinci_element_picker#readme",
   "bugs": {
-    "url": "https://github.com/YOUR_GITHUB/davinci-element-picker/issues"
+    "url": "https://github.com/Ydjin1984/DaVinci_element_picker/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_GITHUB/davinci-element-picker.git"
+    "url": "https://github.com/Ydjin1984/DaVinci_element_picker.git"
   },
   "engines": {
     "vscode": "^1.85.0"

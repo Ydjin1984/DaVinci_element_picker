@@ -76,8 +76,8 @@ cursor --list-extensions --show-versions | findstr element-picker
 ## Сборка из исходников
 
 ```powershell
-git clone https://github.com/<you>/davinci-element-picker.git
-cd davinci-element-picker
+git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
+cd DaVinci_element_picker
 npm install
 npm run package:out
 # → dist/element-picker-<version>.vsix
