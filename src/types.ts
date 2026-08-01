@@ -59,3 +59,11 @@ export interface SavedPick {
 }
 
 export type BrowserChannel = "chromium" | "chrome" | "msedge";
+
+/**
+ * How to attach to a browser:
+ * - auto: remote SSH → CDP (local Chrome); local workspace → launch system Chrome
+ * - cdp: always connect to existing Chrome (remote-debugging-port)
+ * - launch: always spawn browser on the extension-host machine
+ */
+export type BrowserMode = "auto" | "cdp" | "launch";

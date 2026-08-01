@@ -144,6 +144,12 @@ export class ControlsTreeProvider
         command: "elementPicker.reloadWebview",
         tooltip: t("reloadWebviewTooltip"),
       }),
+      new ControlItem("status", "Start Local Chrome (CDP)", {
+        icon: "globe",
+        command: "elementPicker.startLocalChrome",
+        tooltip:
+          "Windows PC: start Chrome with remote debugging. Remote SSH picks use this + reverse port 9222.",
+      }),
     ];
 
     if (s.lastPick) {

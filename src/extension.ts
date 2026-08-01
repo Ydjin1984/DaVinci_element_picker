@@ -1,6 +1,12 @@
 import * as vscode from "vscode";
 import type { Page } from "playwright-core";
-import { BrowserSession } from "./browser/browserSession";
+import {
+  BrowserSession,
+  ensureBrowserPathSetting,
+} from "./browser/browserSession";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import {
   attachEverywhere,
   copyToClipboard,
@@ -40,8 +46,8 @@ function defaultUrl(): string {
   return (
     vscode.workspace
       .getConfiguration("elementPicker")
-      .get<string>("defaultUrl", "http://localhost:8090/") ||
-    "http://localhost:8090/"
+      .get<string>("defaultUrl", "https://davinchi-crypto.com/coin_rebalancer/") ||
+    "https://davinchi-crypto.com/coin_rebalancer/"
   );
 }
 
@@ -83,6 +89,16 @@ function syncUi(extraStatus?: string): void {
 
 function showErr(e: unknown): void {
   const err = e instanceof Error ? e.message : String(e);
+  // Long browser-launch diagnostics: modal so the full text is readable
+  if (err.includes("Could not launch a browser") || err.length > 180) {
+    void vscode.window
+      .showErrorMessage(t("errPrefix", err.split("\n")[0] || err), {
+        modal: true,
+        detail: err,
+      } as vscode.MessageOptions)
+      .then(() => undefined);
+    return;
+  }
   void vscode.window.showErrorMessage(t("errPrefix", err));
 }
 
@@ -228,6 +244,13 @@ export function activate(context: vscode.ExtensionContext): void {
   session.setPickHandler(handlePick);
   session.setModeHandler(() => syncUi());
 
+  // Pin system Chrome/Edge path so Playwright never falls into empty cache
+  void ensureBrowserPathSetting().then((p) => {
+    if (p) {
+      console.log("[DaVinchi] browserPath →", p);
+    }
+  });
+
   panel = new ElementPickerPanelProvider(context.extensionUri, {
     openBrowser,
     toggleSelect,
@@ -290,6 +313,53 @@ export function activate(context: vscode.ExtensionContext): void {
       panel.forceRemount();
       void vscode.window.showInformationMessage(t("msgWebviewReloaded"));
     }),
+    vscode.commands.registerCommand(
+      "elementPicker.copyLocalChromeCmd",
+      async () => {
+        const url = session.currentUrl || defaultUrl();
+        const cmd = BrowserSession.localChromeDebugCommand(url, 9222);
+        await vscode.env.clipboard.writeText(cmd);
+        void vscode.window.showInformationMessage(t("msgLocalChromeStarted"));
+      }
+    ),
+    vscode.commands.registerCommand(
+      "elementPicker.startLocalChrome",
+      async () => {
+        const url = session.currentUrl || defaultUrl();
+        const cmd = BrowserSession.localChromeDebugCommand(url, 9222);
+        await vscode.env.clipboard.writeText(cmd);
+
+        // Also try to open URL on the local machine (local browser, no inject)
+        try {
+          await vscode.env.openExternal(vscode.Uri.parse(url));
+        } catch {
+          /* ignore */
+        }
+
+        // Write a .ps1 the user can double-click on Windows if host is local
+        if (process.platform === "win32" && !vscode.env.remoteName) {
+          try {
+            const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
+            fs.writeFileSync(ps1, cmd, "utf8");
+            const term = vscode.window.createTerminal({
+              name: "DaVinchi Local Chrome",
+              shellPath: "powershell.exe",
+            });
+            term.show(true);
+            term.sendText(`powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`);
+          } catch {
+            /* clipboard is enough */
+          }
+        }
+
+        const remoteHint = vscode.env.remoteName
+          ? "\n\nRemote SSH: ensure port 9222 is reverse-forwarded to this host (Ports panel or SSH RemoteForward 9222 localhost:9222)."
+          : "";
+        void vscode.window.showInformationMessage(
+          t("msgLocalChromeStarted") + remoteHint
+        );
+      }
+    ),
     vscode.commands.registerCommand("elementPicker.selectLanguage", async () => {
       try {
         const locale = await pickAndSaveLanguage();
@@ -305,7 +375,7 @@ export function activate(context: vscode.ExtensionContext): void {
         const url = await vscode.window.showInputBox({
           prompt: t("promptUrl"),
           value: session.currentUrl || defaultUrl(),
-          placeHolder: "http://localhost:8090/",
+          placeHolder: "https://davinchi-crypto.com/coin_rebalancer/",
         });
         if (url === undefined) return;
         await openBrowser(url || defaultUrl());

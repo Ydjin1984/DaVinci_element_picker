@@ -2,6 +2,32 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.11] — 2026-08-01
+
+### Added
+- **Local Chrome via CDP** for Remote SSH: browser runs on your PC, picks still save into the SSH workspace
+- Settings: `elementPicker.browserMode` (`auto` | `cdp` | `launch`), `elementPicker.cdpEndpoint`
+- Commands: **Start Local Chrome (CDP)**, **Copy Local Chrome CDP Command**
+- Controls tree entry for local Chrome CDP
+
+### Changed
+- On Remote SSH, `auto` mode **does not** try to spawn Chrome on the server
+- Closing a CDP session leaves the user's Chrome running
+
+## [0.1.10] — 2026-08-01
+
+### Fixed
+- Prefer discovered system Chrome/Edge paths before Playwright cache
+- Auto-pin `elementPicker.browserPath` when a system browser is found
+- Clearer launch errors (remote host / platform / attempts)
+
+## [0.1.9] — 2026-08-01
+
+### Fixed
+- Launch local Chrome from Windows Local AppData / Edge paths
+- Setting `elementPicker.browserPath` for manual chrome.exe path
+- Default URL → `https://davinchi-crypto.com/coin_rebalancer/`
+
 ## [0.1.8] — 2026-08-01
 
 ### Added

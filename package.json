@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.8",
+  "version": "0.1.11",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "keywords": [
@@ -48,7 +48,9 @@
     "onCommand:elementPicker.attachLast",
     "onCommand:elementPicker.copyLast",
     "onCommand:elementPicker.openEditorPanel",
-    "onCommand:elementPicker.reloadWebview"
+    "onCommand:elementPicker.reloadWebview",
+    "onCommand:elementPicker.startLocalChrome",
+    "onCommand:elementPicker.copyLocalChromeCmd"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -107,6 +109,16 @@
         "command": "elementPicker.reloadWebview",
         "title": "DaVinchi: Reload Webview UI",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "elementPicker.startLocalChrome",
+        "title": "DaVinchi: Start Local Chrome (CDP)",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "elementPicker.copyLocalChromeCmd",
+        "title": "DaVinchi: Copy Local Chrome CDP Command",
+        "icon": "$(clippy)"
       }
     ],
     "keybindings": [
@@ -203,8 +215,8 @@
         },
         "elementPicker.defaultUrl": {
           "type": "string",
-          "default": "http://localhost:8090/",
-          "description": "Default URL opened in the browser."
+          "default": "https://davinchi-crypto.com/coin_rebalancer/",
+          "description": "Default URL opened in the browser (e.g. production Coin Rebalancer or localhost)."
         },
         "elementPicker.browserChannel": {
           "type": "string",
@@ -214,7 +226,32 @@
             "msedge"
           ],
           "default": "chrome",
-          "description": "Browser channel for Playwright. Prefer system Chrome/Edge to avoid downloading Chromium."
+          "description": "Preferred browser for Playwright: system Chrome, Edge, or bundled Chromium."
+        },
+        "elementPicker.browserPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional full path to chrome.exe / msedge.exe when browserMode=launch."
+        },
+        "elementPicker.browserMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "cdp",
+            "launch"
+          ],
+          "default": "auto",
+          "enumDescriptions": [
+            "Remote SSH → connect to local Chrome (CDP). Local workspace → launch Chrome.",
+            "Always connect to existing Chrome at cdpEndpoint (local Chrome + reverse port forward).",
+            "Always spawn a browser on the extension-host machine (server if Remote SSH)."
+          ],
+          "description": "Prefer local Chrome via CDP when using Remote SSH — picks still save into the remote workspace."
+        },
+        "elementPicker.cdpEndpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:9222",
+          "description": "Chrome DevTools endpoint. Start local Chrome with --remote-debugging-port=9222. On Remote SSH reverse-forward this port to your PC."
         },
         "elementPicker.maxHtmlBytes": {
           "type": "number",

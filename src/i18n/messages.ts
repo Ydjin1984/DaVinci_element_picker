@@ -49,6 +49,8 @@ export type MessageKey =
   | "cmdSelectLanguage"
   | "languagePickPlaceholder"
   | "browserChannelFallback"
+  | "msgCdpConnected"
+  | "msgLocalChromeStarted"
   | "actionMenu"
   | "actionMenuTooltip"
   | "actionMenuPlaceholder"
@@ -118,6 +120,10 @@ const en: Dict = {
   languagePickPlaceholder: "Select UI language (saved in user settings)",
   browserChannelFallback:
     'DaVinchi Element Picker: opened with browser channel "{0}" (preferred "{1}" unavailable).',
+  msgCdpConnected:
+    "DaVinchi: connected to local Chrome via CDP ({0}). Picks still save into this workspace.",
+  msgLocalChromeStarted:
+    "DaVinchi: PowerShell command copied. Run it on your Windows PC, reverse-forward port 9222 if Remote SSH, then Open browser.",
   actionMenu: "All actions…",
   actionMenuTooltip: "Native menu (works even if the webview fails)",
   actionMenuPlaceholder: "Choose a DaVinchi action",
@@ -190,6 +196,10 @@ const ru: Dict = {
   languagePickPlaceholder: "Язык интерфейса (сохраняется в настройках пользователя)",
   browserChannelFallback:
     'DaVinchi Element Picker: открыто через "{0}" (предпочтительный "{1}" недоступен).',
+  msgCdpConnected:
+    "DaVinchi: подключён к локальному Chrome через CDP ({0}). Пики сохраняются в этот workspace (SSH).",
+  msgLocalChromeStarted:
+    "DaVinchi: команда PowerShell скопирована. Запустите на Windows PC, reverse-forward 9222 при Remote SSH, затем Open browser.",
   actionMenu: "Все действия…",
   actionMenuTooltip: "Нативное меню (работает даже если webview сломан)",
   actionMenuPlaceholder: "Выберите действие DaVinchi",
