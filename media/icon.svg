@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <!--
+    DaVinchi Element Picker — Activity Bar icon
+    Monochrome (#c5c5c5): VS Code / Cursor recolors via theme.
+    Motif: precision reticle + selection marquee (inspect / pick).
+  -->
+  <!-- Outer soft reticle ring -->
+  <circle cx="12" cy="12" r="9.2" stroke="#c5c5c5" stroke-width="1.15" opacity="0.35"/>
+
+  <!-- Selection marquee corners (design-tool style) -->
+  <path d="M5.5 8.2V5.5H8.2" stroke="#c5c5c5" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M15.8 5.5H18.5V8.2" stroke="#c5c5c5" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18.5 15.8V18.5H15.8" stroke="#c5c5c5" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8.2 18.5H5.5V15.8" stroke="#c5c5c5" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Crosshair arms -->
+  <path d="M12 3.6v3.1M12 17.3v3.1M3.6 12h3.1M17.3 12h3.1"
+        stroke="#c5c5c5" stroke-width="1.45" stroke-linecap="round"/>
+
+  <!-- Inner diamond (Da Vinci / mark) -->
+  <path d="M12 8.15 L15.85 12 L12 15.85 L8.15 12 Z"
+        stroke="#c5c5c5" stroke-width="1.35" stroke-linejoin="round"/>
+
+  <!-- Hot pick core -->
+  <circle cx="12" cy="12" r="1.55" fill="#c5c5c5"/>
+</svg>

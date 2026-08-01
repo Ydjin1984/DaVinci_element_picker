@@ -1,0 +1,253 @@
+{
+  "name": "element-picker",
+  "displayName": "DaVinchi",
+  "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
+  "version": "0.1.8",
+  "publisher": "coin-rebalancer",
+  "license": "MIT",
+  "keywords": [
+    "davinci",
+    "element picker",
+    "dom",
+    "screenshot",
+    "css",
+    "ai agent",
+    "cursor",
+    "claude",
+    "copilot alternative",
+    "playwright"
+  ],
+  "homepage": "https://github.com/YOUR_GITHUB/davinci-element-picker#readme",
+  "bugs": {
+    "url": "https://github.com/YOUR_GITHUB/davinci-element-picker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_GITHUB/davinci-element-picker.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization",
+    "Testing"
+  ],
+  "galleryBanner": {
+    "color": "#0b0e14",
+    "theme": "dark"
+  },
+  "icon": "media/icon.png",
+  "activationEvents": [
+    "onView:elementPicker.controls",
+    "onView:elementPicker.panel",
+    "onCommand:elementPicker.openPanel",
+    "onCommand:elementPicker.showMenu",
+    "onCommand:elementPicker.openBrowser",
+    "onCommand:elementPicker.toggleSelect",
+    "onCommand:elementPicker.attachLast",
+    "onCommand:elementPicker.copyLast",
+    "onCommand:elementPicker.openEditorPanel",
+    "onCommand:elementPicker.reloadWebview"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "elementPicker.openPanel",
+        "title": "DaVinchi: Open Panel",
+        "icon": "$(inspect)"
+      },
+      {
+        "command": "elementPicker.openBrowser",
+        "title": "DaVinchi: Open Browser",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "elementPicker.toggleSelect",
+        "title": "DaVinchi: Toggle Select Mode",
+        "icon": "$(selection)"
+      },
+      {
+        "command": "elementPicker.attachLast",
+        "title": "DaVinchi: Attach Last Pick to Terminal",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "elementPicker.copyLast",
+        "title": "DaVinchi: Copy Last Paths to Clipboard",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "elementPicker.closeBrowser",
+        "title": "DaVinchi: Close Browser",
+        "icon": "$(close)"
+      },
+      {
+        "command": "elementPicker.openLastFolder",
+        "title": "DaVinchi: Reveal Last Pick Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "elementPicker.selectLanguage",
+        "title": "DaVinchi: Select Language",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "elementPicker.showMenu",
+        "title": "DaVinchi: Show Action Menu",
+        "icon": "$(list-flat)"
+      },
+      {
+        "command": "elementPicker.openEditorPanel",
+        "title": "DaVinchi: Open Rich UI in Editor",
+        "icon": "$(window)"
+      },
+      {
+        "command": "elementPicker.reloadWebview",
+        "title": "DaVinchi: Reload Webview UI",
+        "icon": "$(refresh)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "elementPicker.toggleSelect",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "true"
+      },
+      {
+        "command": "elementPicker.showMenu",
+        "key": "ctrl+shift+alt+e",
+        "mac": "cmd+shift+alt+e",
+        "when": "true"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "elementPicker",
+          "title": "DaVinchi",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "elementPicker": [
+        {
+          "id": "elementPicker.controls",
+          "name": "Controls",
+          "contextualTitle": "DaVinchi Controls"
+        },
+        {
+          "type": "webview",
+          "id": "elementPicker.panel",
+          "name": "UI",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DaVinchi Element Picker",
+      "properties": {
+        "elementPicker.language": {
+          "type": "string",
+          "default": "en",
+          "enum": [
+            "ca",
+            "de",
+            "en",
+            "es",
+            "fr",
+            "hi",
+            "id",
+            "it",
+            "ja",
+            "ko",
+            "nl",
+            "pl",
+            "pt-BR",
+            "ru",
+            "tr",
+            "vi",
+            "zh-CN",
+            "zh-TW"
+          ],
+          "enumDescriptions": [
+            "Català (ca)",
+            "Deutsch (de)",
+            "English (en)",
+            "Español (es)",
+            "Français (fr)",
+            "हिन्दी (hi)",
+            "Bahasa Indonesia (id)",
+            "Italiano (it)",
+            "日本語 (ja)",
+            "한국어 (ko)",
+            "Nederlands (nl)",
+            "Polski (pl)",
+            "Português Brasil (pt-BR)",
+            "Русский (ru)",
+            "Türkçe (tr)",
+            "Tiếng Việt (vi)",
+            "简体中文 (zh-CN)",
+            "繁體中文 (zh-TW)"
+          ],
+          "description": "UI language for DaVinchi Element Picker (panel, status bar, notifications). Saved in user settings by default when changed from the panel or command palette.",
+          "scope": "application"
+        },
+        "elementPicker.outputDir": {
+          "type": "string",
+          "default": ".element-picks",
+          "description": "Folder (relative to workspace root) where picks are saved."
+        },
+        "elementPicker.defaultUrl": {
+          "type": "string",
+          "default": "http://localhost:8090/",
+          "description": "Default URL opened in the browser."
+        },
+        "elementPicker.browserChannel": {
+          "type": "string",
+          "enum": [
+            "chromium",
+            "chrome",
+            "msedge"
+          ],
+          "default": "chrome",
+          "description": "Browser channel for Playwright. Prefer system Chrome/Edge to avoid downloading Chromium."
+        },
+        "elementPicker.maxHtmlBytes": {
+          "type": "number",
+          "default": 100000,
+          "description": "Max outerHTML size (bytes) written to context.md."
+        },
+        "elementPicker.terminalPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Text prefix inserted into the terminal before file paths. Leave empty to use the localized default for the selected language."
+        },
+        "elementPicker.autoAttach": {
+          "type": "boolean",
+          "default": true,
+          "description": "After a successful pick: write files, paste paths into terminal, and copy paths to clipboard."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --allow-missing-repository",
+    "package:out": "npm run package && node -e \"const fs=require('fs');const p=require('./package.json');const n=p.name+'-'+p.version+'.vsix';fs.mkdirSync('dist',{recursive:true});fs.copyFileSync(n,'dist/'+n);console.log('dist/'+n)\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

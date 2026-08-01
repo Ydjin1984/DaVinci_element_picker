@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build
+out/
+*.vsix
+dist/*.vsix
+!dist/.gitkeep
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor
+.vscode/*
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*~
+
+# Local picks / secrets
+.env
+.env.*
+.element-picks/
+
+# TypeScript incremental
+*.tsbuildinfo
