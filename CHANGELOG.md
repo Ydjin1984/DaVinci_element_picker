@@ -2,6 +2,12 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.21] — 2026-08-07
+
+### Fixed
+- Hover highlight "stopped working" after the first clone capture: the **one-shot clone mode** introduced in 0.1.19 shipped enabled by default, so after one successful capture the Clone mode silently deactivated itself — the crosshair and the purple frame disappeared and further hovers highlighted nothing until the mode was re-enabled. `elementPicker.cloneOneShot` now defaults to **off** (continuous clone mode, as before 0.1.19); enable the checkbox in Clone settings if you want the activate–click–done flow
+- Verified with an end-to-end headless-Chrome run driving the real `BrowserSession`: clone highlight → pick → screenshots → one-shot off reproduced the vanished highlight; select mode and the injected picker itself were confirmed healthy (highlight, pick, capture/restore cycle, CSP sites)
+
 ## [0.1.20] — 2026-08-07
 
 ### Fixed

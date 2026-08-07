@@ -50,7 +50,7 @@ const DEFAULTS: CloneOptions = {
   computedJson: true,
   inlineSvgs: true,
   fullSite: false,
-  oneShot: true,
+  oneShot: false,
 };
 
 export const CLONE_OPTION_KEYS = Object.keys(SETTING_KEYS) as Array<
