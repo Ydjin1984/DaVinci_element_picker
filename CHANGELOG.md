@@ -2,6 +2,21 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.22] — 2026-08-08
+
+### Fixed
+- **Packaging leak**: VSIX no longer bundles private workspace junk (`.element-picks/`, `clones/`, `finandy*`, `.claude/`, `scripts/`, stray HTML). Package size back to ~3–4 MB
+- **Terminal attach safety**: multi-line attach blocks are flattened before `terminal.sendText` so `\n` is not executed as Enter in a normal shell
+- **Browser settings hardening**: `browserPath` / `browserMode` / `cdpEndpoint` / `browserChannel` are application-scoped (workspace cannot inject an executable path); Restricted Mode ignores custom `browserPath`
+- **Editor panel dispose**: "Open Rich UI in Editor" no longer throws after panel close (unbind uses a pre-captured webview reference)
+- **Pick race during clone capture**: clicks while screenshots run are ignored; each pick gets a unique `pickToken` on `data-davinchi-picked` so the crop cannot jump to another card mid-capture (`PICKER_VERSION` 5)
+- **Stale `latest/` after light pick**: normal picks wipe `latest/` first so an old clone pack cannot sit next to fresh `context.md` / `element.png`
+- **Asset download hang**: in-page fetch fallback now times out (~12–14 s); CDP request timeout tightened to 15 s
+- **ZIP Cyrillic names**: set UTF-8 general-purpose bit so Expand-Archive / Info-ZIP decode non-ASCII entry names correctly
+
+### Added
+- Project release skill `davinchi-release` (preflight: panel script, commands, settings, CHANGELOG, VSIX junk audit)
+
 ## [0.1.21] — 2026-08-07
 
 ### Fixed

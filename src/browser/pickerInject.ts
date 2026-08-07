@@ -10,12 +10,16 @@ export function getPickerBootstrapSource(): string {
   const PICKED_ATTR = 'data-davinchi-picked';
 
   /** Remove the pick-marker attribute from the tracked and any stray elements. */
-  function clearPickedMarks() {
+  function clearPickedMarks(force) {
+    // Keep the mark stable while screenshots are running (unless force, e.g. restore)
+    const st = window.__elementPickerState;
+    if (!force && st && st.capturing) return;
     try {
       const prev = window.__elementPickerPickedEl;
       if (prev && prev.removeAttribute) prev.removeAttribute(PICKED_ATTR);
     } catch (_) { /* ignore */ }
     window.__elementPickerPickedEl = null;
+    window.__elementPickerPickedToken = null;
     try {
       const marked = document.querySelectorAll('[' + PICKED_ATTR + ']');
       for (let i = 0; i < marked.length; i++) marked[i].removeAttribute(PICKED_ATTR);
@@ -23,12 +27,19 @@ export function getPickerBootstrapSource(): string {
   }
 
   /** Mark the picked element so screenshots target it exactly (set AFTER payload HTML is serialized). */
-  function markPicked(el) {
+  function markPicked(el, token) {
+    // Never steal the mark while a screenshot is in progress
+    if (STATE && STATE.capturing) return;
     clearPickedMarks();
     try {
-      el.setAttribute(PICKED_ATTR, '1');
+      el.setAttribute(PICKED_ATTR, token || '1');
       window.__elementPickerPickedEl = el;
+      window.__elementPickerPickedToken = token || '1';
     } catch (_) { /* ignore */ }
+  }
+
+  function newPickToken() {
+    return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
   }
 
   /** Always (re)bind capture helpers — works even if picker was installed earlier. */
@@ -48,7 +59,7 @@ export function getPickerBootstrapSource(): string {
     window.__elementPickerRestoreAfterCapture = () => {
       const st = window.__elementPickerState;
       if (st) st.capturing = false;
-      clearPickedMarks();
+      clearPickedMarks(true);
       if (st && (st.selectMode || st.cloneMode)) {
         document.documentElement.classList.add('__element-picker-on');
         if (st.cloneMode) {
@@ -68,7 +79,7 @@ export function getPickerBootstrapSource(): string {
     };
   }
 
-  const PICKER_VERSION = 4;
+  const PICKER_VERSION = 5;
   if (window.__elementPickerInstalled === PICKER_VERSION) {
     bindCaptureApis();
     const st = window.__elementPickerState || { selectMode: false, cloneMode: false, capturing: false, cloneFullSite: false };
@@ -789,7 +800,8 @@ export function getPickerBootstrapSource(): string {
       cssVariables: collectCssVariables(el),
       inheritedStyles: collectInherited(el),
       canvasMetrics: collectCanvasMetrics(el),
-      captureMode: 'select'
+      captureMode: 'select',
+      pickToken: ''
     };
   }
 
@@ -1451,7 +1463,11 @@ export function getPickerBootstrapSource(): string {
   }
 
   function onClick(e) {
-    if (!isPickingActive()) return;
+    // Ignore clicks while a screenshot cycle is in flight — otherwise a second
+    // click retargets data-davinchi-picked and the pack gets the wrong crop.
+    // (Do not set capturing here: host may drop a concurrent pick via lock and
+    // would never call restoreAfterCapture, leaving the page permanently locked.)
+    if (!isPickingActive() || STATE.capturing) return;
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -1462,14 +1478,18 @@ export function getPickerBootstrapSource(): string {
     const targetEl = (STATE.cloneMode && STATE.cloneFullSite)
       ? (document.documentElement || el)
       : el;
+    const pickToken = newPickToken();
     // Drop marks from previous picks BEFORE serializing HTML so the attribute
     // never leaks into outerHTML/subtreeHTML of the new payload.
     clearPickedMarks();
     const payload = withCleanPage(() =>
       STATE.cloneMode ? buildClonePayload(targetEl) : buildPayload(el)
     );
-    // Mark AFTER payload serialization — screenshots locate this exact element.
-    markPicked(targetEl);
+    payload.pickToken = pickToken;
+    // Mark AFTER payload serialization — screenshots locate this exact nonce.
+    // Even if a late click races before hideForCapture, the host still looks
+    // up [data-davinchi-picked="<pickToken>"] from this payload.
+    markPicked(targetEl, pickToken);
     if (typeof window.__elementPickerOnPick === 'function') {
       window.__elementPickerOnPick(payload);
     }
@@ -1526,7 +1546,7 @@ export function getPickerBootstrapSource(): string {
   // Prefer full restore with lastEl when this install owns the listeners
   window.__elementPickerRestoreAfterCapture = () => {
     STATE.capturing = false;
-    clearPickedMarks();
+    clearPickedMarks(true);
     if (isPickingActive()) {
       applyModeChrome();
       if (lastEl && document.contains(lastEl)) {

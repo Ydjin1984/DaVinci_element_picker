@@ -47,6 +47,11 @@ export interface ElementPickPayload {
   } | null;
   /** select = light pick; clone = full agent pack. */
   captureMode?: "select" | "clone";
+  /**
+   * Per-pick nonce written to data-davinchi-picked. Screenshots target this
+   * exact mark so a second click during capture cannot retarget the crop.
+   */
+  pickToken?: string;
 }
 
 /** Asset discovered during clone capture (page-side). */

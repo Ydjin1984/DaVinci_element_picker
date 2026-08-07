@@ -258,6 +258,11 @@ export class BrowserSession {
   }
 
   private configuredBrowserPath(): string {
+    // Defense in depth: never launch a workspace-injected binary in Restricted Mode
+    // (settings are also application-scoped in package.json).
+    if (!vscode.workspace.isTrusted) {
+      return "";
+    }
     return (
       vscode.workspace
         .getConfiguration("elementPicker")
@@ -812,27 +817,42 @@ export class BrowserSession {
   ): Promise<{ bytes: Uint8Array; contentType?: string } | null> {
     if (!this.context) return null;
     try {
-      const res = await this.context.request.get(url, { timeout: 20000 });
+      const res = await this.context.request.get(url, { timeout: 15000 });
       if (!res.ok()) return null;
       const body = await res.body();
       const contentType = res.headers()["content-type"];
       return { bytes: new Uint8Array(body), contentType };
     } catch {
-      // Fallback: fetch inside page
+      // Fallback: fetch inside page (must time out — silent servers hang forever)
       if (!this.page || this.page.isClosed()) return null;
       try {
-        const result = await this.page.evaluate(async (u: string) => {
-          try {
-            const r = await fetch(u, { credentials: "include", mode: "cors" });
-            if (!r.ok) return null;
-            const ct = r.headers.get("content-type") || undefined;
-            const buf = await r.arrayBuffer();
-            const bytes = Array.from(new Uint8Array(buf));
-            return { bytes, contentType: ct };
-          } catch {
-            return null;
-          }
-        }, url);
+        const result = await Promise.race([
+          this.page.evaluate(async (u: string) => {
+            try {
+              const ctrl =
+                typeof AbortController !== "undefined"
+                  ? new AbortController()
+                  : null;
+              const timer = ctrl
+                ? setTimeout(() => ctrl.abort(), 12000)
+                : null;
+              const r = await fetch(u, {
+                credentials: "include",
+                mode: "cors",
+                signal: ctrl ? ctrl.signal : undefined,
+              });
+              if (timer) clearTimeout(timer);
+              if (!r.ok) return null;
+              const ct = r.headers.get("content-type") || undefined;
+              const buf = await r.arrayBuffer();
+              const bytes = Array.from(new Uint8Array(buf));
+              return { bytes, contentType: ct };
+            } catch {
+              return null;
+            }
+          }, url),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 14000)),
+        ]);
         if (!result?.bytes?.length) return null;
         return {
           bytes: new Uint8Array(result.bytes),
@@ -949,8 +969,17 @@ export class BrowserSession {
 
     // Prefer the exact element marked by the picker at click time — short
     // selectors like "div.card" are often ambiguous and hit a wrong element.
+    // pickToken is a per-capture nonce so a second click cannot steal the mark.
     try {
-      const marked = this.page.locator('[data-davinchi-picked="1"]');
+      const rawToken = (payload as { pickToken?: string }).pickToken;
+      const token =
+        typeof rawToken === "string"
+          ? rawToken.replace(/[^a-zA-Z0-9_-]/g, "")
+          : "";
+      const markSel = token
+        ? `[data-davinchi-picked="${token}"]`
+        : "[data-davinchi-picked]";
+      const marked = this.page.locator(markSel);
       if (
         (await marked.count()) === 1 &&
         boxMatches(await marked.boundingBox())

@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -235,12 +235,14 @@
             "msedge"
           ],
           "default": "chrome",
-          "description": "Preferred browser for Playwright: system Chrome, Edge, or bundled Chromium."
+          "description": "Preferred browser for Playwright: system Chrome, Edge, or bundled Chromium.",
+          "scope": "application"
         },
         "elementPicker.browserPath": {
           "type": "string",
           "default": "",
-          "description": "Optional full path to chrome.exe / msedge.exe when browserMode=launch."
+          "description": "Optional full path to chrome.exe / msedge.exe when browserMode=launch. Application-scoped so a workspace cannot inject an executable path.",
+          "scope": "application"
         },
         "elementPicker.browserMode": {
           "type": "string",
@@ -255,12 +257,14 @@
             "Always spawn Chrome/Edge on this machine.",
             "Only connect to an existing Chrome at cdpEndpoint (advanced)."
           ],
-          "description": "How to attach the browser. Default auto works for both local folders and Remote SSH."
+          "description": "How to attach the browser. Default auto works for both local folders and Remote SSH.",
+          "scope": "application"
         },
         "elementPicker.cdpEndpoint": {
           "type": "string",
           "default": "http://127.0.0.1:9222",
-          "description": "Chrome DevTools endpoint. Start local Chrome with --remote-debugging-port=9222. On Remote SSH reverse-forward this port to your PC."
+          "description": "Chrome DevTools endpoint. Start local Chrome with --remote-debugging-port=9222. On Remote SSH reverse-forward this port to your PC.",
+          "scope": "application"
         },
         "elementPicker.maxHtmlBytes": {
           "type": "number",

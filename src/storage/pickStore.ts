@@ -81,6 +81,16 @@ export async function savePick(
 
   await ensureDir(base);
   await ensureDir(folder);
+  // Wipe latest/ first so a prior clone pack (clone/, zip, AGENT.md, …) cannot
+  // sit next to a fresh light pick — agents would otherwise read mixed state.
+  try {
+    await vscode.workspace.fs.delete(latest, {
+      recursive: true,
+      useTrash: false,
+    });
+  } catch {
+    /* may not exist */
+  }
   await ensureDir(latest);
 
   const markdown = buildContextMarkdown(payload, getMaxHtmlBytes());

@@ -24,6 +24,7 @@ Desktop.ini
 .env
 .env.*
 .element-picks/
+.claude/settings.local.json
 
 # Local clone experiments (captured site references)
 clones/

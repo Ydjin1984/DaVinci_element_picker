@@ -84,6 +84,20 @@ export async function copyToClipboard(pick: SavedPick): Promise<void> {
   await vscode.env.clipboard.writeText(block);
 }
 
+/**
+ * Flatten a multi-line attach block into one terminal paste.
+ * VS Code's sendText turns each `\n` into Enter — so a multi-line prompt would
+ * execute as shell commands in a normal PowerShell/bash terminal. Keep
+ * newlines only on the clipboard; the terminal gets a single line.
+ */
+function toTerminalSafeLine(block: string): string {
+  return block
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0)
+    .join(" · ");
+}
+
 export async function insertIntoTerminal(pick: SavedPick): Promise<void> {
   const block = buildAttachBlock(pick);
   let terminal = vscode.window.activeTerminal;
@@ -91,7 +105,8 @@ export async function insertIntoTerminal(pick: SavedPick): Promise<void> {
     terminal = vscode.window.createTerminal(t("terminalName"));
   }
   terminal.show(true);
-  terminal.sendText(block, false);
+  // false = do not append a trailing newline/Enter after the text
+  terminal.sendText(toTerminalSafeLine(block), false);
 }
 
 export async function attachEverywhere(pick: SavedPick): Promise<void> {

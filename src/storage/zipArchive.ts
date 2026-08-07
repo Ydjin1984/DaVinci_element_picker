@@ -83,10 +83,13 @@ export function createZipBuffer(entries: ZipEntry[]): Uint8Array {
       method = 0;
     }
 
+    // Bit 11 = UTF-8 file names (Info-ZIP / modern expanders, incl. Cyrillic)
+    const gpFlags = 0x800;
+
     const localHeader = Buffer.concat([
       u32(0x04034b50), // local file header signature
       u16(20), // version needed
-      u16(0), // general purpose
+      u16(gpFlags), // general purpose
       u16(method),
       u16(dosTime),
       u16(dosDate),
@@ -103,7 +106,7 @@ export function createZipBuffer(entries: ZipEntry[]): Uint8Array {
       u32(0x02014b50), // central directory
       u16(20), // version made by
       u16(20), // version needed
-      u16(0),
+      u16(gpFlags),
       u16(method),
       u16(dosTime),
       u16(dosDate),

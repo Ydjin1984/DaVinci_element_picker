@@ -18,3 +18,20 @@ dist/**
 !README.md
 !LICENSE
 !CHANGELOG.md
+
+# Local captures / private workspace junk (must never ship in VSIX)
+.element-picks/**
+clones/**
+finandy*
+*.html
+!media/**
+
+# Agent / editor local config and project tooling
+.claude/**
+.agents/**
+scripts/**
+CONTRIBUTING.md
+
+# Source maps / tests leftovers
+**/*.test.js
+**/*.spec.js
