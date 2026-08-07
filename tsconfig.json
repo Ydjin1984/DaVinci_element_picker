@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "Node16",
     "target": "ES2022",
     "lib": ["ES2022"],
     "outDir": "out",
@@ -10,9 +10,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node16",
     "resolveJsonModule": true,
-    "declaration": false
+    "declaration": false,
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["node", "vscode"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "out"]

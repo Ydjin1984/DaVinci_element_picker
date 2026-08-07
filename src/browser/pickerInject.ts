@@ -490,7 +490,7 @@ export function getPickerBootstrapSource(): string {
           let note = '';
           if (hit.kind === 'state') note = 'state (not necessarily active now)';
           else if (hit.kind === 'pseudo-element') note = 'pseudo-element rule';
-          found.push(formatRuleBlock(src, mediaStack, rule.cssText, note));
+          found.push(formatRuleBlock(src, mediaStack, absolutizeCssUrls(rule.cssText, ruleBaseUrl(rule, sheet)), note));
         });
         if (found.length >= limit) break;
       }
@@ -796,13 +796,46 @@ export function getPickerBootstrapSource(): string {
     return out;
   }
 
-  function absUrl(u) {
+  function absUrl(u, base) {
     try {
       if (!u) return '';
       if (u.startsWith('data:') || u.startsWith('blob:')) return u;
-      return new URL(u, location.href).href;
+      return new URL(u, base || location.href).href;
     } catch (_) {
       return u;
+    }
+  }
+
+  /**
+   * Relative url(...) inside a stylesheet resolves against the sheet's URL,
+   * not the page URL — using location.href yields root-relative 404s
+   * (e.g. /fonts/fontawesome-webfont.woff2 for a WP theme sheet).
+   */
+  function ruleBaseUrl(rule, sheet) {
+    try {
+      if (rule && rule.parentStyleSheet && rule.parentStyleSheet.href) {
+        return rule.parentStyleSheet.href;
+      }
+    } catch (_) { /* ignore */ }
+    try {
+      if (sheet && sheet.href) return sheet.href;
+    } catch (_) { /* ignore */ }
+    return location.href;
+  }
+
+  /** Rewrite relative url(...) refs in a css text against the owning sheet. */
+  function absolutizeCssUrls(cssText, base) {
+    if (!cssText) return cssText;
+    try {
+      return String(cssText).replace(/url\\((['"]?)([^'")]+)\\1\\)/gi, function (m0, q, u) {
+        const t = (u || '').trim();
+        if (!t || t.indexOf('data:') === 0 || t.indexOf('blob:') === 0 || t.indexOf('#') === 0) {
+          return m0;
+        }
+        return 'url(' + q + absUrl(t, base) + q + ')';
+      });
+    } catch (_) {
+      return cssText;
     }
   }
 
@@ -862,7 +895,7 @@ export function getPickerBootstrapSource(): string {
         walkStyleRulesForSpecial(rules, (rule) => {
           // CSSFontFaceRule type 5
           if (rule.type === 5 || (rule.cssText && /^@font-face/i.test(rule.cssText))) {
-            const text = rule.cssText;
+            const text = absolutizeCssUrls(rule.cssText, ruleBaseUrl(rule, sheet));
             if (seen[text]) return;
             seen[text] = true;
             blocks.push('/* ' + source + ' */\\n' + text);
@@ -906,7 +939,7 @@ export function getPickerBootstrapSource(): string {
           if (!isKf) return;
           const name = rule.name || '';
           if (Object.keys(want).length && name && !want[name]) return;
-          const text = rule.cssText;
+          const text = absolutizeCssUrls(rule.cssText, ruleBaseUrl(rule, sheet));
           if (seen[text]) return;
           seen[text] = true;
           blocks.push('/* ' + source + ' */\\n' + text);
@@ -973,6 +1006,12 @@ export function getPickerBootstrapSource(): string {
         const sel = shortSelector(img);
         if (img.currentSrc) add('img', img.currentSrc, 'img.currentSrc', sel);
         if (img.src) add('img', img.src, 'img.src', sel);
+        // Lazy-load plugins keep a placeholder in src (dummy.png / 1x1 gif)
+        // and the real file in a data attribute.
+        for (const attr of ['data-lazyload', 'data-src', 'data-lazy-src', 'data-original']) {
+          const lazy = img.getAttribute(attr);
+          if (lazy) add('img', lazy, 'img ' + attr, sel);
+        }
         const srcset = img.getAttribute('srcset');
         if (srcset) {
           const parts = srcset.split(',');
@@ -1037,8 +1076,9 @@ export function getPickerBootstrapSource(): string {
         try { rules = sheet.cssRules; } catch (_) { continue; }
         walkStyleRulesForSpecial(rules, (rule) => {
           if (!(rule.type === 5 || (rule.cssText && /^@font-face/i.test(rule.cssText)))) return;
+          const base = ruleBaseUrl(rule, sheet);
           const urls = extractUrlsFromCssValue(rule.cssText || '');
-          for (const u of urls) add('font', u, '@font-face', '');
+          for (const u of urls) add('font', absUrl(u, base), '@font-face', '');
         });
       }
     } catch (_) { /* ignore */ }

@@ -903,11 +903,25 @@ export class BrowserSession {
     const w = Math.max(1, Math.round(width));
     const h = Math.max(1, Math.round(height));
 
+    // Sliders/carousels can move or collapse the element between pick and
+    // capture; a re-measured box then crops the wrong area (e.g. 1703×62
+    // instead of 1703×700 for an rs-slide). Only trust a live locator when
+    // its current box still matches the box saved at pick time.
+    const boxMatches = (
+      box: { width: number; height: number } | null
+    ): boolean =>
+      !!box &&
+      Math.abs(box.width - w) <= Math.max(4, w * 0.05) &&
+      Math.abs(box.height - h) <= Math.max(4, h * 0.05);
+
     // Prefer the exact element marked by the picker at click time — short
     // selectors like "div.card" are often ambiguous and hit a wrong element.
     try {
       const marked = this.page.locator('[data-davinchi-picked="1"]');
-      if ((await marked.count()) === 1) {
+      if (
+        (await marked.count()) === 1 &&
+        boxMatches(await marked.boundingBox())
+      ) {
         const buf = await marked.screenshot({ type: "png", timeout: 10000 });
         return new Uint8Array(buf);
       }
@@ -920,7 +934,7 @@ export class BrowserSession {
       try {
         const loc = this.page.locator(sel).first();
         const count = await this.page.locator(sel).count();
-        if (count >= 1) {
+        if (count >= 1 && boxMatches(await loc.boundingBox())) {
           const buf = await loc.screenshot({ type: "png" });
           return new Uint8Array(buf);
         }

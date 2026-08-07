@@ -2,6 +2,17 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.17] — 2026-08-07
+
+### Fixed
+- `element.png` no longer crops the wrong area when a slider/carousel moves the element between pick and capture (e.g. Revolution Slider slide gave 1703×62 instead of 1703×700): the live element box is validated against the box saved at pick time, otherwise the saved rect is used for the crop — same path that already produced a correct `parent.png`
+- `@font-face` fonts referenced with relative `url(...)` now resolve against the **stylesheet** URL, not the page URL (previously icon fonts like FontAwesome/eicons/revicons resolved to the site root and failed with 404 — 21 of 56 assets in a real capture)
+- Matched CSS, keyframes and `@font-face` blocks written to `styles.css`/`CLONE.md` get relative `url(...)` rewritten to absolute, so assets can be re-downloaded from the pack
+
+### Added
+- Lazy-load attributes (`data-lazyload`, `data-src`, `data-lazy-src`, `data-original`) are collected as image assets — real files behind `dummy.png`-style placeholders land in `assets/`
+- `CLONE.md`: new "Capture pitfalls" section (screenshot sanity check vs Box size, lazy-load placeholders, canvas snapshots, remote URLs in `subtree.html`); `AGENT.md`: reference-validation step and lazy-load/canvas notes
+
 ## [0.1.16] — 2026-08-07
 
 ### Changed
