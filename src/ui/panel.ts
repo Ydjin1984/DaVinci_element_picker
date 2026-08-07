@@ -6,6 +6,11 @@ import {
   setLocale,
   type Locale,
 } from "../i18n";
+import {
+  getCloneOptions,
+  isCloneOptionKey,
+  updateCloneOption,
+} from "../storage/cloneOptions";
 import type { SavedPick } from "../types";
 
 export type PanelActions = {
@@ -163,7 +168,13 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
     webview.html = this.getHtml(webview);
   }
 
-  private async handleMessage(msg: { type?: string; url?: string; language?: string }): Promise<void> {
+  private async handleMessage(msg: {
+    type?: string;
+    url?: string;
+    language?: string;
+    key?: string;
+    value?: boolean;
+  }): Promise<void> {
     try {
       switch (msg?.type) {
         case "open": {
@@ -190,6 +201,16 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
         case "reveal":
           await this.actions.openLastFolder();
           break;
+        case "setCloneOption": {
+          const key = String(msg.key || "");
+          if (isCloneOptionKey(key)) {
+            // Persisted to User settings; the configuration listener in
+            // extension.ts re-syncs UI and pushes options into the page
+            await updateCloneOption(key, !!msg.value);
+            this.postState();
+          }
+          break;
+        }
         case "setLanguage": {
           const code = String(msg.language || "en") as Locale;
           await setLocale(code);
@@ -227,6 +248,7 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
         language: getLocale(),
         languages: getLanguageOptions(),
         strings,
+        cloneOptions: getCloneOptions(),
         lastPick: last
           ? {
               selector: last.selector,
@@ -477,6 +499,75 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       border-bottom-color: var(--vscode-keybindingLabel-bottomBorder, transparent);
     }
 
+    /* ── Clone settings ─────────────────────── */
+    .clone-set {
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .clone-set summary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--vscode-descriptionForeground);
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+      transition: color 150ms var(--ease), background 150ms var(--ease);
+    }
+    .clone-set summary::-webkit-details-marker { display: none; }
+    .clone-set summary:hover { background: var(--vscode-list-hoverBackground); }
+    .clone-set summary .chev {
+      margin-left: auto;
+      transition: transform 150ms var(--ease);
+    }
+    .clone-set[open] summary .chev { transform: rotate(90deg); }
+    .clone-set.armed {
+      border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder));
+    }
+    .clone-set.armed summary { color: var(--vscode-foreground); }
+    .opts {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 4px 6px 8px;
+      border-top: 1px solid var(--border);
+    }
+    .opt {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 4px 5px;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .opt:hover { background: var(--vscode-list-hoverBackground); }
+    .opt input {
+      flex: none;
+      margin: 2px 0 0;
+      accent-color: var(--vscode-inputOption-activeBorder, #4fc3f7);
+      cursor: pointer;
+    }
+    .opt-body { min-width: 0; }
+    .opt-text { font-size: 11.5px; line-height: 1.35; }
+    .opt-hint {
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 1px;
+    }
+    .opt-sep {
+      height: 1px;
+      margin: 5px 4px;
+      background: var(--border);
+    }
+
     /* ── Status line ────────────────────────── */
     .status-line {
       display: flex;
@@ -700,6 +791,20 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       </div>
     </section>
 
+    <details class="clone-set" id="cloneSet">
+      <summary>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M19.4 13.5a1.8 1.8 0 0 0 .36 1.98l.06.07a2.2 2.2 0 1 1-3.11 3.11l-.07-.06a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.09 1.65V20a2.2 2.2 0 1 1-4.4 0v-.11a1.8 1.8 0 0 0-1.18-1.65 1.8 1.8 0 0 0-1.98.36l-.07.06a2.2 2.2 0 1 1-3.11-3.11l.06-.07a1.8 1.8 0 0 0 .36-1.98 1.8 1.8 0 0 0-1.65-1.09H4a2.2 2.2 0 1 1 0-4.4h.11a1.8 1.8 0 0 0 1.65-1.18 1.8 1.8 0 0 0-.36-1.98l-.06-.07a2.2 2.2 0 1 1 3.11-3.11l.07.06a1.8 1.8 0 0 0 1.98.36h.09a1.8 1.8 0 0 0 1.09-1.65V4a2.2 2.2 0 1 1 4.4 0v.11a1.8 1.8 0 0 0 1.09 1.65 1.8 1.8 0 0 0 1.98-.36l.07-.06a2.2 2.2 0 1 1 3.11 3.11l-.06.07a1.8 1.8 0 0 0-.36 1.98v.09a1.8 1.8 0 0 0 1.65 1.09H20a2.2 2.2 0 1 1 0 4.4h-.11a1.8 1.8 0 0 0-1.65 1.09z" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+        <span id="lblCloneSet">Clone settings</span>
+        <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </summary>
+      <div class="opts" id="cloneOpts"></div>
+    </details>
+
     <div class="status-line" aria-live="polite">
       <span class="dot" id="statusDot"></span><span id="statusText">Ready</span>
     </div>
@@ -790,6 +895,68 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
     });
     $('btnSelect').addEventListener('click', () => post('toggleSelect'));
     $('btnClone').addEventListener('click', () => post('toggleClone'));
+
+    // ── Clone settings checkboxes ─────────────
+    const cloneSetEl = $('cloneSet');
+    const cloneOptsEl = $('cloneOpts');
+    const CLONE_OPTS = [
+      { key: 'fullSite', label: 'cloneOptFullSite', hint: 'cloneOptFullSiteHint' },
+      { key: 'oneShot', label: 'cloneOptOneShot', hint: 'cloneOptOneShotHint' },
+      { sep: true },
+      { key: 'zip', label: 'cloneOptZip' },
+      { key: 'previewHtml', label: 'cloneOptPreview' },
+      { key: 'latestMirror', label: 'cloneOptLatest' },
+      { key: 'assets', label: 'cloneOptAssets' },
+      { key: 'pageScreenshot', label: 'cloneOptPageShot' },
+      { key: 'parentScreenshot', label: 'cloneOptParentShot' },
+      { key: 'computedJson', label: 'cloneOptComputed' },
+      { key: 'inlineSvgs', label: 'cloneOptSvg' }
+    ];
+    const cloneInputs = {};
+    const cloneLabelEls = [];
+    let applyingCloneOpts = false;
+    let prevCloneMode = null;
+
+    CLONE_OPTS.forEach((def) => {
+      if (def.sep) {
+        const sep = document.createElement('div');
+        sep.className = 'opt-sep';
+        cloneOptsEl.appendChild(sep);
+        return;
+      }
+      const label = document.createElement('label');
+      label.className = 'opt';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.addEventListener('change', () => {
+        if (applyingCloneOpts) return;
+        post('setCloneOption', { key: def.key, value: input.checked });
+      });
+      const body = document.createElement('div');
+      body.className = 'opt-body';
+      const text = document.createElement('div');
+      text.className = 'opt-text';
+      body.appendChild(text);
+      let hint = null;
+      if (def.hint) {
+        hint = document.createElement('div');
+        hint.className = 'opt-hint';
+        body.appendChild(hint);
+      }
+      label.appendChild(input);
+      label.appendChild(body);
+      cloneOptsEl.appendChild(label);
+      cloneInputs[def.key] = input;
+      cloneLabelEls.push({ textEl: text, textKey: def.label, hintEl: hint, hintKey: def.hint });
+    });
+
+    function relabelCloneOpts(s) {
+      cloneLabelEls.forEach((item) => {
+        item.textEl.textContent = s[item.textKey] || item.textKey;
+        if (item.hintEl) item.hintEl.textContent = s[item.hintKey] || '';
+      });
+      $('lblCloneSet').textContent = s.sectionCloneSettings || 'Clone settings';
+    }
     $('btnClose').addEventListener('click', () => post('close'));
     $('btnAttach').addEventListener('click', () => post('attach'));
     $('btnCopy').addEventListener('click', () => post('copy'));
@@ -822,6 +989,7 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       $('btnCopy').title = s.copyPaths || '';
       $('btnReveal').title = s.revealFolder || '';
       urlEl.placeholder = s.urlPlaceholder || 'https://…';
+      relabelCloneOpts(s);
     }
 
     function fillLanguages(list, current) {
@@ -869,6 +1037,24 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       clo.disabled = !s.browserOpen;
       sel.title = s.browserOpen ? '' : (strings.errBrowserNotOpen || '');
       clo.title = s.browserOpen ? '' : (strings.errBrowserNotOpen || '');
+
+      // Clone settings: sync checkboxes, auto expand/collapse with the mode
+      if (s.cloneOptions) {
+        applyingCloneOpts = true;
+        Object.keys(cloneInputs).forEach((k) => {
+          if (typeof s.cloneOptions[k] === 'boolean') {
+            cloneInputs[k].checked = s.cloneOptions[k];
+          }
+        });
+        applyingCloneOpts = false;
+      }
+      cloneSetEl.classList.toggle('armed', !!s.cloneMode);
+      if (prevCloneMode !== !!s.cloneMode) {
+        if (prevCloneMode !== null || s.cloneMode) {
+          cloneSetEl.open = !!s.cloneMode;
+        }
+        prevCloneMode = !!s.cloneMode;
+      }
 
       // Status line
       const kind = s.statusKind || 'idle';

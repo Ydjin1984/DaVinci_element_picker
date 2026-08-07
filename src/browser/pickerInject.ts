@@ -60,14 +60,21 @@ export function getPickerBootstrapSource(): string {
       // Next mousemove repaints outline; keep screenshot clean until then
       return !!(st && (st.selectMode || st.cloneMode));
     };
+    window.__elementPickerSetCloneOptions = (opts) => {
+      const st = window.__elementPickerState;
+      if (!st) return false;
+      st.cloneFullSite = !!(opts && opts.fullSite);
+      return true;
+    };
   }
 
-  const PICKER_VERSION = 3;
+  const PICKER_VERSION = 4;
   if (window.__elementPickerInstalled === PICKER_VERSION) {
     bindCaptureApis();
-    const st = window.__elementPickerState || { selectMode: false, cloneMode: false, capturing: false };
+    const st = window.__elementPickerState || { selectMode: false, cloneMode: false, capturing: false, cloneFullSite: false };
     if (typeof st.cloneMode === 'undefined') st.cloneMode = false;
     if (typeof st.capturing === 'undefined') st.capturing = false;
+    if (typeof st.cloneFullSite === 'undefined') st.cloneFullSite = false;
     window.__elementPickerState = st;
     return st;
   }
@@ -83,10 +90,11 @@ export function getPickerBootstrapSource(): string {
     }
   } catch (_) { /* ignore */ }
   window.__elementPickerInstalled = PICKER_VERSION;
-  window.__elementPickerState = window.__elementPickerState || { selectMode: false, cloneMode: false, capturing: false };
+  window.__elementPickerState = window.__elementPickerState || { selectMode: false, cloneMode: false, capturing: false, cloneFullSite: false };
   window.__elementPickerState.selectMode = !!window.__elementPickerState.selectMode;
   window.__elementPickerState.cloneMode = !!window.__elementPickerState.cloneMode;
   window.__elementPickerState.capturing = !!window.__elementPickerState.capturing;
+  window.__elementPickerState.cloneFullSite = !!window.__elementPickerState.cloneFullSite;
 
   const STATE = window.__elementPickerState;
 
@@ -660,7 +668,8 @@ export function getPickerBootstrapSource(): string {
   }
 
   function paintHighlightLabelPrefix() {
-    return STATE.cloneMode ? 'CLONE ' : '';
+    if (!STATE.cloneMode) return '';
+    return STATE.cloneFullSite ? 'CLONE PAGE ' : 'CLONE ';
   }
 
   function paintHighlight(el) {
@@ -1288,7 +1297,8 @@ export function getPickerBootstrapSource(): string {
 
   function buildClonePayload(el) {
     const base = buildPayload(el);
-    const MAX_HTML = 900000;
+    // Full-site captures need room for the whole document markup
+    const MAX_HTML = STATE.cloneFullSite ? 3000000 : 900000;
     let subtreeHTML = '';
     let subtreeTruncated = false;
     try {
@@ -1376,6 +1386,7 @@ export function getPickerBootstrapSource(): string {
 
     return Object.assign({}, base, {
       captureMode: 'clone',
+      fullSiteCapture: !!STATE.cloneFullSite,
       innerText: innerText,
       outerHTML: subtreeHTML.length > 100000 ? subtreeHTML.slice(0, 100000) : subtreeHTML,
       subtreeHTML: subtreeHTML,
@@ -1447,14 +1458,18 @@ export function getPickerBootstrapSource(): string {
     const el = deepElementFromPoint(e.clientX, e.clientY);
     if (!el || isOurUi(el)) return;
     lastEl = el;
+    // Full-site clone: any click captures the whole document instead
+    const targetEl = (STATE.cloneMode && STATE.cloneFullSite)
+      ? (document.documentElement || el)
+      : el;
     // Drop marks from previous picks BEFORE serializing HTML so the attribute
     // never leaks into outerHTML/subtreeHTML of the new payload.
     clearPickedMarks();
     const payload = withCleanPage(() =>
-      STATE.cloneMode ? buildClonePayload(el) : buildPayload(el)
+      STATE.cloneMode ? buildClonePayload(targetEl) : buildPayload(el)
     );
     // Mark AFTER payload serialization — screenshots locate this exact element.
-    markPicked(el);
+    markPicked(targetEl);
     if (typeof window.__elementPickerOnPick === 'function') {
       window.__elementPickerOnPick(payload);
     }
@@ -1531,6 +1546,16 @@ export function getSetModeSource(on: boolean): string {
   return `(() => {
     if (typeof window.__elementPickerSetMode === 'function') {
       return window.__elementPickerSetMode(${on ? "true" : "false"});
+    }
+    return false;
+  })()`;
+}
+
+/** Evaluate helper: push clone options (full-site capture) into the page. */
+export function getSetCloneOptionsSource(opts: { fullSite: boolean }): string {
+  return `(() => {
+    if (typeof window.__elementPickerSetCloneOptions === 'function') {
+      return window.__elementPickerSetCloneOptions({ fullSite: ${opts.fullSite ? "true" : "false"} });
     }
     return false;
   })()`;

@@ -108,7 +108,20 @@ export type MessageKey =
   | "treeStartChromeTooltip"
   | "treeFullPackBadge"
   | "statusBarClone"
-  | "onLabel";
+  | "onLabel"
+  | "sectionCloneSettings"
+  | "cloneOptFullSite"
+  | "cloneOptFullSiteHint"
+  | "cloneOptOneShot"
+  | "cloneOptOneShotHint"
+  | "cloneOptZip"
+  | "cloneOptPreview"
+  | "cloneOptLatest"
+  | "cloneOptAssets"
+  | "cloneOptPageShot"
+  | "cloneOptParentShot"
+  | "cloneOptComputed"
+  | "cloneOptSvg";
 
 type Dict = Record<MessageKey, string>;
 
@@ -245,6 +258,21 @@ const en: Dict = {
   treeFullPackBadge: "full pack",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
+  sectionCloneSettings: "Clone settings",
+  cloneOptFullSite: "Clone the whole page (full reference)",
+  cloneOptFullSiteHint:
+    "Any click captures the entire page: full HTML, styles and assets",
+  cloneOptOneShot: "One-shot: off after capture",
+  cloneOptOneShotHint:
+    "Clone mode deactivates automatically after a successful capture",
+  cloneOptZip: "Zip archive (clone.zip)",
+  cloneOptPreview: "Standalone preview.html",
+  cloneOptLatest: "Copy into latest/ folder",
+  cloneOptAssets: "Download assets (images, fonts)",
+  cloneOptPageShot: "Full-page screenshot (page.png)",
+  cloneOptParentShot: "Parent screenshot (parent.png)",
+  cloneOptComputed: "Style dumps (computed.json, fonts.json)",
+  cloneOptSvg: "Inline SVG files",
 };
 
 const ru: Dict = {
@@ -382,6 +410,21 @@ const ru: Dict = {
   treeFullPackBadge: "полный пакет",
   statusBarClone: "$(git-compare) Клон: ВКЛ",
   onLabel: "ВКЛ",
+  sectionCloneSettings: "Настройки клона",
+  cloneOptFullSite: "Клонировать всю страницу (полный референс)",
+  cloneOptFullSiteHint:
+    "Любой клик захватывает страницу целиком: весь HTML, стили и ассеты",
+  cloneOptOneShot: "Один снимок: выкл после захвата",
+  cloneOptOneShotHint:
+    "Режим клона автоматически отключается после успешного захвата",
+  cloneOptZip: "Zip-архив (clone.zip)",
+  cloneOptPreview: "Автономный preview.html",
+  cloneOptLatest: "Копия в папку latest/",
+  cloneOptAssets: "Скачивать ассеты (картинки, шрифты)",
+  cloneOptPageShot: "Скриншот всей страницы (page.png)",
+  cloneOptParentShot: "Скриншот родителя (parent.png)",
+  cloneOptComputed: "Дампы стилей (computed.json, fonts.json)",
+  cloneOptSvg: "Файлы inline SVG",
 };
 
 const de: Dict = {
@@ -461,6 +504,21 @@ const de: Dict = {
   treeFullPackBadge: "Komplettpaket",
   statusBarClone: "$(git-compare) Klon: AN",
   onLabel: "AN",
+  sectionCloneSettings: "Klon-Einstellungen",
+  cloneOptFullSite: "Ganze Seite klonen (volle Referenz)",
+  cloneOptFullSiteHint:
+    "Jeder Klick erfasst die ganze Seite: komplettes HTML, Styles und Assets",
+  cloneOptOneShot: "Einmalmodus: nach Aufnahme aus",
+  cloneOptOneShotHint:
+    "Der Klonmodus deaktiviert sich nach einer erfolgreichen Aufnahme automatisch",
+  cloneOptZip: "Zip-Archiv (clone.zip)",
+  cloneOptPreview: "Eigenständige preview.html",
+  cloneOptLatest: "Kopie in latest/-Ordner",
+  cloneOptAssets: "Assets herunterladen (Bilder, Schriften)",
+  cloneOptPageShot: "Ganzseiten-Screenshot (page.png)",
+  cloneOptParentShot: "Eltern-Screenshot (parent.png)",
+  cloneOptComputed: "Style-Dumps (computed.json, fonts.json)",
+  cloneOptSvg: "Inline-SVG-Dateien",
 };
 
 const es: Dict = {
@@ -539,6 +597,21 @@ const es: Dict = {
   treeFullPackBadge: "paquete completo",
   statusBarClone: "$(git-compare) Clon: ON",
   onLabel: "ON",
+  sectionCloneSettings: "Ajustes de clonación",
+  cloneOptFullSite: "Clonar toda la página (referencia completa)",
+  cloneOptFullSiteHint:
+    "Cualquier clic captura la página entera: HTML completo, estilos y recursos",
+  cloneOptOneShot: "Un solo uso: se apaga tras la captura",
+  cloneOptOneShotHint:
+    "El modo clon se desactiva automáticamente tras una captura correcta",
+  cloneOptZip: "Archivo zip (clone.zip)",
+  cloneOptPreview: "preview.html autónomo",
+  cloneOptLatest: "Copia en la carpeta latest/",
+  cloneOptAssets: "Descargar recursos (imágenes, fuentes)",
+  cloneOptPageShot: "Captura de página completa (page.png)",
+  cloneOptParentShot: "Captura del contenedor padre (parent.png)",
+  cloneOptComputed: "Volcados de estilos (computed.json, fonts.json)",
+  cloneOptSvg: "Archivos SVG en línea",
 };
 
 const fr: Dict = {
@@ -616,6 +689,21 @@ const fr: Dict = {
   treeFullPackBadge: "pack complet",
   statusBarClone: "$(git-compare) Clone : ON",
   onLabel: "ON",
+  sectionCloneSettings: "Réglages de clonage",
+  cloneOptFullSite: "Cloner la page entière (référence complète)",
+  cloneOptFullSiteHint:
+    "Chaque clic capture toute la page : HTML complet, styles et ressources",
+  cloneOptOneShot: "Usage unique : désactivé après capture",
+  cloneOptOneShotHint:
+    "Le mode clone se désactive automatiquement après une capture réussie",
+  cloneOptZip: "Archive zip (clone.zip)",
+  cloneOptPreview: "preview.html autonome",
+  cloneOptLatest: "Copie dans le dossier latest/",
+  cloneOptAssets: "Télécharger les ressources (images, polices)",
+  cloneOptPageShot: "Capture pleine page (page.png)",
+  cloneOptParentShot: "Capture du parent (parent.png)",
+  cloneOptComputed: "Exports de styles (computed.json, fonts.json)",
+  cloneOptSvg: "Fichiers SVG inline",
 };
 
 const it: Dict = {
@@ -693,6 +781,21 @@ const it: Dict = {
   treeFullPackBadge: "pacchetto completo",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
+  sectionCloneSettings: "Impostazioni clonazione",
+  cloneOptFullSite: "Clona l'intera pagina (riferimento completo)",
+  cloneOptFullSiteHint:
+    "Ogni clic cattura l'intera pagina: HTML completo, stili e risorse",
+  cloneOptOneShot: "Colpo singolo: off dopo la cattura",
+  cloneOptOneShotHint:
+    "La modalità clone si disattiva automaticamente dopo una cattura riuscita",
+  cloneOptZip: "Archivio zip (clone.zip)",
+  cloneOptPreview: "preview.html autonomo",
+  cloneOptLatest: "Copia nella cartella latest/",
+  cloneOptAssets: "Scarica risorse (immagini, font)",
+  cloneOptPageShot: "Screenshot pagina intera (page.png)",
+  cloneOptParentShot: "Screenshot del genitore (parent.png)",
+  cloneOptComputed: "Dump degli stili (computed.json, fonts.json)",
+  cloneOptSvg: "File SVG inline",
 };
 
 const ptBR: Dict = {
@@ -770,6 +873,21 @@ const ptBR: Dict = {
   treeFullPackBadge: "pacote completo",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
+  sectionCloneSettings: "Configurações de clonagem",
+  cloneOptFullSite: "Clonar a página inteira (referência completa)",
+  cloneOptFullSiteHint:
+    "Qualquer clique captura a página toda: HTML completo, estilos e assets",
+  cloneOptOneShot: "Uso único: desliga após a captura",
+  cloneOptOneShotHint:
+    "O modo clone é desativado automaticamente após uma captura bem-sucedida",
+  cloneOptZip: "Arquivo zip (clone.zip)",
+  cloneOptPreview: "preview.html independente",
+  cloneOptLatest: "Cópia na pasta latest/",
+  cloneOptAssets: "Baixar assets (imagens, fontes)",
+  cloneOptPageShot: "Captura da página inteira (page.png)",
+  cloneOptParentShot: "Captura do elemento pai (parent.png)",
+  cloneOptComputed: "Dumps de estilos (computed.json, fonts.json)",
+  cloneOptSvg: "Arquivos SVG inline",
 };
 
 const nl: Dict = {
@@ -848,6 +966,21 @@ const nl: Dict = {
   treeFullPackBadge: "volledig pakket",
   statusBarClone: "$(git-compare) Kloon: AAN",
   onLabel: "AAN",
+  sectionCloneSettings: "Kloon-instellingen",
+  cloneOptFullSite: "Hele pagina klonen (volledige referentie)",
+  cloneOptFullSiteHint:
+    "Elke klik legt de hele pagina vast: volledige HTML, stijlen en assets",
+  cloneOptOneShot: "Eenmalig: uit na vastleggen",
+  cloneOptOneShotHint:
+    "De kloonmodus schakelt zichzelf uit na een geslaagde vastlegging",
+  cloneOptZip: "Zip-archief (clone.zip)",
+  cloneOptPreview: "Zelfstandige preview.html",
+  cloneOptLatest: "Kopie naar map latest/",
+  cloneOptAssets: "Assets downloaden (afbeeldingen, lettertypen)",
+  cloneOptPageShot: "Screenshot hele pagina (page.png)",
+  cloneOptParentShot: "Screenshot bovenliggend element (parent.png)",
+  cloneOptComputed: "Stijldumps (computed.json, fonts.json)",
+  cloneOptSvg: "Inline SVG-bestanden",
 };
 
 const pl: Dict = {
@@ -926,6 +1059,21 @@ const pl: Dict = {
   treeFullPackBadge: "pełny pakiet",
   statusBarClone: "$(git-compare) Klon: ON",
   onLabel: "ON",
+  sectionCloneSettings: "Ustawienia klonowania",
+  cloneOptFullSite: "Klonuj całą stronę (pełna referencja)",
+  cloneOptFullSiteHint:
+    "Każde kliknięcie przechwytuje całą stronę: pełny HTML, style i zasoby",
+  cloneOptOneShot: "Jednorazowo: wyłącz po przechwyceniu",
+  cloneOptOneShotHint:
+    "Tryb klonowania wyłącza się automatycznie po udanym przechwyceniu",
+  cloneOptZip: "Archiwum zip (clone.zip)",
+  cloneOptPreview: "Samodzielny preview.html",
+  cloneOptLatest: "Kopia do folderu latest/",
+  cloneOptAssets: "Pobieraj zasoby (obrazy, czcionki)",
+  cloneOptPageShot: "Zrzut całej strony (page.png)",
+  cloneOptParentShot: "Zrzut rodzica (parent.png)",
+  cloneOptComputed: "Zrzuty stylów (computed.json, fonts.json)",
+  cloneOptSvg: "Pliki inline SVG",
 };
 
 const tr: Dict = {
@@ -1004,6 +1152,21 @@ const tr: Dict = {
   treeFullPackBadge: "tam paket",
   statusBarClone: "$(git-compare) Klon: AÇIK",
   onLabel: "AÇIK",
+  sectionCloneSettings: "Klon ayarları",
+  cloneOptFullSite: "Tüm sayfayı klonla (tam referans)",
+  cloneOptFullSiteHint:
+    "Her tıklama tüm sayfayı yakalar: tam HTML, stiller ve varlıklar",
+  cloneOptOneShot: "Tek seferlik: yakalamadan sonra kapat",
+  cloneOptOneShotHint:
+    "Klon modu başarılı bir yakalamadan sonra otomatik kapanır",
+  cloneOptZip: "Zip arşivi (clone.zip)",
+  cloneOptPreview: "Bağımsız preview.html",
+  cloneOptLatest: "latest/ klasörüne kopya",
+  cloneOptAssets: "Varlıkları indir (görseller, yazı tipleri)",
+  cloneOptPageShot: "Tam sayfa ekran görüntüsü (page.png)",
+  cloneOptParentShot: "Üst öğe ekran görüntüsü (parent.png)",
+  cloneOptComputed: "Stil dökümleri (computed.json, fonts.json)",
+  cloneOptSvg: "Satır içi SVG dosyaları",
 };
 
 const vi: Dict = {
@@ -1082,6 +1245,21 @@ const vi: Dict = {
   treeFullPackBadge: "gói đầy đủ",
   statusBarClone: "$(git-compare) Clone: BẬT",
   onLabel: "BẬT",
+  sectionCloneSettings: "Cài đặt nhân bản",
+  cloneOptFullSite: "Nhân bản toàn bộ trang (tham chiếu đầy đủ)",
+  cloneOptFullSiteHint:
+    "Mỗi cú nhấp sẽ chụp toàn bộ trang: HTML đầy đủ, style và tài nguyên",
+  cloneOptOneShot: "Một lần: tắt sau khi chụp",
+  cloneOptOneShotHint:
+    "Chế độ nhân bản tự tắt sau khi chụp thành công",
+  cloneOptZip: "Tệp zip (clone.zip)",
+  cloneOptPreview: "preview.html độc lập",
+  cloneOptLatest: "Sao chép vào thư mục latest/",
+  cloneOptAssets: "Tải tài nguyên (ảnh, phông chữ)",
+  cloneOptPageShot: "Ảnh chụp toàn trang (page.png)",
+  cloneOptParentShot: "Ảnh chụp phần tử cha (parent.png)",
+  cloneOptComputed: "Bản dump style (computed.json, fonts.json)",
+  cloneOptSvg: "Tệp SVG nội tuyến",
 };
 
 const id: Dict = {
@@ -1159,6 +1337,21 @@ const id: Dict = {
   treeFullPackBadge: "paket lengkap",
   statusBarClone: "$(git-compare) Klon: AKTIF",
   onLabel: "AKTIF",
+  sectionCloneSettings: "Pengaturan kloning",
+  cloneOptFullSite: "Klon seluruh halaman (referensi penuh)",
+  cloneOptFullSiteHint:
+    "Setiap klik menangkap seluruh halaman: HTML lengkap, gaya, dan aset",
+  cloneOptOneShot: "Sekali pakai: mati setelah tangkapan",
+  cloneOptOneShotHint:
+    "Mode klon otomatis nonaktif setelah tangkapan berhasil",
+  cloneOptZip: "Arsip zip (clone.zip)",
+  cloneOptPreview: "preview.html mandiri",
+  cloneOptLatest: "Salin ke folder latest/",
+  cloneOptAssets: "Unduh aset (gambar, font)",
+  cloneOptPageShot: "Tangkapan halaman penuh (page.png)",
+  cloneOptParentShot: "Tangkapan elemen induk (parent.png)",
+  cloneOptComputed: "Dump gaya (computed.json, fonts.json)",
+  cloneOptSvg: "Berkas SVG inline",
 };
 
 const ca: Dict = {
@@ -1236,6 +1429,21 @@ const ca: Dict = {
   treeFullPackBadge: "paquet complet",
   statusBarClone: "$(git-compare) Clon: ON",
   onLabel: "ON",
+  sectionCloneSettings: "Configuració de clonació",
+  cloneOptFullSite: "Clona tota la pàgina (referència completa)",
+  cloneOptFullSiteHint:
+    "Qualsevol clic captura tota la pàgina: HTML complet, estils i recursos",
+  cloneOptOneShot: "Un sol ús: s'apaga després de la captura",
+  cloneOptOneShotHint:
+    "El mode clon es desactiva automàticament després d'una captura correcta",
+  cloneOptZip: "Arxiu zip (clone.zip)",
+  cloneOptPreview: "preview.html autònom",
+  cloneOptLatest: "Còpia a la carpeta latest/",
+  cloneOptAssets: "Baixa recursos (imatges, tipografies)",
+  cloneOptPageShot: "Captura de pàgina completa (page.png)",
+  cloneOptParentShot: "Captura del pare (parent.png)",
+  cloneOptComputed: "Bolcats d'estils (computed.json, fonts.json)",
+  cloneOptSvg: "Fitxers SVG en línia",
 };
 
 const hi: Dict = {
@@ -1314,6 +1522,21 @@ const hi: Dict = {
   treeFullPackBadge: "पूरा पैक",
   statusBarClone: "$(git-compare) क्लोन: चालू",
   onLabel: "चालू",
+  sectionCloneSettings: "क्लोन सेटिंग्स",
+  cloneOptFullSite: "पूरा पेज क्लोन करें (पूर्ण संदर्भ)",
+  cloneOptFullSiteHint:
+    "कोई भी क्लिक पूरा पेज कैप्चर करता है: पूरा HTML, स्टाइल और एसेट",
+  cloneOptOneShot: "वन-शॉट: कैप्चर के बाद बंद",
+  cloneOptOneShotHint:
+    "सफल कैप्चर के बाद क्लोन मोड अपने आप बंद हो जाता है",
+  cloneOptZip: "Zip संग्रह (clone.zip)",
+  cloneOptPreview: "स्वतंत्र preview.html",
+  cloneOptLatest: "latest/ फ़ोल्डर में कॉपी",
+  cloneOptAssets: "एसेट डाउनलोड करें (छवियाँ, फ़ॉन्ट)",
+  cloneOptPageShot: "पूरे पेज का स्क्रीनशॉट (page.png)",
+  cloneOptParentShot: "पैरेंट स्क्रीनशॉट (parent.png)",
+  cloneOptComputed: "स्टाइल डंप (computed.json, fonts.json)",
+  cloneOptSvg: "इनलाइन SVG फ़ाइलें",
 };
 
 const ja: Dict = {
@@ -1392,6 +1615,21 @@ const ja: Dict = {
   treeFullPackBadge: "フルパック",
   statusBarClone: "$(git-compare) クローン: ON",
   onLabel: "ON",
+  sectionCloneSettings: "クローン設定",
+  cloneOptFullSite: "ページ全体をクローン（完全リファレンス）",
+  cloneOptFullSiteHint:
+    "クリックするとページ全体をキャプチャ：完全なHTML・スタイル・アセット",
+  cloneOptOneShot: "ワンショット：キャプチャ後にオフ",
+  cloneOptOneShotHint:
+    "キャプチャ成功後、クローンモードは自動的にオフになります",
+  cloneOptZip: "Zipアーカイブ（clone.zip）",
+  cloneOptPreview: "自己完結型 preview.html",
+  cloneOptLatest: "latest/ フォルダーへコピー",
+  cloneOptAssets: "アセットをダウンロード（画像・フォント）",
+  cloneOptPageShot: "ページ全体のスクリーンショット（page.png）",
+  cloneOptParentShot: "親要素のスクリーンショット（parent.png）",
+  cloneOptComputed: "スタイルダンプ（computed.json・fonts.json）",
+  cloneOptSvg: "インラインSVGファイル",
 };
 
 const ko: Dict = {
@@ -1470,6 +1708,21 @@ const ko: Dict = {
   treeFullPackBadge: "풀 팩",
   statusBarClone: "$(git-compare) 클론: ON",
   onLabel: "ON",
+  sectionCloneSettings: "클론 설정",
+  cloneOptFullSite: "전체 페이지 클론 (완전한 레퍼런스)",
+  cloneOptFullSiteHint:
+    "클릭 한 번으로 페이지 전체를 캡처: 전체 HTML, 스타일, 에셋",
+  cloneOptOneShot: "원샷: 캡처 후 끄기",
+  cloneOptOneShotHint:
+    "캡처가 성공하면 클론 모드가 자동으로 꺼집니다",
+  cloneOptZip: "Zip 아카이브 (clone.zip)",
+  cloneOptPreview: "독립형 preview.html",
+  cloneOptLatest: "latest/ 폴더에 복사",
+  cloneOptAssets: "에셋 다운로드 (이미지, 폰트)",
+  cloneOptPageShot: "전체 페이지 스크린샷 (page.png)",
+  cloneOptParentShot: "부모 요소 스크린샷 (parent.png)",
+  cloneOptComputed: "스타일 덤프 (computed.json, fonts.json)",
+  cloneOptSvg: "인라인 SVG 파일",
 };
 
 const zhCN: Dict = {
@@ -1543,6 +1796,20 @@ const zhCN: Dict = {
   treeFullPackBadge: "完整包",
   statusBarClone: "$(git-compare) 克隆: 开",
   onLabel: "开",
+  sectionCloneSettings: "克隆设置",
+  cloneOptFullSite: "克隆整个页面（完整参考）",
+  cloneOptFullSiteHint:
+    "任意点击都会捕获整个页面：完整 HTML、样式和资源",
+  cloneOptOneShot: "单次模式：捕获后自动关闭",
+  cloneOptOneShotHint: "捕获成功后克隆模式会自动关闭",
+  cloneOptZip: "Zip 压缩包（clone.zip）",
+  cloneOptPreview: "独立的 preview.html",
+  cloneOptLatest: "复制到 latest/ 文件夹",
+  cloneOptAssets: "下载资源（图片、字体）",
+  cloneOptPageShot: "整页截图（page.png）",
+  cloneOptParentShot: "父元素截图（parent.png）",
+  cloneOptComputed: "样式转储（computed.json、fonts.json）",
+  cloneOptSvg: "内联 SVG 文件",
 };
 
 const zhTW: Dict = {
@@ -1616,6 +1883,20 @@ const zhTW: Dict = {
   treeFullPackBadge: "完整包",
   statusBarClone: "$(git-compare) 克隆: 開",
   onLabel: "開",
+  sectionCloneSettings: "克隆設定",
+  cloneOptFullSite: "克隆整個頁面（完整參考）",
+  cloneOptFullSiteHint:
+    "任意點擊都會擷取整個頁面：完整 HTML、樣式與資源",
+  cloneOptOneShot: "單次模式：擷取後自動關閉",
+  cloneOptOneShotHint: "擷取成功後克隆模式會自動關閉",
+  cloneOptZip: "Zip 壓縮檔（clone.zip）",
+  cloneOptPreview: "獨立的 preview.html",
+  cloneOptLatest: "複製到 latest/ 資料夾",
+  cloneOptAssets: "下載資源（圖片、字型）",
+  cloneOptPageShot: "整頁截圖（page.png）",
+  cloneOptParentShot: "父元素截圖（parent.png）",
+  cloneOptComputed: "樣式傾印（computed.json、fonts.json）",
+  cloneOptSvg: "內嵌 SVG 檔案",
 };
 
 export const MESSAGES: Record<Locale, Dict> = {

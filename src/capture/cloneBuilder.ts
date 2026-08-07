@@ -28,14 +28,14 @@ function mdCell(value: string): string {
 export function buildCloneMarkdown(
   payload: ElementClonePayload,
   assets: SavedCloneAsset[],
-  // Workspace-relative paths with forward slashes
+  // Workspace-relative paths with forward slashes (absent = disabled in options)
   paths: {
     elementPng: string;
-    pagePng: string;
+    pagePng?: string;
     parentPng?: string;
     subtreeHtml: string;
     stylesCss: string;
-    assetsDir: string;
+    assetsDir?: string;
     previewHtml?: string;
     zip?: string;
   }
@@ -70,14 +70,22 @@ export function buildCloneMarkdown(
     "| `CLONE.md` | This document — full clone brief |",
     "| `AGENT.md` | Ready-to-paste instruction for the coding agent |",
     "| `element.png` | Cropped screenshot of the target element |",
-    "| `page.png` | Full-page screenshot for layout context |",
-    "| `parent.png` | Parent container area (when available) |",
+    ...(paths.pagePng
+      ? ["| `page.png` | Full-page screenshot for layout context |"]
+      : []),
+    ...(paths.parentPng
+      ? ["| `parent.png` | Parent container area (when available) |"]
+      : []),
     "| `subtree.html` | Full outerHTML of the element subtree |",
     "| `styles.css` | Matched CSS + keyframes + font-face + deep rules |",
-    "| `computed.json` | Resolved styles tree + ancestors + motion |",
-    "| `fonts.json` | Fonts used in the subtree |",
-    "| `assets/manifest.json` | Asset URL → local file map |",
-    "| `assets/*` | Downloaded images, fonts, icons, etc. |",
+    "| `computed.json` | Resolved styles tree + ancestors + motion (if enabled) |",
+    "| `fonts.json` | Fonts used in the subtree (if enabled) |",
+    ...(paths.assetsDir
+      ? [
+          "| `assets/manifest.json` | Asset URL → local file map |",
+          "| `assets/*` | Downloaded images, fonts, icons, etc. |",
+        ]
+      : []),
     "| `meta.json` | Machine-readable metadata |",
     "| `preview.html` | Self-contained visual preview (if enabled) |",
     "| `../clone.zip` | Full pack archive (if enabled) |",
@@ -85,11 +93,11 @@ export function buildCloneMarkdown(
     "Relative paths from workspace:",
     "```",
     paths.elementPng,
-    paths.pagePng,
+    paths.pagePng || "(page.png disabled)",
     paths.parentPng || "(no parent.png)",
     paths.subtreeHtml,
     paths.stylesCss,
-    paths.assetsDir,
+    paths.assetsDir || "(assets disabled)",
     paths.previewHtml || "(preview.html disabled)",
     paths.zip || "(clone.zip disabled)",
     "```",
@@ -97,8 +105,8 @@ export function buildCloneMarkdown(
     "## Screenshots (look first)",
     "",
     "1. **element.png** — exact visual target",
-    "2. **parent.png** — surrounding layout",
-    "3. **page.png** — full page context",
+    ...(paths.parentPng ? ["2. **parent.png** — surrounding layout"] : []),
+    ...(paths.pagePng ? ["3. **page.png** — full page context"] : []),
     "",
     "Match colors, spacing, radii, shadows, and typography from the screenshots,",
     "not only from CSS numbers (computed values can differ from design tokens).",
@@ -379,11 +387,14 @@ export function buildCloneMarkdown(
  */
 export function buildAgentMarkdown(
   payload: ElementClonePayload,
-  pick: SavedPick
+  pick: SavedPick,
+  included?: { computedJson?: boolean; assets?: boolean }
 ): string {
   const cloneRel = pick.cloneDirPath
     ? relHint(pick.cloneDirPath)
     : `${getOutputDirName()}/…/clone`;
+  const withComputed = included?.computedJson !== false;
+  const withAssets = included?.assets !== false;
   return [
     "# Agent task: clone this UI element 1:1",
     "",
@@ -401,14 +412,14 @@ export function buildAgentMarkdown(
     "```",
     `${cloneRel}/CLONE.md`,
     `${cloneRel}/element.png`,
-    `${cloneRel}/page.png`,
-    `${cloneRel}/parent.png`,
+    pick.pageImagePath ? `${cloneRel}/page.png` : null,
+    pick.parentImagePath ? `${cloneRel}/parent.png` : null,
     `${cloneRel}/subtree.html`,
     `${cloneRel}/styles.css`,
-    `${cloneRel}/computed.json`,
-    `${cloneRel}/fonts.json`,
-    `${cloneRel}/assets/manifest.json`,
-    `${cloneRel}/assets/*`,
+    withComputed ? `${cloneRel}/computed.json` : null,
+    withComputed ? `${cloneRel}/fonts.json` : null,
+    withAssets ? `${cloneRel}/assets/manifest.json` : null,
+    withAssets ? `${cloneRel}/assets/*` : null,
     pick.previewHtmlPath ? `${cloneRel}/preview.html` : null,
     pick.zipPath || null,
     "```",

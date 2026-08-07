@@ -10,12 +10,14 @@ import {
   type Page,
 } from "playwright-core";
 import { t } from "../i18n";
+import { getCloneOptions } from "../storage/cloneOptions";
 import type { BrowserChannel, ElementPickPayload } from "../types";
 import {
   getHideForCaptureSource,
   getPickerBootstrapSource,
   getRestoreAfterCaptureSource,
   getSetCloneModeSource,
+  getSetCloneOptionsSource,
   getSetModeSource,
 } from "./pickerInject";
 
@@ -701,6 +703,9 @@ export class BrowserSession {
         try {
           await page.evaluate(getPickerBootstrapSource());
           if (this.cloneMode) {
+            await page.evaluate(
+              getSetCloneOptionsSource({ fullSite: getCloneOptions().fullSite })
+            );
             await page.evaluate(getSetCloneModeSource(true));
           } else if (this.selectMode) {
             await page.evaluate(getSetModeSource(true));
@@ -732,6 +737,13 @@ export class BrowserSession {
     if (!this.page || this.page.isClosed()) {
       this.cloneMode = false;
       return false;
+    }
+    try {
+      await this.page.evaluate(
+        getSetCloneOptionsSource({ fullSite: getCloneOptions().fullSite })
+      );
+    } catch {
+      /* options push is best-effort */
     }
     const result = await this.page.evaluate(getSetCloneModeSource(on));
     if (typeof result === "boolean") {
@@ -774,6 +786,18 @@ export class BrowserSession {
 
   async toggleSelectMode(): Promise<boolean> {
     return this.setSelectMode(!this.selectMode);
+  }
+
+  /** Re-push clone options (e.g. full-site toggle) into the live page. */
+  async applyCloneOptions(): Promise<void> {
+    if (!this.isOpen || !this.page) return;
+    try {
+      await this.page.evaluate(
+        getSetCloneOptionsSource({ fullSite: getCloneOptions().fullSite })
+      );
+    } catch {
+      /* page busy or navigating */
+    }
   }
 
   async toggleCloneMode(): Promise<boolean> {
@@ -822,15 +846,17 @@ export class BrowserSession {
 
   /**
    * Multi-shot capture for clone packs: element + full page + parent area.
+   * page.png / parent.png follow the user's clone options (may be skipped).
    */
   async screenshotClonePack(payload: ElementPickPayload): Promise<{
     elementPng: Uint8Array;
-    pagePng: Uint8Array;
+    pagePng: Uint8Array | null;
     parentPng: Uint8Array | null;
   }> {
     if (!this.page || this.page.isClosed()) {
       throw new Error("Browser page is closed.");
     }
+    const opts = getCloneOptions();
 
     try {
       await this.page.evaluate(getPickerBootstrapSource());
@@ -843,16 +869,18 @@ export class BrowserSession {
     try {
       const elementPng = await this.captureElementPng(payload);
 
-      let pagePng: Uint8Array;
-      try {
-        const buf = await this.page.screenshot({
-          type: "png",
-          fullPage: true,
-        });
-        pagePng = new Uint8Array(buf);
-      } catch {
-        const buf = await this.page.screenshot({ type: "png" });
-        pagePng = new Uint8Array(buf);
+      let pagePng: Uint8Array | null = null;
+      if (opts.pageScreenshot) {
+        try {
+          const buf = await this.page.screenshot({
+            type: "png",
+            fullPage: true,
+          });
+          pagePng = new Uint8Array(buf);
+        } catch {
+          const buf = await this.page.screenshot({ type: "png" });
+          pagePng = new Uint8Array(buf);
+        }
       }
 
       let parentPng: Uint8Array | null = null;
@@ -866,7 +894,12 @@ export class BrowserSession {
           } | null;
         }
       ).parentDimensions;
-      if (parentBox && parentBox.width > 2 && parentBox.height > 2) {
+      if (
+        opts.parentScreenshot &&
+        parentBox &&
+        parentBox.width > 2 &&
+        parentBox.height > 2
+      ) {
         try {
           const buf = await this.page.screenshot({
             type: "png",

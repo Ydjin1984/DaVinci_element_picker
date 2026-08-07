@@ -74,7 +74,7 @@ export interface StandalonePreviewInput {
   stylesCss: string;
   subtreeHtml: string;
   elementPng: Uint8Array;
-  pagePng: Uint8Array;
+  pagePng?: Uint8Array | null;
   parentPng?: Uint8Array | null;
   assets: SavedCloneAsset[];
   /** Map localRel → file bytes for inlining. */
@@ -89,7 +89,10 @@ export function buildStandalonePreviewHtml(input: StandalonePreviewInput): strin
   const { payload, stylesCss, subtreeHtml } = input;
   const d = payload.dimensions;
   const elementData = dataUrl(input.elementPng, "image/png");
-  const pageData = dataUrl(input.pagePng, "image/png");
+  const pageData =
+    input.pagePng && input.pagePng.byteLength > 0
+      ? dataUrl(input.pagePng, "image/png")
+      : "";
   const parentData =
     input.parentPng && input.parentPng.byteLength > 0
       ? dataUrl(input.parentPng, "image/png")
@@ -284,10 +287,14 @@ export function buildStandalonePreviewHtml(input: StandalonePreviewInput): strin
       </div>`
           : ""
       }
-      <div>
+      ${
+        pageData
+          ? `<div>
         <div class="label">page.png (full page)</div>
         <img class="shot" alt="page" src="${pageData}" />
-      </div>
+      </div>`
+          : ""
+      }
     </div>
     <p class="note">Use these as the visual ground truth when rebuilding the UI.</p>
   </section>

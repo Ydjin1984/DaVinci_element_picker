@@ -15,10 +15,8 @@ import type {
   SavedPick,
 } from "../types";
 import { createZipBuffer, type ZipEntry } from "./zipArchive";
+import { getCloneOptions } from "./cloneOptions";
 import { getOutputDirName } from "./pickStore";
-
-/** Extra clone pack outputs controlled by settings. */
-export type ClonePackExtras = "none" | "previewHtml" | "zip" | "both";
 
 function stamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-").replace("Z", "");
@@ -30,29 +28,6 @@ function getMaxHtmlBytes(): number {
       .getConfiguration("elementPicker")
       .get<number>("maxHtmlBytes", 100000) || 100000
   );
-}
-
-export function getClonePackExtras(): ClonePackExtras {
-  const raw = vscode.workspace
-    .getConfiguration("elementPicker")
-    .get<string>("clonePackExtras", "both");
-  if (
-    raw === "none" ||
-    raw === "previewHtml" ||
-    raw === "zip" ||
-    raw === "both"
-  ) {
-    return raw;
-  }
-  return "both";
-}
-
-function wantPreview(extras: ClonePackExtras): boolean {
-  return extras === "previewHtml" || extras === "both";
-}
-
-function wantZip(extras: ClonePackExtras): boolean {
-  return extras === "zip" || extras === "both";
 }
 
 function workspaceRoot(): vscode.Uri | undefined {
@@ -137,7 +112,8 @@ export type AssetDownloader = (
 
 export interface CloneScreenshots {
   elementPng: Uint8Array;
-  pagePng: Uint8Array;
+  /** Null when the full-page screenshot is disabled in clone options. */
+  pagePng: Uint8Array | null;
   parentPng?: Uint8Array | null;
 }
 
@@ -154,6 +130,9 @@ export async function saveClonePack(
     throw new Error("Open a workspace folder to save element clones.");
   }
 
+  const opts = getCloneOptions();
+  const fullSite = !!payload.fullSiteCapture;
+
   const outName = getOutputDirName();
   const ts = stamp();
   const base = vscode.Uri.joinPath(root, outName);
@@ -164,23 +143,38 @@ export async function saveClonePack(
   const latestClone = vscode.Uri.joinPath(latest, "clone");
   const latestAssets = vscode.Uri.joinPath(latestClone, "assets");
 
+  /** Mirror helper — no-op when the latest/ option is off. */
+  const writeLatest = async (
+    uri: vscode.Uri,
+    data: Uint8Array | string
+  ): Promise<void> => {
+    if (!opts.latestMirror) return;
+    await writeFile(uri, data);
+  };
+
   await ensureDir(base);
   await ensureDir(folder);
-  // latest/ uses positional asset names (img-001.*), so stale files from a
-  // previous capture would mix in — wipe it before writing the new capture
-  try {
-    await vscode.workspace.fs.delete(latest, {
-      recursive: true,
-      useTrash: false,
-    });
-  } catch {
-    /* may not exist */
-  }
-  await ensureDir(latest);
   await ensureDir(cloneDir);
-  await ensureDir(assetsDir);
-  await ensureDir(latestClone);
-  await ensureDir(latestAssets);
+  if (opts.assets) {
+    await ensureDir(assetsDir);
+  }
+  if (opts.latestMirror) {
+    // latest/ uses positional asset names (img-001.*), so stale files from a
+    // previous capture would mix in — wipe it before writing the new capture
+    try {
+      await vscode.workspace.fs.delete(latest, {
+        recursive: true,
+        useTrash: false,
+      });
+    } catch {
+      /* may not exist */
+    }
+    await ensureDir(latest);
+    await ensureDir(latestClone);
+    if (opts.assets) {
+      await ensureDir(latestAssets);
+    }
+  }
 
   // Light context.md (compatible with normal picks)
   const lightPayload: ElementPickPayload = {
@@ -194,23 +188,31 @@ export async function saveClonePack(
   const imageUri = vscode.Uri.joinPath(folder, "element.png");
   await writeFile(contextUri, markdown);
   await writeFile(imageUri, shots.elementPng);
-  await writeFile(vscode.Uri.joinPath(latest, "context.md"), markdown);
-  await writeFile(vscode.Uri.joinPath(latest, "element.png"), shots.elementPng);
+  await writeLatest(vscode.Uri.joinPath(latest, "context.md"), markdown);
+  await writeLatest(
+    vscode.Uri.joinPath(latest, "element.png"),
+    shots.elementPng
+  );
 
   // Clone screenshots
   await writeFile(vscode.Uri.joinPath(cloneDir, "element.png"), shots.elementPng);
-  await writeFile(vscode.Uri.joinPath(cloneDir, "page.png"), shots.pagePng);
-  await writeFile(
+  await writeLatest(
     vscode.Uri.joinPath(latestClone, "element.png"),
     shots.elementPng
   );
-  await writeFile(vscode.Uri.joinPath(latestClone, "page.png"), shots.pagePng);
+  if (shots.pagePng && shots.pagePng.byteLength > 0) {
+    await writeFile(vscode.Uri.joinPath(cloneDir, "page.png"), shots.pagePng);
+    await writeLatest(
+      vscode.Uri.joinPath(latestClone, "page.png"),
+      shots.pagePng
+    );
+  }
   if (shots.parentPng && shots.parentPng.byteLength > 0) {
     await writeFile(
       vscode.Uri.joinPath(cloneDir, "parent.png"),
       shots.parentPng
     );
-    await writeFile(
+    await writeLatest(
       vscode.Uri.joinPath(latestClone, "parent.png"),
       shots.parentPng
     );
@@ -232,21 +234,22 @@ export async function saveClonePack(
 
   await writeFile(vscode.Uri.joinPath(cloneDir, "subtree.html"), subtreeHtml);
   await writeFile(vscode.Uri.joinPath(cloneDir, "styles.css"), stylesCss);
-  await writeFile(
+  await writeLatest(
     vscode.Uri.joinPath(latestClone, "subtree.html"),
     subtreeHtml
   );
-  await writeFile(vscode.Uri.joinPath(latestClone, "styles.css"), stylesCss);
+  await writeLatest(vscode.Uri.joinPath(latestClone, "styles.css"), stylesCss);
 
-  // Download assets
+  // Download assets (skipped entirely when the assets option is off)
   const savedAssets: SavedCloneAsset[] = [];
   const seenUrls = new Set<string>();
-  const maxAssets = 48;
+  const maxAssets = fullSite ? 150 : 48;
   const maxBytesEach = 6 * 1024 * 1024;
 
   // Prefer unique absolute URLs; also handle canvas data URLs from payload
-  const queueList = [...(payload.assets || [])];
+  const queueList = opts.assets ? [...(payload.assets || [])] : [];
   for (const c of payload.canvasDataUrls || []) {
+    if (!opts.assets) break;
     if (c.dataUrl?.startsWith("data:")) {
       queueList.push({
         kind: "img",
@@ -367,7 +370,7 @@ export async function saveClonePack(
       const fileName = `${ref.kind}-${pad}${ext}`;
       const assetUri = vscode.Uri.joinPath(assetsDir, fileName);
       await writeFile(assetUri, bytes);
-      await writeFile(vscode.Uri.joinPath(latestAssets, fileName), bytes);
+      await writeLatest(vscode.Uri.joinPath(latestAssets, fileName), bytes);
 
       savedAssets.push({
         kind: ref.kind,
@@ -399,52 +402,56 @@ export async function saveClonePack(
     }
   }
 
-  const manifest = {
-    generatedAt: new Date().toISOString(),
-    count: savedAssets.length,
-    assets: savedAssets,
-  };
-  await writeFile(
-    vscode.Uri.joinPath(assetsDir, "manifest.json"),
-    JSON.stringify(manifest, null, 2)
-  );
-  await writeFile(
-    vscode.Uri.joinPath(latestAssets, "manifest.json"),
-    JSON.stringify(manifest, null, 2)
-  );
+  if (opts.assets) {
+    const manifest = {
+      generatedAt: new Date().toISOString(),
+      count: savedAssets.length,
+      assets: savedAssets,
+    };
+    await writeFile(
+      vscode.Uri.joinPath(assetsDir, "manifest.json"),
+      JSON.stringify(manifest, null, 2)
+    );
+    await writeLatest(
+      vscode.Uri.joinPath(latestAssets, "manifest.json"),
+      JSON.stringify(manifest, null, 2)
+    );
+  }
 
-  const computed = buildComputedJson(payload);
   const meta = buildCloneMeta(payload);
-  const fontsJson = payload.fonts || [];
-
-  await writeFile(
-    vscode.Uri.joinPath(cloneDir, "computed.json"),
-    JSON.stringify(computed, null, 2)
-  );
   await writeFile(
     vscode.Uri.joinPath(cloneDir, "meta.json"),
     JSON.stringify(meta, null, 2)
   );
-  await writeFile(
-    vscode.Uri.joinPath(cloneDir, "fonts.json"),
-    JSON.stringify(fontsJson, null, 2)
-  );
-  await writeFile(
-    vscode.Uri.joinPath(latestClone, "computed.json"),
-    JSON.stringify(computed, null, 2)
-  );
-  await writeFile(
+  await writeLatest(
     vscode.Uri.joinPath(latestClone, "meta.json"),
     JSON.stringify(meta, null, 2)
   );
-  await writeFile(
-    vscode.Uri.joinPath(latestClone, "fonts.json"),
-    JSON.stringify(fontsJson, null, 2)
-  );
+
+  if (opts.computedJson) {
+    const computed = buildComputedJson(payload);
+    const fontsJson = payload.fonts || [];
+    await writeFile(
+      vscode.Uri.joinPath(cloneDir, "computed.json"),
+      JSON.stringify(computed, null, 2)
+    );
+    await writeFile(
+      vscode.Uri.joinPath(cloneDir, "fonts.json"),
+      JSON.stringify(fontsJson, null, 2)
+    );
+    await writeLatest(
+      vscode.Uri.joinPath(latestClone, "computed.json"),
+      JSON.stringify(computed, null, 2)
+    );
+    await writeLatest(
+      vscode.Uri.joinPath(latestClone, "fonts.json"),
+      JSON.stringify(fontsJson, null, 2)
+    );
+  }
 
   // If any inline SVGs, dump them
   const inlineSvgNames: string[] = [];
-  if (payload.inlineSvgs?.length) {
+  if (opts.inlineSvgs && payload.inlineSvgs?.length) {
     for (let i = 0; i < payload.inlineSvgs.length; i++) {
       const name = `inline-${String(i + 1).padStart(2, "0")}.svg`;
       // wrap if needed
@@ -453,17 +460,16 @@ export async function saveClonePack(
         svg = `<svg xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
       }
       await writeFile(vscode.Uri.joinPath(cloneDir, name), svg);
-      await writeFile(vscode.Uri.joinPath(latestClone, name), svg);
+      await writeLatest(vscode.Uri.joinPath(latestClone, name), svg);
       inlineSvgNames.push(name);
     }
   }
 
-  const extras = getClonePackExtras();
   let previewHtmlPath: string | undefined;
   let zipPath: string | undefined;
 
   // Standalone preview.html (self-contained)
-  if (wantPreview(extras)) {
+  if (opts.previewHtml) {
     const assetBytes = new Map<string, Uint8Array>();
     for (const a of savedAssets) {
       if (!a.ok || !a.localRel || !a.localPath) continue;
@@ -487,7 +493,7 @@ export async function saveClonePack(
       assetBytes,
     });
     await writeFile(vscode.Uri.joinPath(cloneDir, "preview.html"), previewHtml);
-    await writeFile(
+    await writeLatest(
       vscode.Uri.joinPath(latestClone, "preview.html"),
       previewHtml
     );
@@ -507,18 +513,21 @@ export async function saveClonePack(
     cloneDirPath: cloneDir.fsPath,
     cloneMdPath: vscode.Uri.joinPath(cloneDir, "CLONE.md").fsPath,
     agentMdPath: vscode.Uri.joinPath(cloneDir, "AGENT.md").fsPath,
-    pageImagePath: vscode.Uri.joinPath(cloneDir, "page.png").fsPath,
+    pageImagePath:
+      shots.pagePng && shots.pagePng.byteLength > 0
+        ? vscode.Uri.joinPath(cloneDir, "page.png").fsPath
+        : undefined,
     parentImagePath: shots.parentPng
       ? vscode.Uri.joinPath(cloneDir, "parent.png").fsPath
       : undefined,
-    assetsDirPath: assetsDir.fsPath,
+    assetsDirPath: opts.assets ? assetsDir.fsPath : undefined,
     previewHtmlPath,
   };
 
   // Zip path is known up front so the markdown can reference it and the
   // archive is built exactly once with the final markdown inside
   const zipUri = vscode.Uri.joinPath(folder, "clone.zip");
-  if (wantZip(extras)) {
+  if (opts.zip) {
     zipPath = zipUri.fsPath;
     pick.zipPath = zipPath;
   }
@@ -528,27 +537,32 @@ export async function saveClonePack(
 
   const cloneMd = buildCloneMarkdown(payload, savedAssets, {
     elementPng: toRel(vscode.Uri.joinPath(cloneDir, "element.png")),
-    pagePng: toRel(vscode.Uri.joinPath(cloneDir, "page.png")),
+    pagePng: pick.pageImagePath
+      ? toRel(vscode.Uri.joinPath(cloneDir, "page.png"))
+      : undefined,
     parentPng: pick.parentImagePath
       ? toRel(vscode.Uri.joinPath(cloneDir, "parent.png"))
       : undefined,
     subtreeHtml: toRel(vscode.Uri.joinPath(cloneDir, "subtree.html")),
     stylesCss: toRel(vscode.Uri.joinPath(cloneDir, "styles.css")),
-    assetsDir: toRel(assetsDir),
+    assetsDir: opts.assets ? toRel(assetsDir) : undefined,
     previewHtml: previewHtmlPath
       ? toRel(vscode.Uri.joinPath(cloneDir, "preview.html"))
       : undefined,
     zip: zipPath ? toRel(zipUri) : undefined,
   });
-  const agentMd = buildAgentMarkdown(payload, pick);
+  const agentMd = buildAgentMarkdown(payload, pick, {
+    computedJson: opts.computedJson,
+    assets: opts.assets,
+  });
 
   await writeFile(vscode.Uri.joinPath(cloneDir, "CLONE.md"), cloneMd);
   await writeFile(vscode.Uri.joinPath(cloneDir, "AGENT.md"), agentMd);
-  await writeFile(vscode.Uri.joinPath(latestClone, "CLONE.md"), cloneMd);
-  await writeFile(vscode.Uri.joinPath(latestClone, "AGENT.md"), agentMd);
+  await writeLatest(vscode.Uri.joinPath(latestClone, "CLONE.md"), cloneMd);
+  await writeLatest(vscode.Uri.joinPath(latestClone, "AGENT.md"), agentMd);
 
   // Zip archive of the full clone/ folder (+ light pick files at root of zip)
-  if (wantZip(extras)) {
+  if (opts.zip) {
     const entries: ZipEntry[] = [];
 
     const pushFile = async (
@@ -620,9 +634,8 @@ export async function saveClonePack(
     await pushFile(imageUri, "element.png");
 
     const zipBytes = createZipBuffer(entries);
-    const latestZipUri = vscode.Uri.joinPath(latest, "clone.zip");
     await writeFile(zipUri, zipBytes);
-    await writeFile(latestZipUri, zipBytes);
+    await writeLatest(vscode.Uri.joinPath(latest, "clone.zip"), zipBytes);
   }
 
   return pick;

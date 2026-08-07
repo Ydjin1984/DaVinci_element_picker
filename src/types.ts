@@ -97,6 +97,8 @@ export interface CloneFontInfo {
 /** Extra fields produced when captureMode === "clone". */
 export interface ElementCloneExtras {
   captureMode: "clone";
+  /** True when the capture targeted the whole document (full-site option). */
+  fullSiteCapture?: boolean;
   /** Full subtree HTML (may be large; also written to clone/subtree.html). */
   subtreeHTML: string;
   /** Truncation note if HTML was cut. */

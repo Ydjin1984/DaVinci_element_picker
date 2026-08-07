@@ -19,6 +19,10 @@ import {
   pickAndSaveLanguage,
   t,
 } from "./i18n";
+import {
+  affectsCloneOptions,
+  getCloneOptions,
+} from "./storage/cloneOptions";
 import { saveClonePack } from "./storage/cloneStore";
 import {
   ensureGitignoreEntry,
@@ -388,6 +392,15 @@ async function handlePick(
       );
       lastPick = saved;
 
+      // One-shot: clone mode deactivates itself after a successful capture
+      if (getCloneOptions().oneShot && session.isCloneMode) {
+        try {
+          await session.setCloneMode(false);
+        } catch {
+          /* page may be closed or navigating */
+        }
+      }
+
       if (autoAttach()) {
         await attachEverywhere(saved);
         syncUi(t("statusCloneSavedAttached", payload.selector, saved.timestamp));
@@ -552,6 +565,14 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
     onDidChangeLanguage(() => {
       onLanguageChange();
+    }),
+    // Clone options changed (panel checkbox or settings UI) → refresh panel
+    // checkboxes and push the full-site flag into the live page
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (affectsCloneOptions(e)) {
+        void session.applyCloneOptions();
+        syncUi();
+      }
     }),
     vscode.commands.registerCommand("elementPicker.openPanel", async () => {
       // Prefer durable Controls tree; fall back to webview tab

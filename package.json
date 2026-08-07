@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -42,22 +42,7 @@
     "theme": "dark"
   },
   "icon": "media/icon.png",
-  "activationEvents": [
-    "onView:elementPicker.controls",
-    "onView:elementPicker.panel",
-    "onCommand:elementPicker.openPanel",
-    "onCommand:elementPicker.showMenu",
-    "onCommand:elementPicker.openBrowser",
-    "onCommand:elementPicker.toggleSelect",
-    "onCommand:elementPicker.toggleClone",
-    "onCommand:elementPicker.attachLast",
-    "onCommand:elementPicker.copyLast",
-    "onCommand:elementPicker.openEditorPanel",
-    "onCommand:elementPicker.reloadWebview",
-    "onCommand:elementPicker.fixWebviewCache",
-    "onCommand:elementPicker.startLocalChrome",
-    "onCommand:elementPicker.copyLocalChromeCmd"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -171,12 +156,14 @@
         {
           "id": "elementPicker.controls",
           "name": "Controls",
+          "icon": "media/icon.svg",
           "contextualTitle": "DaVinchi Controls"
         },
         {
           "type": "webview",
           "id": "elementPicker.panel",
           "name": "Panel",
+          "icon": "media/icon.svg",
           "visibility": "collapsed"
         }
       ]
@@ -290,22 +277,55 @@
           "default": true,
           "description": "After a successful pick: write files, paste paths into terminal, and copy paths to clipboard."
         },
-        "elementPicker.clonePackExtras": {
-          "type": "string",
-          "enum": [
-            "none",
-            "previewHtml",
-            "zip",
-            "both"
-          ],
-          "default": "both",
-          "enumDescriptions": [
-            "Only the standard clone/ folder (no extras).",
-            "Self-contained clone/preview.html (HTML + CSS + screenshots + assets inlined).",
-            "Zip archive of the full pack: <timestamp>/clone.zip (and latest/clone.zip).",
-            "Both standalone preview.html and clone.zip."
-          ],
-          "description": "Clone mode extras: standalone preview.html and/or zip archive of the pack. Standard clone/ files are always written."
+        "elementPicker.cloneZip": {
+          "type": "boolean",
+          "default": false,
+          "description": "Clone mode: build a zip archive of the full pack (<timestamp>/clone.zip and latest/clone.zip)."
+        },
+        "elementPicker.cloneLatest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: mirror every capture into the latest/ folder (stable paths for agents)."
+        },
+        "elementPicker.clonePreviewHtml": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: write self-contained clone/preview.html (HTML + CSS + screenshots + assets inlined)."
+        },
+        "elementPicker.cloneAssets": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: download images, fonts and icons into clone/assets/."
+        },
+        "elementPicker.clonePageScreenshot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: capture the full-page screenshot clone/page.png."
+        },
+        "elementPicker.cloneParentScreenshot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: capture the parent-area screenshot clone/parent.png."
+        },
+        "elementPicker.cloneComputedJson": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: write style dumps clone/computed.json and clone/fonts.json."
+        },
+        "elementPicker.cloneInlineSvgs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: write inline-XX.svg files found in the subtree."
+        },
+        "elementPicker.cloneFullSite": {
+          "type": "boolean",
+          "default": false,
+          "description": "Clone mode: capture the WHOLE page (full HTML, styles, assets) on any click — full site reference instead of a single element."
+        },
+        "elementPicker.cloneOneShot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Clone mode: one-shot — the mode deactivates automatically after a successful capture."
         }
       }
     }

@@ -25,5 +25,9 @@ Desktop.ini
 .env.*
 .element-picks/
 
+# Local clone experiments (captured site references)
+clones/
+finandy-order-clone.html
+
 # TypeScript incremental
 *.tsbuildinfo
