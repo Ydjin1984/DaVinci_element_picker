@@ -39,6 +39,7 @@ import {
   type StatusKind,
 } from "./ui/panel";
 import { StatusBarController } from "./ui/statusBar";
+import { fixWebviewCache } from "./ui/webviewRepair";
 
 let session: BrowserSession;
 let lastPick: SavedPick | null = null;
@@ -575,6 +576,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("elementPicker.reloadWebview", () => {
       panel.forceRemount();
       void vscode.window.showInformationMessage(t("msgWebviewReloaded"));
+    }),
+    vscode.commands.registerCommand("elementPicker.fixWebviewCache", async () => {
+      try {
+        await fixWebviewCache(context);
+      } catch (e) {
+        showErr(e);
+      }
     }),
     vscode.commands.registerCommand(
       "elementPicker.copyLocalChromeCmd",

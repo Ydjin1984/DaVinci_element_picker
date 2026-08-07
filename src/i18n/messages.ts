@@ -79,6 +79,11 @@ export type MessageKey =
   | "reloadWebview"
   | "reloadWebviewTooltip"
   | "msgWebviewReloaded"
+  | "fixWebview"
+  | "fixWebviewTooltip"
+  | "fixWebviewArmed"
+  | "fixWebviewCloseNow"
+  | "fixWebviewUnsupported"
   | "controlsViewTitle"
   | "statusBarMenuTooltip"
   | "sectionPage"
@@ -204,6 +209,14 @@ const en: Dict = {
   reloadWebviewTooltip:
     "Remount sidebar/editor HTML if the webview Service Worker got stuck",
   msgWebviewReloaded: "DaVinchi: webview remounted. If still blank, use Controls tree or All actions…",
+  fixWebview: "Fix webview cache (restart editor)",
+  fixWebviewTooltip:
+    "Cure for 'Could not register service worker': close the editor — its Service Worker cache is wiped and the editor restarts automatically",
+  fixWebviewArmed:
+    "DaVinchi: repair armed. Close all {0} windows — the Service Worker cache will be cleared and the editor will restart automatically. Unsaved files will prompt to save as usual.",
+  fixWebviewCloseNow: "Close editor now",
+  fixWebviewUnsupported:
+    "Automatic repair is available on Windows only. Close the editor and delete this folder manually: {0}",
   controlsViewTitle: "Controls",
   statusBarMenuTooltip:
     "DaVinchi Element Picker — click for menu (Ctrl+Shift+E toggles select)",
@@ -333,6 +346,14 @@ const ru: Dict = {
     "Пересоздать HTML панели, если Service Worker webview «залип»",
   msgWebviewReloaded:
     "DaVinchi: webview пересоздан. Если пусто — используйте Controls или «Все действия…»",
+  fixWebview: "Починить кэш webview (перезапуск)",
+  fixWebviewTooltip:
+    "Лечит «Could not register service worker»: закройте редактор — кэш Service Worker будет очищен, редактор перезапустится автоматически",
+  fixWebviewArmed:
+    "DaVinchi: починка активирована. Закройте все окна {0} — кэш Service Worker будет очищен, редактор перезапустится автоматически. Несохранённые файлы предложат сохранить как обычно.",
+  fixWebviewCloseNow: "Закрыть редактор сейчас",
+  fixWebviewUnsupported:
+    "Автопочинка доступна только на Windows. Закройте редактор и удалите папку вручную: {0}",
   controlsViewTitle: "Управление",
   statusBarMenuTooltip:
     "DaVinchi — клик: меню · Ctrl+Shift+E Select · Ctrl+Shift+Alt+C Clone",

@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -54,6 +54,7 @@
     "onCommand:elementPicker.copyLast",
     "onCommand:elementPicker.openEditorPanel",
     "onCommand:elementPicker.reloadWebview",
+    "onCommand:elementPicker.fixWebviewCache",
     "onCommand:elementPicker.startLocalChrome",
     "onCommand:elementPicker.copyLocalChromeCmd"
   ],
@@ -119,6 +120,11 @@
         "command": "elementPicker.reloadWebview",
         "title": "DaVinchi: Reload Webview UI",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "elementPicker.fixWebviewCache",
+        "title": "DaVinchi: Fix Webview Cache (restart editor)",
+        "icon": "$(tools)"
       },
       {
         "command": "elementPicker.startLocalChrome",

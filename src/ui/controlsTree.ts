@@ -17,6 +17,7 @@ type ControlKind =
   | "language"
   | "editorUi"
   | "reloadWebview"
+  | "fixWebview"
   | "startChrome"
   | "menu";
 
@@ -189,6 +190,11 @@ export class ControlsTreeProvider
         icon: "refresh",
         command: "elementPicker.reloadWebview",
         tooltip: t("reloadWebviewTooltip"),
+      }),
+      new ControlItem("fixWebview", t("fixWebview"), {
+        icon: "tools",
+        command: "elementPicker.fixWebviewCache",
+        tooltip: t("fixWebviewTooltip"),
       }),
       new ControlItem("startChrome", t("treeStartChrome"), {
         icon: "debug-start",

@@ -81,6 +81,11 @@ export async function showActionMenu(state: PanelState): Promise<void> {
       command: "elementPicker.reloadWebview",
     },
     {
+      label: `$(tools) ${t("fixWebview")}`,
+      detail: t("fixWebviewTooltip"),
+      command: "elementPicker.fixWebviewCache",
+    },
+    {
       label: `$(debug-start) ${t("treeStartChrome")}`,
       detail: t("treeStartChromeTooltip"),
       command: "elementPicker.startLocalChrome",

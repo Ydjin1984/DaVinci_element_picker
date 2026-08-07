@@ -2,6 +2,15 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.18] — 2026-08-07
+
+### Added
+- **DaVinchi: Fix Webview Cache (restart editor)** command (`elementPicker.fixWebviewCache`) — one-click cure for the editor-level error `Could not register service worker: InvalidStateError`. Arms a detached PowerShell watcher that waits for the editor to close, deletes the corrupted `<userData>/Service Worker` cache and relaunches the editor automatically. Available in the command palette, the Controls tree (Advanced) and the action menu. Windows-only; on other platforms shows the manual path to delete
+- `scripts/fix-webview-cache.ps1` — standalone repair script for VS Code and Cursor (clears the Service Worker cache of closed editors; `-Wait` waits for a running editor to close first)
+
+### Why
+The `InvalidStateError` comes from the editor's own webview Service Worker whose on-disk cache got corrupted — no extension code can prevent it, but repair is now one action instead of a manual cache hunt.
+
 ## [0.1.17] — 2026-08-07
 
 ### Fixed
