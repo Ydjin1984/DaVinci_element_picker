@@ -303,6 +303,9 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       --border: var(--vscode-widget-border, var(--vscode-editorWidget-border, rgba(128,128,128,0.25)));
     }
     * { box-sizing: border-box; }
+    /* Author display rules (.conn-row/.empty are flex) override the UA
+       [hidden] style — re-assert it, or el.hidden = true has no effect */
+    [hidden] { display: none !important; }
     html, body { height: 100%; }
     body {
       font-family: var(--vscode-font-family);

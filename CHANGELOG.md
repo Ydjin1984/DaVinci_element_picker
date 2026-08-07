@@ -2,6 +2,12 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.20] — 2026-08-07
+
+### Fixed
+- Panel: the connected-URL row (green dot + address + **Close browser**) stayed visible after the browser was closed, and the "No captures yet" placeholder could show together with the last-capture card. Root cause: the author CSS `display: flex` on `.conn-row`/`.empty` overrides the browser's built-in `[hidden] { display: none }`, so `el.hidden = true` had no visual effect. Added an explicit `[hidden] { display: none !important; }` reset to the webview stylesheet
+- Verified with a headless-Chrome test driving the real panel HTML through open → close → capture state transitions (33 checks), including a regression run against the old CSS that reproduces the stuck row
+
 ## [0.1.19] — 2026-08-07
 
 ### Added

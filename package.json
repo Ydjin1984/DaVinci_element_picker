@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
