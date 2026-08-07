@@ -2,6 +2,51 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.16] — 2026-08-07
+
+### Changed
+- **Redesigned sidebar panel**: sectioned layout (Page / Capture mode / Last capture), brand header with connection pill, mode tiles with descriptions and shortcuts, live status line (idle / connected / busy / error), last-capture card with Terminal / Copy / Folder actions, empty state, language picker + collapsible "How it works" in the footer
+- Controls tree grouped into Browser / Capture / Last capture / Advanced, fully localized
+- Action menu (QuickPick) grouped with separators and mode descriptions
+- Terminal attach block is now shell-neutral (quoted paths, no PowerShell `&`) — works in PowerShell, cmd, bash and zsh, including paths with spaces/Cyrillic
+- `@mention` hints respect a custom `elementPicker.outputDir`
+
+### Fixed
+- ReDoS hang in data-URL parsing during clone capture (malicious/broken `data:` URI could freeze the extension host)
+- CDP session close now really disconnects (no leaked connections; stale handlers no longer wipe a new session's state)
+- Element screenshot could capture the wrong element when the short selector was not unique — the picked node is now marked and captured precisely
+- Hover highlight no longer leaks into screenshots when the mouse moves during capture
+- Shadow DOM: picking inside open web components now selects the inner element, not the host
+- `latest/` folder is cleaned before each clone save (no mixing of files from different captures)
+- `clone/preview.html` renders the captured subtree in isolated Shadow DOM and strips active content (inline handlers, scripts, iframes)
+- Browser-open errors are routed correctly: CDP wizard only for CDP failures, real launch errors shown as-is
+- Double-click on "Open browser" no longer spawns two browsers; Esc in the URL prompt cancels silently
+- `file://` and other schemes are no longer rewritten to `http://`
+- Playwright cache discovery on Windows/macOS (`%LOCALAPPDATA%\ms-playwright`, `~/Library/Caches`)
+- Asset download limit no longer consumed by failed entries; oversized data-URLs deduplicated
+- Markdown packs survive page content containing ``` fences or `|` in URLs
+- Clone zip is built once (was compressed and written twice); CRC32 uses a lookup table
+- `elementPicker.outputDir` is validated (no `..`, absolute paths or invalid characters)
+- Status bar clone label localized
+
+## [0.1.15] — 2026-08-07
+
+### Added
+- Setting **`elementPicker.clonePackExtras`**: `none` | `previewHtml` | `zip` | `both` (default `both`)
+  - **`previewHtml`** → self-contained `clone/preview.html` (screenshots + subtree + CSS + assets inlined; open offline)
+  - **`zip`** → `clone.zip` next to the pick folder (and `latest/clone.zip`) with full pack + light context
+- Terminal/clipboard attach includes `preview.html` / `clone.zip` paths when present
+
+## [0.1.14] — 2026-08-07
+
+### Added
+- **Clone mode** — separate from Select: full agent-ready pack for 1:1 UI recreation
+  - Command: `DaVinchi: Toggle Clone Mode` · shortcut `Ctrl+Shift+Alt+C` · purple highlight
+  - Pack under `.element-picks/<ts>/clone/` (+ mirrored to `latest/clone/`)
+  - Artifacts: `CLONE.md`, `AGENT.md`, `element.png`, `page.png`, `parent.png`, `subtree.html`, `styles.css`, `computed.json`, `fonts.json`, `meta.json`, `assets/*` + `manifest.json`
+  - Deep capture: full subtree HTML, ancestor layout context, matched CSS + keyframes + `@font-face`, fonts, motion styles, inline SVGs, canvas snapshots (when allowed), downloadable assets
+  - Terminal/clipboard attach includes clone paths and clone-oriented prompt
+
 ## [0.1.13] — 2026-08-01
 
 ### Fixed

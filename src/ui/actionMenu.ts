@@ -8,31 +8,50 @@ import type { PanelState } from "./panel";
 export async function showActionMenu(state: PanelState): Promise<void> {
   type Item = vscode.QuickPickItem & { command?: string };
 
+  const separator = (label: string): Item => ({
+    label,
+    kind: vscode.QuickPickItemKind.Separator,
+  });
+
   const items: Item[] = [
     {
       label: `$(info) ${state.status || t("statusReady")}`,
-      description: state.selectMode
-        ? t("badgeSelectOn")
-        : state.browserOpen
-          ? t("badgeBrowserOpen")
-          : undefined,
+      description: state.cloneMode
+        ? t("badgeCloneOn")
+        : state.selectMode
+          ? t("badgeSelectOn")
+          : state.browserOpen
+            ? t("badgeBrowserOpen")
+            : undefined,
       detail: state.currentUrl || undefined,
     },
+    separator(t("treeGroupBrowser")),
     {
       label: `$(globe) ${t("openBrowser")}`,
       command: "elementPicker.openBrowser",
     },
     {
+      label: `$(close) ${t("closeBrowser")}`,
+      command: "elementPicker.closeBrowser",
+    },
+    separator(t("treeGroupCapture")),
+    {
       label: `$(${state.selectMode ? "target" : "selection"}) ${
         state.selectMode ? t("selectModeOn") : t("selectMode")
       }`,
       description: "Ctrl+Shift+E",
+      detail: t("selectModeDesc"),
       command: "elementPicker.toggleSelect",
     },
     {
-      label: `$(close) ${t("closeBrowser")}`,
-      command: "elementPicker.closeBrowser",
+      label: `$(${state.cloneMode ? "git-compare" : "copy"}) ${
+        state.cloneMode ? t("cloneModeOn") : t("cloneMode")
+      }`,
+      description: "Ctrl+Shift+Alt+C",
+      detail: t("cloneModeDesc"),
+      command: "elementPicker.toggleClone",
     },
+    separator(t("sectionLast")),
     {
       label: `$(terminal) ${t("attachLast")}`,
       description: state.lastPick?.selector,
@@ -46,6 +65,7 @@ export async function showActionMenu(state: PanelState): Promise<void> {
       label: `$(folder-opened) ${t("revealFolder")}`,
       command: "elementPicker.openLastFolder",
     },
+    separator(t("treeGroupAdvanced")),
     {
       label: `$(globe) ${t("languageLabel")}`,
       command: "elementPicker.selectLanguage",
@@ -59,6 +79,11 @@ export async function showActionMenu(state: PanelState): Promise<void> {
       label: `$(refresh) ${t("reloadWebview")}`,
       detail: t("reloadWebviewTooltip"),
       command: "elementPicker.reloadWebview",
+    },
+    {
+      label: `$(debug-start) ${t("treeStartChrome")}`,
+      detail: t("treeStartChromeTooltip"),
+      command: "elementPicker.startLocalChrome",
     },
   ];
 

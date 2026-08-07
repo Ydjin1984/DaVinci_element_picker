@@ -19,18 +19,24 @@ import {
   pickAndSaveLanguage,
   t,
 } from "./i18n";
+import { saveClonePack } from "./storage/cloneStore";
 import {
   ensureGitignoreEntry,
   getLatestPaths,
   savePick,
 } from "./storage/pickStore";
-import type { ElementPickPayload, SavedPick } from "./types";
+import {
+  isClonePayload,
+  type ElementPickPayload,
+  type SavedPick,
+} from "./types";
 import { showActionMenu } from "./ui/actionMenu";
 import { ControlsTreeProvider } from "./ui/controlsTree";
 import { EditorControlPanel } from "./ui/editorPanel";
 import {
   ElementPickerPanelProvider,
   type PanelState,
+  type StatusKind,
 } from "./ui/panel";
 import { StatusBarController } from "./ui/statusBar";
 
@@ -41,6 +47,7 @@ let controlsTree: ControlsTreeProvider;
 let editorPanel: EditorControlPanel;
 let statusBar: StatusBarController;
 let pickingLock = false;
+let openingBrowser = false;
 
 /** User setting only — empty by default (no built-in site preset). */
 function defaultUrl(): string {
@@ -66,6 +73,11 @@ async function askUrl(initial?: string): Promise<string | undefined> {
   return trimmed || undefined;
 }
 
+/** Prepend http:// only when no scheme at all (keeps file://, https://, etc.). */
+function normalizeUrl(target: string): string {
+  return /^[a-z][a-z0-9+.-]*:/i.test(target) ? target : `http://${target}`;
+}
+
 function autoAttach(): boolean {
   return vscode.workspace
     .getConfiguration("elementPicker")
@@ -76,27 +88,34 @@ function panelState(): PanelState {
   return {
     browserOpen: session.isOpen,
     selectMode: session.isSelectMode,
+    cloneMode: session.isCloneMode,
     currentUrl: session.currentUrl || defaultUrl(),
     lastPick,
     status: session.isOpen
-      ? session.isSelectMode
-        ? t("statusSelectOn")
-        : t("statusBrowserOpen")
+      ? session.isCloneMode
+        ? t("statusCloneOn")
+        : session.isSelectMode
+          ? t("statusSelectOn")
+          : t("statusBrowserOpen")
       : lastPick
         ? t("statusLastPick", lastPick.selector)
         : t("statusReady"),
+    statusKind: session.isOpen ? "ok" : "idle",
   };
 }
 
-function syncUi(extraStatus?: string): void {
+function syncUi(extraStatus?: string, kind?: StatusKind): void {
   const st = panelState();
   if (extraStatus) {
     st.status = extraStatus;
   }
+  if (kind) {
+    st.statusKind = kind;
+  }
   panel.updateState(st);
   controlsTree?.refresh(st);
   if (session.isOpen) {
-    statusBar.setBrowserOpen(session.isSelectMode);
+    statusBar.setBrowserOpen(session.isSelectMode, session.isCloneMode);
   } else {
     statusBar.setClosed();
   }
@@ -117,16 +136,38 @@ function showErr(e: unknown): void {
   void vscode.window.showErrorMessage(t("errPrefix", err));
 }
 
+/** True when the browser-open error should route to the CDP wizard. */
+function isCdpFailure(e: unknown, message: string): boolean {
+  const kind = (e as { davinchiErrorKind?: string } | null)?.davinchiErrorKind;
+  if (kind) {
+    return kind === "cdp";
+  }
+  // Fallback for errors without a kind: only unambiguous CDP signals
+  return (
+    message.includes("ECONNREFUSED 127.0.0.1:9222") ||
+    message.includes("Remote SSH")
+  );
+}
+
 async function openBrowser(url?: string): Promise<void> {
+  if (openingBrowser) {
+    return;
+  }
   let target = (url || "").trim();
   if (!target) {
-    target = (await askUrl()) || "";
+    const answer = await askUrl();
+    if (answer === undefined) {
+      return; // user pressed Esc — not an error
+    }
+    target = answer;
   }
   if (!target) {
     throw new Error(t("errUrlEmpty"));
   }
-  const finalUrl = /^https?:\/\//i.test(target) ? target : `http://${target}`;
+  const finalUrl = normalizeUrl(target);
 
+  openingBrowser = true;
+  syncUi(t("msgOpening", finalUrl), "busy");
   try {
     await vscode.window.withProgress(
       {
@@ -140,17 +181,16 @@ async function openBrowser(url?: string): Promise<void> {
     );
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
-    // Remote CDP not ready → guided retry loop
-    if (
-      err.includes("CDP") ||
-      err.includes("ECONNREFUSED") ||
-      err.includes("9222") ||
-      err.includes("Remote SSH")
-    ) {
+    syncUi(t("statusError", err.split("\n")[0] || err), "error");
+    if (isCdpFailure(e, err)) {
+      // Remote CDP not ready → guided retry loop
+      openingBrowser = false;
       await handleCdpConnectFailure(finalUrl, err);
       return;
     }
     throw e;
+  } finally {
+    openingBrowser = false;
   }
 
   await ensureGitignoreEntry();
@@ -210,16 +250,23 @@ async function handleCdpConnectFailure(
       t("cdpActionRetry")
     );
     if (again === t("cdpActionRetry")) {
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: t("msgOpening", finalUrl),
-          cancellable: false,
-        },
-        async () => {
-          await session.open(finalUrl);
-        }
-      );
+      syncUi(t("msgOpening", finalUrl), "busy");
+      try {
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: t("msgOpening", finalUrl),
+            cancellable: false,
+          },
+          async () => {
+            await session.open(finalUrl);
+          }
+        );
+      } catch (e) {
+        const err = e instanceof Error ? e.message : String(e);
+        syncUi(t("statusError", err.split("\n")[0] || err), "error");
+        throw e;
+      }
       await ensureGitignoreEntry();
       syncUi(t("statusBrowserOpenUrl", finalUrl));
       void vscode.window.showInformationMessage(t("msgBrowserOpened"));
@@ -232,10 +279,22 @@ async function toggleSelect(): Promise<boolean> {
     await openBrowser();
   }
   if (!session.isOpen) {
-    throw new Error(t("errBrowserNotOpen"));
+    return false; // user cancelled the URL prompt
   }
   const on = await session.toggleSelectMode();
   syncUi(on ? t("statusSelectOnHover") : t("statusSelectOff"));
+  return on;
+}
+
+async function toggleClone(): Promise<boolean> {
+  if (!session.isOpen) {
+    await openBrowser();
+  }
+  if (!session.isOpen) {
+    return false; // user cancelled the URL prompt
+  }
+  const on = await session.toggleCloneMode();
+  syncUi(on ? t("statusCloneOnHover") : t("statusCloneOff"));
   return on;
 }
 
@@ -253,7 +312,97 @@ async function handlePick(
   }
   pickingLock = true;
   try {
-    syncUi(t("statusCapturing", payload.selector));
+    if (isClonePayload(payload) || payload.captureMode === "clone") {
+      syncUi(t("statusCloning", payload.selector), "busy");
+      const shots = await session.screenshotClonePack(payload);
+      const clonePayload = isClonePayload(payload)
+        ? payload
+        : ({ ...payload, captureMode: "clone" } as import("./types").ElementClonePayload);
+
+      // Ensure minimum clone fields if payload was partial
+      const full = {
+        ...clonePayload,
+        captureMode: "clone" as const,
+        subtreeHTML:
+          (clonePayload as import("./types").ElementClonePayload).subtreeHTML ||
+          payload.outerHTML ||
+          "",
+        subtreeTruncated:
+          (clonePayload as import("./types").ElementClonePayload)
+            .subtreeTruncated ?? false,
+        ancestors:
+          (clonePayload as import("./types").ElementClonePayload).ancestors ||
+          [],
+        parentDimensions:
+          (clonePayload as import("./types").ElementClonePayload)
+            .parentDimensions ?? null,
+        pageMetrics: (clonePayload as import("./types").ElementClonePayload)
+          .pageMetrics || {
+          scrollWidth: 0,
+          scrollHeight: 0,
+          viewportWidth: 0,
+          viewportHeight: 0,
+        },
+        deepCssText:
+          (clonePayload as import("./types").ElementClonePayload).deepCssText ||
+          payload.cssText ||
+          "",
+        keyframesCss:
+          (clonePayload as import("./types").ElementClonePayload)
+            .keyframesCss || "",
+        fontFaceCss:
+          (clonePayload as import("./types").ElementClonePayload).fontFaceCss ||
+          "",
+        motionStyles:
+          (clonePayload as import("./types").ElementClonePayload)
+            .motionStyles || {},
+        fonts:
+          (clonePayload as import("./types").ElementClonePayload).fonts || [],
+        assets:
+          (clonePayload as import("./types").ElementClonePayload).assets || [],
+        styleTree:
+          (clonePayload as import("./types").ElementClonePayload).styleTree ||
+          [],
+        inlineSvgs:
+          (clonePayload as import("./types").ElementClonePayload).inlineSvgs ||
+          [],
+        canvasDataUrls:
+          (clonePayload as import("./types").ElementClonePayload)
+            .canvasDataUrls || [],
+        pseudoElements:
+          (clonePayload as import("./types").ElementClonePayload)
+            .pseudoElements || {},
+        deepCssVariables:
+          (clonePayload as import("./types").ElementClonePayload)
+            .deepCssVariables ||
+          payload.cssVariables ||
+          {},
+        headLinks:
+          (clonePayload as import("./types").ElementClonePayload).headLinks ||
+          [],
+      };
+
+      const saved = await saveClonePack(full, shots, (url) =>
+        session.downloadUrl(url)
+      );
+      lastPick = saved;
+
+      if (autoAttach()) {
+        await attachEverywhere(saved);
+        syncUi(t("statusCloneSavedAttached", payload.selector, saved.timestamp));
+        void vscode.window.showInformationMessage(
+          t("msgCloneSavedAttached", payload.selector)
+        );
+      } else {
+        syncUi(t("statusCloneSaved", payload.selector, saved.timestamp));
+        void vscode.window.showInformationMessage(
+          t("msgCloneSavedManual", payload.selector)
+        );
+      }
+      return;
+    }
+
+    syncUi(t("statusCapturing", payload.selector), "busy");
     const png = await session.screenshotElement(payload);
     const saved = await savePick(payload, png);
     lastPick = saved;
@@ -274,7 +423,7 @@ async function handlePick(
     }
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
-    syncUi(t("statusPickFailed", err));
+    syncUi(t("statusPickFailed", err), "error");
     void vscode.window.showErrorMessage(t("errPrefix", err));
   } finally {
     pickingLock = false;
@@ -334,7 +483,7 @@ function onLanguageChange(): void {
   syncUi();
   statusBar.setIdle();
   if (session.isOpen) {
-    statusBar.setBrowserOpen(session.isSelectMode);
+    statusBar.setBrowserOpen(session.isSelectMode, session.isCloneMode);
   }
   const locale = getLocale();
   void vscode.window.showInformationMessage(
@@ -348,6 +497,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   session.setPickHandler(handlePick);
   session.setModeHandler(() => syncUi());
+  session.setCloneModeHandler(() => syncUi());
 
   // Pin system Chrome/Edge path so Playwright uses a real executable
   void ensureBrowserPathSetting().then((p) => {
@@ -366,6 +516,7 @@ export function activate(context: vscode.ExtensionContext): void {
   panel = new ElementPickerPanelProvider(context.extensionUri, {
     openBrowser,
     toggleSelect,
+    toggleClone,
     closeBrowser,
     attachLast,
     copyLast,
@@ -378,7 +529,7 @@ export function activate(context: vscode.ExtensionContext): void {
       syncUi();
       statusBar.setIdle();
       if (session.isOpen) {
-        statusBar.setBrowserOpen(session.isSelectMode);
+        statusBar.setBrowserOpen(session.isSelectMode, session.isCloneMode);
       }
     },
   });
@@ -430,7 +581,7 @@ export function activate(context: vscode.ExtensionContext): void {
       async () => {
         const url = (await askUrl(session.currentUrl || defaultUrl())) || "";
         if (!url) return;
-        const finalUrl = /^https?:\/\//i.test(url) ? url : `http://${url}`;
+        const finalUrl = normalizeUrl(url);
         const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
         await vscode.env.clipboard.writeText(cmd);
         void vscode.window.showInformationMessage(t("msgLocalChromeStarted"));
@@ -441,7 +592,7 @@ export function activate(context: vscode.ExtensionContext): void {
       async () => {
         const url = (await askUrl(session.currentUrl || defaultUrl())) || "";
         if (!url) return;
-        const finalUrl = /^https?:\/\//i.test(url) ? url : `http://${url}`;
+        const finalUrl = normalizeUrl(url);
         const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
         await vscode.env.clipboard.writeText(cmd);
 
@@ -491,6 +642,13 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("elementPicker.toggleSelect", async () => {
       try {
         await toggleSelect();
+      } catch (e) {
+        showErr(e);
+      }
+    }),
+    vscode.commands.registerCommand("elementPicker.toggleClone", async () => {
+      try {
+        await toggleClone();
       } catch (e) {
         showErr(e);
       }

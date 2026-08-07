@@ -26,9 +26,14 @@ export class StatusBarController {
     this.item.backgroundColor = undefined;
   }
 
-  setBrowserOpen(selectMode: boolean): void {
+  setBrowserOpen(selectMode: boolean, cloneMode = false): void {
     this.refreshTooltip();
-    if (selectMode) {
+    if (cloneMode) {
+      this.item.text = t("statusBarClone");
+      this.item.backgroundColor = new vscode.ThemeColor(
+        "statusBarItem.prominentBackground"
+      );
+    } else if (selectMode) {
       this.item.text = t("statusBarOn");
       this.item.backgroundColor = new vscode.ThemeColor(
         "statusBarItem.warningBackground"

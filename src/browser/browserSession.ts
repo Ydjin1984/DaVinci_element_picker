@@ -15,6 +15,7 @@ import {
   getHideForCaptureSource,
   getPickerBootstrapSource,
   getRestoreAfterCaptureSource,
+  getSetCloneModeSource,
   getSetModeSource,
 } from "./pickerInject";
 
@@ -74,6 +75,23 @@ function pushIfExists(
   } catch {
     /* ignore */
   }
+}
+
+/** Playwright browser cache root for this platform (honors PLAYWRIGHT_BROWSERS_PATH). */
+function playwrightCacheRoot(): string {
+  const envRoot = (process.env.PLAYWRIGHT_BROWSERS_PATH || "").trim();
+  if (envRoot && envRoot !== "0") {
+    return envRoot;
+  }
+  const home = os.homedir();
+  if (process.platform === "win32") {
+    const local = process.env.LOCALAPPDATA || path.join(home, "AppData", "Local");
+    return path.join(local, "ms-playwright");
+  }
+  if (process.platform === "darwin") {
+    return path.join(home, "Library", "Caches", "ms-playwright");
+  }
+  return path.join(home, ".cache", "ms-playwright");
 }
 
 /** Common install locations for system Chrome / Edge (Windows user-local, Linux remote, macOS). */
@@ -152,7 +170,7 @@ function discoverBrowserExecutables(): Array<{ label: string; executablePath: st
 
   // Scan playwright cache for any chrome binary (linux/mac/win)
   try {
-    const pw = path.join(home, ".cache", "ms-playwright");
+    const pw = playwrightCacheRoot();
     if (fs.existsSync(pw)) {
       for (const name of fs.readdirSync(pw)) {
         if (!name.startsWith("chromium")) continue;
@@ -180,12 +198,16 @@ export class BrowserSession {
   private context: BrowserContext | null = null;
   private page: Page | null = null;
   private selectMode = false;
+  private cloneMode = false;
   private onPick: PickHandler | null = null;
   private onModeChange: ModeHandler | null = null;
+  private onCloneModeChange: ModeHandler | null = null;
   private navHooked = false;
   private exposed = false;
   /** Connected to user's existing Chrome via CDP — do not kill Chrome on close. */
   private viaCdp = false;
+  /** In-flight open() — a second call reuses it instead of opening twice. */
+  private openInFlight: Promise<void> | null = null;
 
   get isOpen(): boolean {
     return !!this.page && !this.page.isClosed();
@@ -193,6 +215,14 @@ export class BrowserSession {
 
   get isSelectMode(): boolean {
     return this.selectMode;
+  }
+
+  get isCloneMode(): boolean {
+    return this.cloneMode;
+  }
+
+  get isPickingActive(): boolean {
+    return this.selectMode || this.cloneMode;
   }
 
   get currentUrl(): string {
@@ -209,6 +239,10 @@ export class BrowserSession {
 
   setModeHandler(handler: ModeHandler | null): void {
     this.onModeChange = handler;
+  }
+
+  setCloneModeHandler(handler: ModeHandler | null): void {
+    this.onCloneModeChange = handler;
   }
 
   private channel(): BrowserChannel {
@@ -360,7 +394,7 @@ export class BrowserSession {
 
     // Bundled Playwright Chromium — only if already on disk (skip download trap)
     const home = os.homedir();
-    const pwRoot = path.join(home, ".cache", "ms-playwright");
+    const pwRoot = playwrightCacheRoot();
     let hasPwChrome = false;
     try {
       if (fs.existsSync(pwRoot)) {
@@ -470,13 +504,13 @@ export class BrowserSession {
     if (mode === "cdp") {
       const cdp = await tryCdp();
       if (cdp) return cdp;
-      throw this.unifiedBrowserError(errors, endpoint);
+      throw this.unifiedBrowserError(errors, endpoint, "cdp");
     }
 
     if (mode === "launch") {
       const launched = await tryLaunch();
       if (launched) return launched;
-      throw this.unifiedBrowserError(errors, endpoint);
+      throw this.unifiedBrowserError(errors, endpoint, "launch");
     }
 
     // auto: launch first when Chrome exists on this host (local PC / UI extension host)
@@ -494,10 +528,19 @@ export class BrowserSession {
       if (launched) return launched;
     }
 
-    throw this.unifiedBrowserError(errors, endpoint);
+    // auto mode: CDP is the real target only on a remote host without a local browser
+    throw this.unifiedBrowserError(
+      errors,
+      endpoint,
+      this.isRemoteHost() && !canLaunch ? "cdp" : "launch"
+    );
   }
 
-  private unifiedBrowserError(errors: string[], endpoint: string): Error {
+  private unifiedBrowserError(
+    errors: string[],
+    endpoint: string,
+    kind: "cdp" | "launch"
+  ): Error {
     const hostNote = this.isRemoteHost()
       ? `Workspace is Remote SSH (${vscode.env.remoteName}), but DaVinchi prefers the local UI host so Chrome opens on your PC.\n` +
         `If this still fails, ensure the extension is not forced to “workspace” only, and Chrome is installed locally.\n\n`
@@ -505,21 +548,35 @@ export class BrowserSession {
     const found = discoverBrowserExecutables()
       .map((d) => d.executablePath)
       .join("\n  ");
-    return new Error(
-      `Could not open a browser.\n` +
-        hostNote +
-        `Platform: ${process.platform} ${os.arch()}\n` +
-        `Browsers found here:\n  ${found || "(none)"}\n\n` +
-        `Fix:\n` +
-        `1) Install Google Chrome or Edge on this PC\n` +
-        `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
-        `3) Optional advanced: start Chrome with --remote-debugging-port=9222 and set browserMode=cdp\n\n` +
-        `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
-        `(CDP endpoint tried: ${endpoint})`
+    return Object.assign(
+      new Error(
+        `Could not open a browser.\n` +
+          hostNote +
+          `Platform: ${process.platform} ${os.arch()}\n` +
+          `Browsers found here:\n  ${found || "(none)"}\n\n` +
+          `Fix:\n` +
+          `1) Install Google Chrome or Edge on this PC\n` +
+          `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
+          `3) Optional advanced: start Chrome with --remote-debugging-port=9222 and set browserMode=cdp\n\n` +
+          `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
+          `(CDP endpoint tried: ${endpoint})`
+      ),
+      { davinchiErrorKind: kind }
     );
   }
 
   async open(url: string): Promise<void> {
+    if (this.openInFlight) {
+      return this.openInFlight;
+    }
+    const inFlight = this.openInternal(url).finally(() => {
+      this.openInFlight = null;
+    });
+    this.openInFlight = inFlight;
+    return inFlight;
+  }
+
+  private async openInternal(url: string): Promise<void> {
     if (this.isOpen && this.page) {
       await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
       await this.installPicker(this.page);
@@ -562,19 +619,28 @@ export class BrowserSession {
       }
     }
 
-    this.page.on("close", () => {
+    // Capture current objects — events from a stale page/browser (closed or
+    // orphaned by a later open) must not wipe the live session's state.
+    const openedPage = this.page;
+    openedPage.on("close", () => {
+      if (this.page !== openedPage) return;
       this.selectMode = false;
+      this.cloneMode = false;
       this.page = null;
       this.onModeChange?.(false);
+      this.onCloneModeChange?.(false);
     });
 
-    this.browser.on("disconnected", () => {
+    browser.on("disconnected", () => {
+      if (this.browser !== browser) return;
       this.browser = null;
       this.context = null;
       this.page = null;
       this.selectMode = false;
+      this.cloneMode = false;
       this.viaCdp = false;
       this.onModeChange?.(false);
+      this.onCloneModeChange?.(false);
     });
 
     await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -601,10 +667,25 @@ export class BrowserSession {
         );
         await page.exposeFunction("__elementPickerOnModeChange", (on: boolean) => {
           this.selectMode = !!on;
+          if (this.selectMode) this.cloneMode = false;
           this.onModeChange?.(this.selectMode);
+          this.onCloneModeChange?.(this.cloneMode);
         });
+        await page.exposeFunction(
+          "__elementPickerOnCloneModeChange",
+          (on: boolean) => {
+            this.cloneMode = !!on;
+            if (this.cloneMode) this.selectMode = false;
+            this.onCloneModeChange?.(this.cloneMode);
+            this.onModeChange?.(this.selectMode);
+          }
+        );
         this.exposed = true;
-      } catch {
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (!/already registered/i.test(msg)) {
+          throw e;
+        }
         // already exposed in this context
         this.exposed = true;
       }
@@ -619,7 +700,9 @@ export class BrowserSession {
         if (frame !== page.mainFrame()) return;
         try {
           await page.evaluate(getPickerBootstrapSource());
-          if (this.selectMode) {
+          if (this.cloneMode) {
+            await page.evaluate(getSetCloneModeSource(true));
+          } else if (this.selectMode) {
             await page.evaluate(getSetModeSource(true));
           }
         } catch {
@@ -635,14 +718,29 @@ export class BrowserSession {
       return false;
     }
     const result = await this.page.evaluate(getSetModeSource(on));
-    this.selectMode = !!result && on;
     // evaluate returns the new mode from page
     if (typeof result === "boolean") {
       this.selectMode = result;
     } else {
       this.selectMode = on;
     }
+    if (this.selectMode) this.cloneMode = false;
     return this.selectMode;
+  }
+
+  private async applyCloneMode(on: boolean): Promise<boolean> {
+    if (!this.page || this.page.isClosed()) {
+      this.cloneMode = false;
+      return false;
+    }
+    const result = await this.page.evaluate(getSetCloneModeSource(on));
+    if (typeof result === "boolean") {
+      this.cloneMode = result;
+    } else {
+      this.cloneMode = on;
+    }
+    if (this.cloneMode) this.selectMode = false;
+    return this.cloneMode;
   }
 
   async setSelectMode(on: boolean): Promise<boolean> {
@@ -651,13 +749,201 @@ export class BrowserSession {
     }
     // Ensure picker script is present
     await this.page!.evaluate(getPickerBootstrapSource());
+    if (on && this.cloneMode) {
+      await this.applyCloneMode(false);
+      this.onCloneModeChange?.(false);
+    }
     const mode = await this.applySelectMode(on);
     this.onModeChange?.(mode);
     return mode;
   }
 
+  async setCloneMode(on: boolean): Promise<boolean> {
+    if (!this.isOpen) {
+      throw new Error("Browser is not open. Open a URL first.");
+    }
+    await this.page!.evaluate(getPickerBootstrapSource());
+    if (on && this.selectMode) {
+      await this.applySelectMode(false);
+      this.onModeChange?.(false);
+    }
+    const mode = await this.applyCloneMode(on);
+    this.onCloneModeChange?.(mode);
+    return mode;
+  }
+
   async toggleSelectMode(): Promise<boolean> {
     return this.setSelectMode(!this.selectMode);
+  }
+
+  async toggleCloneMode(): Promise<boolean> {
+    return this.setCloneMode(!this.cloneMode);
+  }
+
+  /**
+   * Download a URL using the browser context (cookies / CORS as the page).
+   */
+  async downloadUrl(
+    url: string
+  ): Promise<{ bytes: Uint8Array; contentType?: string } | null> {
+    if (!this.context) return null;
+    try {
+      const res = await this.context.request.get(url, { timeout: 20000 });
+      if (!res.ok()) return null;
+      const body = await res.body();
+      const contentType = res.headers()["content-type"];
+      return { bytes: new Uint8Array(body), contentType };
+    } catch {
+      // Fallback: fetch inside page
+      if (!this.page || this.page.isClosed()) return null;
+      try {
+        const result = await this.page.evaluate(async (u: string) => {
+          try {
+            const r = await fetch(u, { credentials: "include", mode: "cors" });
+            if (!r.ok) return null;
+            const ct = r.headers.get("content-type") || undefined;
+            const buf = await r.arrayBuffer();
+            const bytes = Array.from(new Uint8Array(buf));
+            return { bytes, contentType: ct };
+          } catch {
+            return null;
+          }
+        }, url);
+        if (!result?.bytes?.length) return null;
+        return {
+          bytes: new Uint8Array(result.bytes),
+          contentType: result.contentType,
+        };
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Multi-shot capture for clone packs: element + full page + parent area.
+   */
+  async screenshotClonePack(payload: ElementPickPayload): Promise<{
+    elementPng: Uint8Array;
+    pagePng: Uint8Array;
+    parentPng: Uint8Array | null;
+  }> {
+    if (!this.page || this.page.isClosed()) {
+      throw new Error("Browser page is closed.");
+    }
+
+    try {
+      await this.page.evaluate(getPickerBootstrapSource());
+      await this.page.evaluate(getHideForCaptureSource());
+      await new Promise((r) => setTimeout(r, 40));
+    } catch {
+      /* best-effort */
+    }
+
+    try {
+      const elementPng = await this.captureElementPng(payload);
+
+      let pagePng: Uint8Array;
+      try {
+        const buf = await this.page.screenshot({
+          type: "png",
+          fullPage: true,
+        });
+        pagePng = new Uint8Array(buf);
+      } catch {
+        const buf = await this.page.screenshot({ type: "png" });
+        pagePng = new Uint8Array(buf);
+      }
+
+      let parentPng: Uint8Array | null = null;
+      const parentBox = (
+        payload as ElementPickPayload & {
+          parentDimensions?: {
+            top: number;
+            left: number;
+            width: number;
+            height: number;
+          } | null;
+        }
+      ).parentDimensions;
+      if (parentBox && parentBox.width > 2 && parentBox.height > 2) {
+        try {
+          const buf = await this.page.screenshot({
+            type: "png",
+            clip: {
+              x: Math.max(0, parentBox.left),
+              y: Math.max(0, parentBox.top),
+              width: Math.max(1, Math.round(parentBox.width)),
+              height: Math.max(1, Math.round(parentBox.height)),
+            },
+          });
+          parentPng = new Uint8Array(buf);
+        } catch {
+          parentPng = null;
+        }
+      }
+
+      return { elementPng, pagePng, parentPng };
+    } finally {
+      try {
+        await this.page.evaluate(getRestoreAfterCaptureSource());
+      } catch {
+        /* page may have closed */
+      }
+    }
+  }
+
+  private async captureElementPng(
+    payload: ElementPickPayload
+  ): Promise<Uint8Array> {
+    if (!this.page || this.page.isClosed()) {
+      throw new Error("Browser page is closed.");
+    }
+    const { left, top, width, height } = payload.dimensions;
+    const w = Math.max(1, Math.round(width));
+    const h = Math.max(1, Math.round(height));
+
+    // Prefer the exact element marked by the picker at click time — short
+    // selectors like "div.card" are often ambiguous and hit a wrong element.
+    try {
+      const marked = this.page.locator('[data-davinchi-picked="1"]');
+      if ((await marked.count()) === 1) {
+        const buf = await marked.screenshot({ type: "png", timeout: 10000 });
+        return new Uint8Array(buf);
+      }
+    } catch {
+      // fall through to selector / clip fallbacks
+    }
+
+    const sel = payload.selector;
+    if (sel && !sel.includes(" > ")) {
+      try {
+        const loc = this.page.locator(sel).first();
+        const count = await this.page.locator(sel).count();
+        if (count >= 1) {
+          const buf = await loc.screenshot({ type: "png" });
+          return new Uint8Array(buf);
+        }
+      } catch {
+        // fall through
+      }
+    }
+
+    try {
+      const buf = await this.page.screenshot({
+        type: "png",
+        clip: {
+          x: Math.max(0, left),
+          y: Math.max(0, top),
+          width: w,
+          height: h,
+        },
+      });
+      return new Uint8Array(buf);
+    } catch {
+      const buf = await this.page.screenshot({ type: "png" });
+      return new Uint8Array(buf);
+    }
   }
 
   /**
@@ -668,10 +954,6 @@ export class BrowserSession {
     if (!this.page || this.page.isClosed()) {
       throw new Error("Browser page is closed.");
     }
-
-    const { left, top, width, height } = payload.dimensions;
-    const w = Math.max(1, Math.round(width));
-    const h = Math.max(1, Math.round(height));
 
     // Ensure picker APIs exist, then hide overlay before capture
     try {
@@ -684,36 +966,7 @@ export class BrowserSession {
     }
 
     try {
-      // Prefer selector-based shot when unique enough
-      const sel = payload.selector;
-      if (sel && !sel.includes(" > ")) {
-        try {
-          const loc = this.page.locator(sel).first();
-          const count = await this.page.locator(sel).count();
-          if (count >= 1) {
-            const buf = await loc.screenshot({ type: "png" });
-            return new Uint8Array(buf);
-          }
-        } catch {
-          // fall through to clip
-        }
-      }
-
-      try {
-        const buf = await this.page.screenshot({
-          type: "png",
-          clip: {
-            x: Math.max(0, left),
-            y: Math.max(0, top),
-            width: w,
-            height: h,
-          },
-        });
-        return new Uint8Array(buf);
-      } catch {
-        const buf = await this.page.screenshot({ type: "png" });
-        return new Uint8Array(buf);
-      }
+      return await this.captureElementPng(payload);
     } finally {
       // Restore cyan outline for continued picking
       try {
@@ -726,21 +979,23 @@ export class BrowserSession {
 
   async close(): Promise<void> {
     this.selectMode = false;
+    this.cloneMode = false;
     this.navHooked = false;
     this.exposed = false;
     const viaCdp = this.viaCdp;
     this.viaCdp = false;
 
     if (viaCdp) {
-      // Leave the user's local Chrome running — only drop our connection.
+      // Leave the user's local Chrome running — for connectOverCDP, close()
+      // only drops our connection and does NOT kill the user's browser.
+      try {
+        await this.browser?.close();
+      } catch {
+        /* ignore */
+      }
       this.page = null;
       this.context = null;
-      try {
-        // disconnect without closing Chrome (Playwright close() would kill it)
-        this.browser = null;
-      } catch {
-        this.browser = null;
-      }
+      this.browser = null;
       return;
     }
 

@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.13",
+  "version": "0.1.16",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -49,6 +49,7 @@
     "onCommand:elementPicker.showMenu",
     "onCommand:elementPicker.openBrowser",
     "onCommand:elementPicker.toggleSelect",
+    "onCommand:elementPicker.toggleClone",
     "onCommand:elementPicker.attachLast",
     "onCommand:elementPicker.copyLast",
     "onCommand:elementPicker.openEditorPanel",
@@ -73,6 +74,11 @@
         "command": "elementPicker.toggleSelect",
         "title": "DaVinchi: Toggle Select Mode",
         "icon": "$(selection)"
+      },
+      {
+        "command": "elementPicker.toggleClone",
+        "title": "DaVinchi: Toggle Clone Mode (full pack)",
+        "icon": "$(git-compare)"
       },
       {
         "command": "elementPicker.attachLast",
@@ -133,6 +139,12 @@
         "when": "true"
       },
       {
+        "command": "elementPicker.toggleClone",
+        "key": "ctrl+shift+alt+c",
+        "mac": "cmd+shift+alt+c",
+        "when": "true"
+      },
+      {
         "command": "elementPicker.showMenu",
         "key": "ctrl+shift+alt+e",
         "mac": "cmd+shift+alt+e",
@@ -158,7 +170,7 @@
         {
           "type": "webview",
           "id": "elementPicker.panel",
-          "name": "UI",
+          "name": "Panel",
           "visibility": "collapsed"
         }
       ]
@@ -271,6 +283,23 @@
           "type": "boolean",
           "default": true,
           "description": "After a successful pick: write files, paste paths into terminal, and copy paths to clipboard."
+        },
+        "elementPicker.clonePackExtras": {
+          "type": "string",
+          "enum": [
+            "none",
+            "previewHtml",
+            "zip",
+            "both"
+          ],
+          "default": "both",
+          "enumDescriptions": [
+            "Only the standard clone/ folder (no extras).",
+            "Self-contained clone/preview.html (HTML + CSS + screenshots + assets inlined).",
+            "Zip archive of the full pack: <timestamp>/clone.zip (and latest/clone.zip).",
+            "Both standalone preview.html and clone.zip."
+          ],
+          "description": "Clone mode extras: standalone preview.html and/or zip archive of the pack. Standard clone/ files are always written."
         }
       }
     }

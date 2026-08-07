@@ -20,6 +20,22 @@ function formatStyleMap(map: Record<string, string>, indent = ""): string {
 }
 
 /**
+ * Wrap content in a code fence longer than any backtick run inside it,
+ * so page-controlled content cannot terminate the fence early.
+ */
+export function fence(content: string, lang = ""): string {
+  let longest = 2;
+  const runs = content.match(/`+/g);
+  if (runs) {
+    for (const r of runs) {
+      if (r.length > longest) longest = r.length;
+    }
+  }
+  const marker = "`".repeat(longest + 1);
+  return `${marker}${lang}\n${content}\n${marker}`;
+}
+
+/**
  * Build a context markdown document close to Copilot's
  * "Attached Element Context from Integrated Browser" format.
  */
@@ -40,9 +56,7 @@ export function buildContextMarkdown(
     `HTML Path: ${payload.htmlPath || payload.selector}`,
     "",
     "Outer HTML:",
-    "```html",
-    html,
-    "```",
+    fence(html, "html"),
     "",
     "Dimensions:",
     `- top: ${d.top}px`,
@@ -68,34 +82,32 @@ export function buildContextMarkdown(
     );
   }
 
-  lines.push("CSS:", "```css");
+  const cssParts: string[] = [];
 
   if (payload.cssText?.trim()) {
-    lines.push(payload.cssText.trim(), "");
+    cssParts.push(payload.cssText.trim(), "");
   }
 
   if (payload.inheritedStyles && Object.keys(payload.inheritedStyles).length) {
-    lines.push("/* Inherited */");
-    lines.push(formatStyleMap(payload.inheritedStyles));
-    lines.push("");
+    cssParts.push("/* Inherited */", formatStyleMap(payload.inheritedStyles), "");
   }
 
   if (payload.resolvedStyles && Object.keys(payload.resolvedStyles).length) {
-    lines.push("/* Resolved values (non-default) */");
-    lines.push(formatStyleMap(payload.resolvedStyles));
-    lines.push("");
+    cssParts.push(
+      "/* Resolved values (non-default) */",
+      formatStyleMap(payload.resolvedStyles),
+      ""
+    );
   }
 
   if (payload.cssVariables && Object.keys(payload.cssVariables).length) {
-    lines.push("/* CSS variables */");
-    lines.push(formatStyleMap(payload.cssVariables));
-    lines.push("");
+    cssParts.push("/* CSS variables */", formatStyleMap(payload.cssVariables), "");
   }
 
-  lines.push("```");
+  lines.push("CSS:", fence(cssParts.join("\n"), "css"));
 
   if (payload.innerText?.trim()) {
-    lines.push("", "Inner text (truncated):", "```", payload.innerText.trim(), "```");
+    lines.push("", "Inner text (truncated):", fence(payload.innerText.trim()));
   }
 
   lines.push("", `Page title: ${payload.title || "(none)"}`);

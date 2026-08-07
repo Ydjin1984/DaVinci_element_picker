@@ -8,11 +8,30 @@ function stamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-").replace("Z", "");
 }
 
-function getOutputDirName(): string {
-  return (
+/**
+ * Sanitize the configured output dir name. Only a workspace-relative name is
+ * allowed — absolute paths, "..", empty segments, and characters invalid on
+ * Windows fall back to the default so writes never escape the workspace.
+ */
+export function sanitizeOutputDirName(raw: string | undefined): string {
+  const fallback = ".element-picks";
+  const name = (raw || "").trim().replace(/[\\/]+$/, "");
+  if (!name) return fallback;
+  if (
+    path.isAbsolute(name) ||
+    /[<>:"|?*\u0000-\u001f]/.test(name) ||
+    name.split(/[\\/]/).some((seg) => seg === "" || seg === "..")
+  ) {
+    return fallback;
+  }
+  return name;
+}
+
+export function getOutputDirName(): string {
+  return sanitizeOutputDirName(
     vscode.workspace
       .getConfiguration("elementPicker")
-      .get<string>("outputDir", ".element-picks") || ".element-picks"
+      .get<string>("outputDir", ".element-picks")
   );
 }
 

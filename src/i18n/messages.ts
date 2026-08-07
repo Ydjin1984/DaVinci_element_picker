@@ -7,21 +7,29 @@ export type MessageKey =
   | "openBrowser"
   | "selectMode"
   | "selectModeOn"
+  | "cloneMode"
+  | "cloneModeOn"
   | "closeBrowser"
   | "attachLast"
   | "copyPaths"
   | "revealFolder"
   | "statusReady"
   | "statusSelectOn"
+  | "statusCloneOn"
   | "statusBrowserOpen"
   | "statusLastPick"
   | "statusBrowserOpenUrl"
   | "statusSelectOnHover"
   | "statusSelectOff"
+  | "statusCloneOnHover"
+  | "statusCloneOff"
   | "statusBrowserClosed"
   | "statusCapturing"
+  | "statusCloning"
   | "statusSavedAttached"
   | "statusSaved"
+  | "statusCloneSavedAttached"
+  | "statusCloneSaved"
   | "statusPickFailed"
   | "statusPathsTerminal"
   | "statusPathsClipboard"
@@ -29,6 +37,8 @@ export type MessageKey =
   | "msgBrowserOpened"
   | "msgSavedAttached"
   | "msgSavedManual"
+  | "msgCloneSavedAttached"
+  | "msgCloneSavedManual"
   | "msgCopied"
   | "msgOpening"
   | "msgLanguageChanged"
@@ -49,11 +59,13 @@ export type MessageKey =
   | "statusBarBrowser"
   | "statusBarTooltip"
   | "badgeSelectOn"
+  | "badgeCloneOn"
   | "badgeBrowserOpen"
   | "lastLabel"
   | "hint"
   | "terminalName"
   | "defaultTerminalPrompt"
+  | "defaultCloneTerminalPrompt"
   | "cmdSelectLanguage"
   | "languagePickPlaceholder"
   | "browserChannelFallback"
@@ -68,7 +80,30 @@ export type MessageKey =
   | "reloadWebviewTooltip"
   | "msgWebviewReloaded"
   | "controlsViewTitle"
-  | "statusBarMenuTooltip";
+  | "statusBarMenuTooltip"
+  | "sectionPage"
+  | "sectionCapture"
+  | "sectionLast"
+  | "openShort"
+  | "connectedLabel"
+  | "disconnectedLabel"
+  | "selectModeDesc"
+  | "cloneModeDesc"
+  | "emptyLastTitle"
+  | "emptyLastBody"
+  | "attachShort"
+  | "copyShort"
+  | "revealShort"
+  | "howItWorks"
+  | "cloneChipLabel"
+  | "treeGroupBrowser"
+  | "treeGroupCapture"
+  | "treeGroupAdvanced"
+  | "treeStartChrome"
+  | "treeStartChromeTooltip"
+  | "treeFullPackBadge"
+  | "statusBarClone"
+  | "onLabel";
 
 type Dict = Record<MessageKey, string>;
 
@@ -79,32 +114,45 @@ const en: Dict = {
   openBrowser: "Open browser",
   selectMode: "Select mode",
   selectModeOn: "Select mode ON",
+  cloneMode: "Clone mode",
+  cloneModeOn: "Clone mode ON",
   closeBrowser: "Close browser",
   attachLast: "Attach last → terminal",
   copyPaths: "Copy paths",
   revealFolder: "Reveal folder",
   statusReady: "Ready — open a browser URL",
   statusSelectOn: "Select mode ON — hover and click an element",
-  statusBrowserOpen: "Browser open — enable Select mode",
+  statusCloneOn: "Clone mode ON — click to capture full clone pack",
+  statusBrowserOpen: "Browser open — enable Select or Clone mode",
   statusLastPick: "Last pick: {0}",
   statusBrowserOpenUrl: "Browser open: {0}",
   statusSelectOnHover:
     "Select mode ON — hover and click an element in the browser window",
   statusSelectOff: "Select mode OFF",
+  statusCloneOnHover:
+    "Clone mode ON — hover and click to steal full HTML/CSS/assets + screenshots",
+  statusCloneOff: "Clone mode OFF",
   statusBrowserClosed: "Browser closed",
   statusCapturing: "Capturing {0}…",
+  statusCloning: "Cloning {0} (deep pack)…",
   statusSavedAttached: "Saved {0} → terminal + clipboard ({1})",
   statusSaved: "Saved {0} ({1})",
+  statusCloneSavedAttached: "Clone saved {0} → terminal + clipboard ({1})",
+  statusCloneSaved: "Clone saved {0} ({1})",
   statusPickFailed: "Pick failed: {0}",
   statusPathsTerminal: "Paths inserted into terminal",
   statusPathsClipboard: "Paths copied to clipboard",
   statusError: "Error: {0}",
   msgBrowserOpened:
-    "DaVinchi Element Picker: browser opened. Enable Select mode, then click an element.",
+    "DaVinchi Element Picker: browser opened. Enable Select or Clone mode, then click an element.",
   msgSavedAttached:
     "DaVinchi Element Picker: saved {0} and attached paths to terminal + clipboard.",
   msgSavedManual:
     "DaVinchi Element Picker: saved {0}. Use Attach / Copy to send paths.",
+  msgCloneSavedAttached:
+    "DaVinchi: full clone of {0} saved (clone/ pack) → terminal + clipboard.",
+  msgCloneSavedManual:
+    "DaVinchi: full clone of {0} saved under .element-picks/…/clone/. Use Attach / Copy.",
   msgCopied: "DaVinchi Element Picker: paths copied to clipboard.",
   msgOpening: "DaVinchi Element Picker: opening {0}",
   msgLanguageChanged: "DaVinchi Element Picker language: {0}",
@@ -113,7 +161,7 @@ const en: Dict = {
   errUrlEmpty: "URL is empty — paste any address you want to inspect.",
   errBrowserNotOpen: "Browser is not connected. Open a URL first.",
   errNoPick:
-    "No pick yet. Open browser, enable Select mode, click an element.",
+    "No pick yet. Open browser, enable Select or Clone mode, click an element.",
   errPrefix: "DaVinchi Element Picker: {0}",
   cdpNeedLocalChrome:
     "Remote SSH: start Chrome on your Windows PC, reverse-forward port 9222, then retry.",
@@ -129,12 +177,15 @@ const en: Dict = {
   statusBarBrowser: "$(inspect) Pick: browser",
   statusBarTooltip: "DaVinchi Element Picker: toggle select mode (Ctrl+Shift+E)",
   badgeSelectOn: "SELECT ON",
+  badgeCloneOn: "CLONE ON",
   badgeBrowserOpen: "browser open",
   lastLabel: "Last:",
-  hint: "1. Paste <b>any URL</b> → Open browser (Remote SSH: Local Chrome CDP first).<br/>2. <b>Select mode</b> / <code>Ctrl+Shift+E</code> → click.<br/>3. Files in <code>.element-picks/</code>; paths → terminal + clipboard.",
+  hint: "1. Paste <b>any URL</b> → Open browser.<br/>2. <b>Select</b> (<code>Ctrl+Shift+E</code>) = light pick · <b>Clone</b> (<code>Ctrl+Shift+Alt+C</code>) = full pack for agents.<br/>3. Files in <code>.element-picks/</code> (clone → <code>clone/</code>).",
   terminalName: "DaVinchi Element Picker",
   defaultTerminalPrompt:
     "UI context attached (screenshot + element HTML/CSS). Question: ",
+  defaultCloneTerminalPrompt:
+    "Full UI clone pack attached (screenshots + HTML/CSS + assets + AGENT.md). Recreate 1:1: ",
   cmdSelectLanguage: "DaVinchi Element Picker: Select Language",
   languagePickPlaceholder: "Select UI language (saved in user settings)",
   browserChannelFallback:
@@ -156,6 +207,31 @@ const en: Dict = {
   controlsViewTitle: "Controls",
   statusBarMenuTooltip:
     "DaVinchi Element Picker — click for menu (Ctrl+Shift+E toggles select)",
+  sectionPage: "Page",
+  sectionCapture: "Capture mode",
+  sectionLast: "Last capture",
+  openShort: "Open",
+  connectedLabel: "Connected",
+  disconnectedLabel: "No browser",
+  selectModeDesc: "One element: screenshot + HTML/CSS",
+  cloneModeDesc: "Full pack: HTML, CSS, assets, screenshots",
+  emptyLastTitle: "No captures yet",
+  emptyLastBody:
+    "Open a page, choose a mode, then click any element in the browser window.",
+  attachShort: "Terminal",
+  copyShort: "Copy",
+  revealShort: "Folder",
+  howItWorks: "How it works",
+  cloneChipLabel: "CLONE",
+  treeGroupBrowser: "Browser",
+  treeGroupCapture: "Capture",
+  treeGroupAdvanced: "Advanced",
+  treeStartChrome: "Start local Chrome (CDP)",
+  treeStartChromeTooltip:
+    "Start Chrome with remote debugging on this PC. For Remote SSH, reverse-forward port 9222.",
+  treeFullPackBadge: "full pack",
+  statusBarClone: "$(git-compare) Clone: ON",
+  onLabel: "ON",
 };
 
 const ru: Dict = {
@@ -166,32 +242,45 @@ const ru: Dict = {
   openBrowser: "Открыть браузер",
   selectMode: "Режим выбора",
   selectModeOn: "Режим выбора ВКЛ",
+  cloneMode: "Режим клона",
+  cloneModeOn: "Режим клона ВКЛ",
   closeBrowser: "Закрыть браузер",
   attachLast: "Вставить в terminal",
   copyPaths: "Копировать пути",
   revealFolder: "Открыть папку",
   statusReady: "Готово — откройте URL в браузере",
   statusSelectOn: "Режим выбора ВКЛ — наведите и кликните элемент",
-  statusBrowserOpen: "Браузер открыт — включите режим выбора",
+  statusCloneOn: "Режим клона ВКЛ — клик = полный pack для агента",
+  statusBrowserOpen: "Браузер открыт — Select или Clone",
   statusLastPick: "Последний выбор: {0}",
   statusBrowserOpenUrl: "Браузер открыт: {0}",
   statusSelectOnHover:
     "Режим выбора ВКЛ — наведите и кликните элемент в окне браузера",
   statusSelectOff: "Режим выбора ВЫКЛ",
+  statusCloneOnHover:
+    "Режим клона ВКЛ — кликните элемент: HTML/CSS/ассеты/скрины",
+  statusCloneOff: "Режим клона ВЫКЛ",
   statusBrowserClosed: "Браузер закрыт",
   statusCapturing: "Захват {0}…",
+  statusCloning: "Клонирование {0} (глубокий pack)…",
   statusSavedAttached: "Сохранено {0} → terminal + буфер ({1})",
   statusSaved: "Сохранено {0} ({1})",
+  statusCloneSavedAttached: "Клон {0} → terminal + буфер ({1})",
+  statusCloneSaved: "Клон сохранён {0} ({1})",
   statusPickFailed: "Ошибка выбора: {0}",
   statusPathsTerminal: "Пути вставлены в terminal",
   statusPathsClipboard: "Пути скопированы в буфер",
   statusError: "Ошибка: {0}",
   msgBrowserOpened:
-    "DaVinchi Element Picker: браузер открыт. Включите режим выбора и кликните элемент.",
+    "DaVinchi: браузер открыт. Включите Select или Clone и кликните элемент.",
   msgSavedAttached:
     "DaVinchi Element Picker: сохранено {0}, пути в terminal и буфере.",
   msgSavedManual:
     "DaVinchi Element Picker: сохранено {0}. Используйте Attach / Copy.",
+  msgCloneSavedAttached:
+    "DaVinchi: полный клон {0} сохранён (папка clone/) → terminal + буфер.",
+  msgCloneSavedManual:
+    "DaVinchi: полный клон {0} в .element-picks/…/clone/. Attach / Copy.",
   msgCopied: "DaVinchi Element Picker: пути скопированы в буфер.",
   msgOpening: "DaVinchi Element Picker: открытие {0}",
   msgLanguageChanged: "Язык DaVinchi Element Picker: {0}",
@@ -200,7 +289,7 @@ const ru: Dict = {
   errUrlEmpty: "URL пуст — вставьте любой адрес, который нужно разобрать.",
   errBrowserNotOpen: "Браузер не подключён. Сначала откройте URL.",
   errNoPick:
-    "Ещё нет выбора. Откройте браузер, включите режим выбора, кликните элемент.",
+    "Ещё нет выбора. Откройте браузер, Select или Clone, кликните элемент.",
   errPrefix: "DaVinchi Element Picker: {0}",
   cdpNeedLocalChrome:
     "Remote SSH: запустите Chrome на Windows PC, reverse-forward порт 9222, затем Retry.",
@@ -216,12 +305,15 @@ const ru: Dict = {
   statusBarBrowser: "$(inspect) Выбор: браузер",
   statusBarTooltip: "DaVinchi Element Picker: режим выбора (Ctrl+Shift+E)",
   badgeSelectOn: "ВЫБОР ВКЛ",
+  badgeCloneOn: "КЛОН ВКЛ",
   badgeBrowserOpen: "браузер",
   lastLabel: "Последний:",
-  hint: "1. Вставьте любой URL → <b>Open browser</b> (Remote SSH: сначала Local Chrome CDP).<br/>2. <b>Select mode</b> / <code>Ctrl+Shift+E</code> → клик.<br/>3. Файлы в <code>.element-picks/</code>; пути — в terminal и буфер.",
+  hint: "1. URL → <b>Open browser</b>.<br/>2. <b>Select</b> (<code>Ctrl+Shift+E</code>) — лёгкий pick · <b>Clone</b> (<code>Ctrl+Shift+Alt+C</code>) — полный pack.<br/>3. Файлы в <code>.element-picks/</code> (клон → <code>clone/</code>).",
   terminalName: "DaVinchi Element Picker",
   defaultTerminalPrompt:
     "Контекст UI прикреплён (скриншот + HTML/CSS). Вопрос: ",
+  defaultCloneTerminalPrompt:
+    "Полный clone-pack UI (скрины + HTML/CSS + ассеты + AGENT.md). Воспроизведи 1:1: ",
   cmdSelectLanguage: "DaVinchi Element Picker: Выбрать язык",
   languagePickPlaceholder: "Язык интерфейса (сохраняется в настройках пользователя)",
   browserChannelFallback:
@@ -243,7 +335,32 @@ const ru: Dict = {
     "DaVinchi: webview пересоздан. Если пусто — используйте Controls или «Все действия…»",
   controlsViewTitle: "Управление",
   statusBarMenuTooltip:
-    "DaVinchi Element Picker — клик: меню (Ctrl+Shift+E — режим выбора)",
+    "DaVinchi — клик: меню · Ctrl+Shift+E Select · Ctrl+Shift+Alt+C Clone",
+  sectionPage: "Страница",
+  sectionCapture: "Режим захвата",
+  sectionLast: "Последний захват",
+  openShort: "Открыть",
+  connectedLabel: "Подключено",
+  disconnectedLabel: "Браузер не открыт",
+  selectModeDesc: "Один элемент: скриншот + HTML/CSS",
+  cloneModeDesc: "Полный пакет: HTML, CSS, ассеты, скриншоты",
+  emptyLastTitle: "Захватов пока нет",
+  emptyLastBody:
+    "Откройте страницу, выберите режим и кликните любой элемент в окне браузера.",
+  attachShort: "Терминал",
+  copyShort: "Копировать",
+  revealShort: "Папка",
+  howItWorks: "Как это работает",
+  cloneChipLabel: "КЛОН",
+  treeGroupBrowser: "Браузер",
+  treeGroupCapture: "Захват",
+  treeGroupAdvanced: "Дополнительно",
+  treeStartChrome: "Запустить локальный Chrome (CDP)",
+  treeStartChromeTooltip:
+    "Запуск Chrome с удалённой отладкой на этом ПК. Для Remote SSH — reverse-forward порта 9222.",
+  treeFullPackBadge: "полный пакет",
+  statusBarClone: "$(git-compare) Клон: ВКЛ",
+  onLabel: "ВКЛ",
 };
 
 const de: Dict = {
@@ -298,6 +415,31 @@ const de: Dict = {
   languagePickPlaceholder: "UI-Sprache wählen (wird in Benutzereinstellungen gespeichert)",
   browserChannelFallback:
     'DaVinchi Element Picker: mit Kanal "{0}" geöffnet (bevorzugt "{1}" nicht verfügbar).',
+  sectionPage: "Seite",
+  sectionCapture: "Aufnahmemodus",
+  sectionLast: "Letzte Aufnahme",
+  openShort: "Öffnen",
+  connectedLabel: "Verbunden",
+  disconnectedLabel: "Kein Browser",
+  selectModeDesc: "Ein Element: Screenshot + HTML/CSS",
+  cloneModeDesc: "Komplettpaket: HTML, CSS, Assets, Screenshots",
+  emptyLastTitle: "Noch keine Aufnahmen",
+  emptyLastBody:
+    "Seite öffnen, Modus wählen und ein Element im Browserfenster anklicken.",
+  attachShort: "Terminal",
+  copyShort: "Kopieren",
+  revealShort: "Ordner",
+  howItWorks: "So funktioniert es",
+  cloneChipLabel: "KLON",
+  treeGroupBrowser: "Browser",
+  treeGroupCapture: "Aufnahme",
+  treeGroupAdvanced: "Erweitert",
+  treeStartChrome: "Lokales Chrome starten (CDP)",
+  treeStartChromeTooltip:
+    "Chrome mit Remote-Debugging auf diesem PC starten. Bei Remote SSH Port 9222 reverse-forwarden.",
+  treeFullPackBadge: "Komplettpaket",
+  statusBarClone: "$(git-compare) Klon: AN",
+  onLabel: "AN",
 };
 
 const es: Dict = {
@@ -351,6 +493,31 @@ const es: Dict = {
   languagePickPlaceholder: "Idioma de la UI (se guarda en ajustes de usuario)",
   browserChannelFallback:
     'DaVinchi Element Picker: abierto con canal "{0}" (preferido "{1}" no disponible).',
+  sectionPage: "Página",
+  sectionCapture: "Modo de captura",
+  sectionLast: "Última captura",
+  openShort: "Abrir",
+  connectedLabel: "Conectado",
+  disconnectedLabel: "Sin navegador",
+  selectModeDesc: "Un elemento: captura + HTML/CSS",
+  cloneModeDesc: "Paquete completo: HTML, CSS, recursos, capturas",
+  emptyLastTitle: "Aún no hay capturas",
+  emptyLastBody:
+    "Abre una página, elige un modo y haz clic en cualquier elemento del navegador.",
+  attachShort: "Terminal",
+  copyShort: "Copiar",
+  revealShort: "Carpeta",
+  howItWorks: "Cómo funciona",
+  cloneChipLabel: "CLON",
+  treeGroupBrowser: "Navegador",
+  treeGroupCapture: "Captura",
+  treeGroupAdvanced: "Avanzado",
+  treeStartChrome: "Iniciar Chrome local (CDP)",
+  treeStartChromeTooltip:
+    "Inicia Chrome con depuración remota en este PC. Con Remote SSH, redirige el puerto 9222 en reversa.",
+  treeFullPackBadge: "paquete completo",
+  statusBarClone: "$(git-compare) Clon: ON",
+  onLabel: "ON",
 };
 
 const fr: Dict = {
@@ -403,6 +570,31 @@ const fr: Dict = {
   languagePickPlaceholder: "Langue de l'interface (enregistrée dans les paramètres utilisateur)",
   browserChannelFallback:
     'DaVinchi Element Picker : ouvert avec le canal "{0}" (préféré "{1}" indisponible).',
+  sectionPage: "Page",
+  sectionCapture: "Mode de capture",
+  sectionLast: "Dernière capture",
+  openShort: "Ouvrir",
+  connectedLabel: "Connecté",
+  disconnectedLabel: "Pas de navigateur",
+  selectModeDesc: "Un élément : capture + HTML/CSS",
+  cloneModeDesc: "Pack complet : HTML, CSS, ressources, captures",
+  emptyLastTitle: "Aucune capture pour l'instant",
+  emptyLastBody:
+    "Ouvrez une page, choisissez un mode, puis cliquez sur un élément dans le navigateur.",
+  attachShort: "Terminal",
+  copyShort: "Copier",
+  revealShort: "Dossier",
+  howItWorks: "Comment ça marche",
+  cloneChipLabel: "CLONE",
+  treeGroupBrowser: "Navigateur",
+  treeGroupCapture: "Capture",
+  treeGroupAdvanced: "Avancé",
+  treeStartChrome: "Démarrer Chrome local (CDP)",
+  treeStartChromeTooltip:
+    "Démarre Chrome avec le débogage distant sur ce PC. En Remote SSH, redirigez le port 9222 en inverse.",
+  treeFullPackBadge: "pack complet",
+  statusBarClone: "$(git-compare) Clone : ON",
+  onLabel: "ON",
 };
 
 const it: Dict = {
@@ -455,6 +647,31 @@ const it: Dict = {
   languagePickPlaceholder: "Lingua UI (salvata nelle impostazioni utente)",
   browserChannelFallback:
     'DaVinchi Element Picker: aperto con canale "{0}" (preferito "{1}" non disponibile).',
+  sectionPage: "Pagina",
+  sectionCapture: "Modalità di cattura",
+  sectionLast: "Ultima cattura",
+  openShort: "Apri",
+  connectedLabel: "Connesso",
+  disconnectedLabel: "Nessun browser",
+  selectModeDesc: "Un elemento: screenshot + HTML/CSS",
+  cloneModeDesc: "Pacchetto completo: HTML, CSS, risorse, screenshot",
+  emptyLastTitle: "Ancora nessuna cattura",
+  emptyLastBody:
+    "Apri una pagina, scegli una modalità e fai clic su un elemento nel browser.",
+  attachShort: "Terminale",
+  copyShort: "Copia",
+  revealShort: "Cartella",
+  howItWorks: "Come funziona",
+  cloneChipLabel: "CLONE",
+  treeGroupBrowser: "Browser",
+  treeGroupCapture: "Cattura",
+  treeGroupAdvanced: "Avanzate",
+  treeStartChrome: "Avvia Chrome locale (CDP)",
+  treeStartChromeTooltip:
+    "Avvia Chrome con il debug remoto su questo PC. Con Remote SSH inoltra la porta 9222 in reverse.",
+  treeFullPackBadge: "pacchetto completo",
+  statusBarClone: "$(git-compare) Clone: ON",
+  onLabel: "ON",
 };
 
 const ptBR: Dict = {
@@ -507,6 +724,31 @@ const ptBR: Dict = {
   languagePickPlaceholder: "Idioma da UI (salvo nas configurações do usuário)",
   browserChannelFallback:
     'DaVinchi Element Picker: aberto com canal "{0}" (preferido "{1}" indisponível).',
+  sectionPage: "Página",
+  sectionCapture: "Modo de captura",
+  sectionLast: "Última captura",
+  openShort: "Abrir",
+  connectedLabel: "Conectado",
+  disconnectedLabel: "Sem navegador",
+  selectModeDesc: "Um elemento: screenshot + HTML/CSS",
+  cloneModeDesc: "Pacote completo: HTML, CSS, assets, screenshots",
+  emptyLastTitle: "Nenhuma captura ainda",
+  emptyLastBody:
+    "Abra uma página, escolha um modo e clique em qualquer elemento no navegador.",
+  attachShort: "Terminal",
+  copyShort: "Copiar",
+  revealShort: "Pasta",
+  howItWorks: "Como funciona",
+  cloneChipLabel: "CLONE",
+  treeGroupBrowser: "Navegador",
+  treeGroupCapture: "Captura",
+  treeGroupAdvanced: "Avançado",
+  treeStartChrome: "Iniciar Chrome local (CDP)",
+  treeStartChromeTooltip:
+    "Inicia o Chrome com depuração remota neste PC. No Remote SSH, faça reverse-forward da porta 9222.",
+  treeFullPackBadge: "pacote completo",
+  statusBarClone: "$(git-compare) Clone: ON",
+  onLabel: "ON",
 };
 
 const nl: Dict = {
@@ -560,6 +802,31 @@ const nl: Dict = {
   languagePickPlaceholder: "UI-taal (opgeslagen in gebruikersinstellingen)",
   browserChannelFallback:
     'DaVinchi Element Picker: geopend met kanaal "{0}" (voorkeur "{1}" niet beschikbaar).',
+  sectionPage: "Pagina",
+  sectionCapture: "Opnamemodus",
+  sectionLast: "Laatste opname",
+  openShort: "Openen",
+  connectedLabel: "Verbonden",
+  disconnectedLabel: "Geen browser",
+  selectModeDesc: "Eén element: screenshot + HTML/CSS",
+  cloneModeDesc: "Volledig pakket: HTML, CSS, assets, screenshots",
+  emptyLastTitle: "Nog geen opnames",
+  emptyLastBody:
+    "Open een pagina, kies een modus en klik op een element in het browservenster.",
+  attachShort: "Terminal",
+  copyShort: "Kopiëren",
+  revealShort: "Map",
+  howItWorks: "Hoe het werkt",
+  cloneChipLabel: "KLOON",
+  treeGroupBrowser: "Browser",
+  treeGroupCapture: "Opname",
+  treeGroupAdvanced: "Geavanceerd",
+  treeStartChrome: "Lokale Chrome starten (CDP)",
+  treeStartChromeTooltip:
+    "Start Chrome met remote debugging op deze pc. Bij Remote SSH: reverse-forward poort 9222.",
+  treeFullPackBadge: "volledig pakket",
+  statusBarClone: "$(git-compare) Kloon: AAN",
+  onLabel: "AAN",
 };
 
 const pl: Dict = {
@@ -613,6 +880,31 @@ const pl: Dict = {
   languagePickPlaceholder: "Język UI (zapis w ustawieniach użytkownika)",
   browserChannelFallback:
     'DaVinchi Element Picker: otwarto kanałem "{0}" (preferowany "{1}" niedostępny).',
+  sectionPage: "Strona",
+  sectionCapture: "Tryb przechwytywania",
+  sectionLast: "Ostatnie przechwycenie",
+  openShort: "Otwórz",
+  connectedLabel: "Połączono",
+  disconnectedLabel: "Brak przeglądarki",
+  selectModeDesc: "Jeden element: zrzut + HTML/CSS",
+  cloneModeDesc: "Pełny pakiet: HTML, CSS, zasoby, zrzuty",
+  emptyLastTitle: "Brak przechwyceń",
+  emptyLastBody:
+    "Otwórz stronę, wybierz tryb i kliknij dowolny element w oknie przeglądarki.",
+  attachShort: "Terminal",
+  copyShort: "Kopiuj",
+  revealShort: "Folder",
+  howItWorks: "Jak to działa",
+  cloneChipLabel: "KLON",
+  treeGroupBrowser: "Przeglądarka",
+  treeGroupCapture: "Przechwytywanie",
+  treeGroupAdvanced: "Zaawansowane",
+  treeStartChrome: "Uruchom lokalny Chrome (CDP)",
+  treeStartChromeTooltip:
+    "Uruchamia Chrome ze zdalnym debugowaniem na tym PC. Przy Remote SSH: reverse-forward portu 9222.",
+  treeFullPackBadge: "pełny pakiet",
+  statusBarClone: "$(git-compare) Klon: ON",
+  onLabel: "ON",
 };
 
 const tr: Dict = {
@@ -666,6 +958,31 @@ const tr: Dict = {
   languagePickPlaceholder: "UI dili (kullanıcı ayarlarına kaydedilir)",
   browserChannelFallback:
     'DaVinchi Element Picker: "{0}" kanalıyla açıldı (tercih "{1}" yok).',
+  sectionPage: "Sayfa",
+  sectionCapture: "Yakalama modu",
+  sectionLast: "Son yakalama",
+  openShort: "Aç",
+  connectedLabel: "Bağlandı",
+  disconnectedLabel: "Tarayıcı yok",
+  selectModeDesc: "Tek öğe: ekran görüntüsü + HTML/CSS",
+  cloneModeDesc: "Tam paket: HTML, CSS, varlıklar, ekran görüntüleri",
+  emptyLastTitle: "Henüz yakalama yok",
+  emptyLastBody:
+    "Bir sayfa açın, mod seçin ve tarayıcı penceresinde herhangi bir öğeye tıklayın.",
+  attachShort: "Terminal",
+  copyShort: "Kopyala",
+  revealShort: "Klasör",
+  howItWorks: "Nasıl çalışır",
+  cloneChipLabel: "KLON",
+  treeGroupBrowser: "Tarayıcı",
+  treeGroupCapture: "Yakalama",
+  treeGroupAdvanced: "Gelişmiş",
+  treeStartChrome: "Yerel Chrome'u başlat (CDP)",
+  treeStartChromeTooltip:
+    "Bu PC'de uzaktan hata ayıklama ile Chrome'u başlatır. Remote SSH'ta 9222 portunu reverse-forward yapın.",
+  treeFullPackBadge: "tam paket",
+  statusBarClone: "$(git-compare) Klon: AÇIK",
+  onLabel: "AÇIK",
 };
 
 const vi: Dict = {
@@ -719,6 +1036,31 @@ const vi: Dict = {
   languagePickPlaceholder: "Ngôn ngữ UI (lưu trong cài đặt người dùng)",
   browserChannelFallback:
     'DaVinchi Element Picker: mở bằng kênh "{0}" (ưu tiên "{1}" không khả dụng).',
+  sectionPage: "Trang",
+  sectionCapture: "Chế độ chụp",
+  sectionLast: "Lần chụp gần nhất",
+  openShort: "Mở",
+  connectedLabel: "Đã kết nối",
+  disconnectedLabel: "Chưa có trình duyệt",
+  selectModeDesc: "Một phần tử: ảnh chụp + HTML/CSS",
+  cloneModeDesc: "Gói đầy đủ: HTML, CSS, tài nguyên, ảnh chụp",
+  emptyLastTitle: "Chưa có lần chụp nào",
+  emptyLastBody:
+    "Mở một trang, chọn chế độ rồi bấm vào phần tử bất kỳ trong cửa sổ trình duyệt.",
+  attachShort: "Terminal",
+  copyShort: "Sao chép",
+  revealShort: "Thư mục",
+  howItWorks: "Cách hoạt động",
+  cloneChipLabel: "CLONE",
+  treeGroupBrowser: "Trình duyệt",
+  treeGroupCapture: "Chụp",
+  treeGroupAdvanced: "Nâng cao",
+  treeStartChrome: "Khởi động Chrome cục bộ (CDP)",
+  treeStartChromeTooltip:
+    "Khởi động Chrome với remote debugging trên PC này. Với Remote SSH, reverse-forward cổng 9222.",
+  treeFullPackBadge: "gói đầy đủ",
+  statusBarClone: "$(git-compare) Clone: BẬT",
+  onLabel: "BẬT",
 };
 
 const id: Dict = {
@@ -771,6 +1113,31 @@ const id: Dict = {
   languagePickPlaceholder: "Bahasa UI (disimpan di pengaturan pengguna)",
   browserChannelFallback:
     'DaVinchi Element Picker: dibuka dengan saluran "{0}" (preferensi "{1}" tidak tersedia).',
+  sectionPage: "Halaman",
+  sectionCapture: "Mode tangkapan",
+  sectionLast: "Tangkapan terakhir",
+  openShort: "Buka",
+  connectedLabel: "Terhubung",
+  disconnectedLabel: "Tidak ada browser",
+  selectModeDesc: "Satu elemen: tangkapan layar + HTML/CSS",
+  cloneModeDesc: "Paket lengkap: HTML, CSS, aset, tangkapan layar",
+  emptyLastTitle: "Belum ada tangkapan",
+  emptyLastBody:
+    "Buka halaman, pilih mode, lalu klik elemen apa pun di jendela browser.",
+  attachShort: "Terminal",
+  copyShort: "Salin",
+  revealShort: "Folder",
+  howItWorks: "Cara kerja",
+  cloneChipLabel: "KLON",
+  treeGroupBrowser: "Browser",
+  treeGroupCapture: "Tangkapan",
+  treeGroupAdvanced: "Lanjutan",
+  treeStartChrome: "Mulai Chrome lokal (CDP)",
+  treeStartChromeTooltip:
+    "Menjalankan Chrome dengan remote debugging di PC ini. Untuk Remote SSH, reverse-forward port 9222.",
+  treeFullPackBadge: "paket lengkap",
+  statusBarClone: "$(git-compare) Klon: AKTIF",
+  onLabel: "AKTIF",
 };
 
 const ca: Dict = {
@@ -823,6 +1190,31 @@ const ca: Dict = {
   languagePickPlaceholder: "Idioma de la UI (es desa a la configuració d'usuari)",
   browserChannelFallback:
     'DaVinchi Element Picker: obert amb el canal "{0}" (preferit "{1}" no disponible).',
+  sectionPage: "Pàgina",
+  sectionCapture: "Mode de captura",
+  sectionLast: "Última captura",
+  openShort: "Obre",
+  connectedLabel: "Connectat",
+  disconnectedLabel: "Sense navegador",
+  selectModeDesc: "Un element: captura + HTML/CSS",
+  cloneModeDesc: "Paquet complet: HTML, CSS, recursos, captures",
+  emptyLastTitle: "Encara no hi ha captures",
+  emptyLastBody:
+    "Obre una pàgina, tria un mode i fes clic a qualsevol element del navegador.",
+  attachShort: "Terminal",
+  copyShort: "Copia",
+  revealShort: "Carpeta",
+  howItWorks: "Com funciona",
+  cloneChipLabel: "CLON",
+  treeGroupBrowser: "Navegador",
+  treeGroupCapture: "Captura",
+  treeGroupAdvanced: "Avançat",
+  treeStartChrome: "Inicia Chrome local (CDP)",
+  treeStartChromeTooltip:
+    "Inicia Chrome amb depuració remota en aquest PC. Amb Remote SSH, redirigeix el port 9222 en revers.",
+  treeFullPackBadge: "paquet complet",
+  statusBarClone: "$(git-compare) Clon: ON",
+  onLabel: "ON",
 };
 
 const hi: Dict = {
@@ -876,6 +1268,31 @@ const hi: Dict = {
   languagePickPlaceholder: "UI भाषा (उपयोगकर्ता सेटिंग्स में सहेजी जाती है)",
   browserChannelFallback:
     'DaVinchi Element Picker: चैनल "{0}" से खोला गया (पसंदीदा "{1}" उपलब्ध नहीं)।',
+  sectionPage: "पृष्ठ",
+  sectionCapture: "कैप्चर मोड",
+  sectionLast: "पिछला कैप्चर",
+  openShort: "खोलें",
+  connectedLabel: "कनेक्टेड",
+  disconnectedLabel: "ब्राउज़र नहीं",
+  selectModeDesc: "एक एलिमेंट: स्क्रीनशॉट + HTML/CSS",
+  cloneModeDesc: "पूरा पैक: HTML, CSS, एसेट, स्क्रीनशॉट",
+  emptyLastTitle: "अभी कोई कैप्चर नहीं",
+  emptyLastBody:
+    "पृष्ठ खोलें, मोड चुनें, फिर ब्राउज़र विंडो में किसी एलिमेंट पर क्लिक करें।",
+  attachShort: "टर्मिनल",
+  copyShort: "कॉपी",
+  revealShort: "फ़ोल्डर",
+  howItWorks: "यह कैसे काम करता है",
+  cloneChipLabel: "क्लोन",
+  treeGroupBrowser: "ब्राउज़र",
+  treeGroupCapture: "कैप्चर",
+  treeGroupAdvanced: "एडवांस्ड",
+  treeStartChrome: "लोकल Chrome शुरू करें (CDP)",
+  treeStartChromeTooltip:
+    "इस PC पर रिमोट डिबगिंग के साथ Chrome शुरू करता है। Remote SSH में पोर्ट 9222 reverse-forward करें।",
+  treeFullPackBadge: "पूरा पैक",
+  statusBarClone: "$(git-compare) क्लोन: चालू",
+  onLabel: "चालू",
 };
 
 const ja: Dict = {
@@ -929,6 +1346,31 @@ const ja: Dict = {
   languagePickPlaceholder: "UI 言語（ユーザー設定に保存）",
   browserChannelFallback:
     'DaVinchi Element Picker: チャネル "{0}" で起動（優先 "{1}" は利用不可）。',
+  sectionPage: "ページ",
+  sectionCapture: "キャプチャモード",
+  sectionLast: "最後のキャプチャ",
+  openShort: "開く",
+  connectedLabel: "接続済み",
+  disconnectedLabel: "ブラウザー未接続",
+  selectModeDesc: "1要素: スクリーンショット + HTML/CSS",
+  cloneModeDesc: "フルパック: HTML・CSS・アセット・スクリーンショット",
+  emptyLastTitle: "キャプチャはまだありません",
+  emptyLastBody:
+    "ページを開き、モードを選択して、ブラウザー内の要素をクリックしてください。",
+  attachShort: "ターミナル",
+  copyShort: "コピー",
+  revealShort: "フォルダー",
+  howItWorks: "使い方",
+  cloneChipLabel: "クローン",
+  treeGroupBrowser: "ブラウザー",
+  treeGroupCapture: "キャプチャ",
+  treeGroupAdvanced: "詳細",
+  treeStartChrome: "ローカル Chrome を起動 (CDP)",
+  treeStartChromeTooltip:
+    "この PC でリモートデバッグ付き Chrome を起動します。Remote SSH ではポート 9222 をリバースフォワードしてください。",
+  treeFullPackBadge: "フルパック",
+  statusBarClone: "$(git-compare) クローン: ON",
+  onLabel: "ON",
 };
 
 const ko: Dict = {
@@ -982,6 +1424,31 @@ const ko: Dict = {
   languagePickPlaceholder: "UI 언어(사용자 설정에 저장)",
   browserChannelFallback:
     'DaVinchi Element Picker: "{0}" 채널로 열림(선호 "{1}" 사용 불가).',
+  sectionPage: "페이지",
+  sectionCapture: "캡처 모드",
+  sectionLast: "마지막 캡처",
+  openShort: "열기",
+  connectedLabel: "연결됨",
+  disconnectedLabel: "브라우저 없음",
+  selectModeDesc: "요소 하나: 스크린샷 + HTML/CSS",
+  cloneModeDesc: "풀 팩: HTML, CSS, 에셋, 스크린샷",
+  emptyLastTitle: "아직 캡처가 없습니다",
+  emptyLastBody:
+    "페이지를 열고 모드를 선택한 뒤 브라우저 창에서 요소를 클릭하세요.",
+  attachShort: "터미널",
+  copyShort: "복사",
+  revealShort: "폴더",
+  howItWorks: "사용 방법",
+  cloneChipLabel: "클론",
+  treeGroupBrowser: "브라우저",
+  treeGroupCapture: "캡처",
+  treeGroupAdvanced: "고급",
+  treeStartChrome: "로컬 Chrome 시작 (CDP)",
+  treeStartChromeTooltip:
+    "이 PC에서 원격 디버깅으로 Chrome을 시작합니다. Remote SSH에서는 포트 9222를 역포워딩하세요.",
+  treeFullPackBadge: "풀 팩",
+  statusBarClone: "$(git-compare) 클론: ON",
+  onLabel: "ON",
 };
 
 const zhCN: Dict = {
@@ -1031,6 +1498,30 @@ const zhCN: Dict = {
   languagePickPlaceholder: "界面语言（保存在用户设置中）",
   browserChannelFallback:
     'DaVinchi Element Picker：使用通道 "{0}" 打开（首选 "{1}" 不可用）。',
+  sectionPage: "页面",
+  sectionCapture: "捕获模式",
+  sectionLast: "最近捕获",
+  openShort: "打开",
+  connectedLabel: "已连接",
+  disconnectedLabel: "未连接浏览器",
+  selectModeDesc: "单个元素：截图 + HTML/CSS",
+  cloneModeDesc: "完整包：HTML、CSS、资源、截图",
+  emptyLastTitle: "暂无捕获",
+  emptyLastBody: "打开页面，选择模式，然后在浏览器窗口中点击任意元素。",
+  attachShort: "终端",
+  copyShort: "复制",
+  revealShort: "文件夹",
+  howItWorks: "使用说明",
+  cloneChipLabel: "克隆",
+  treeGroupBrowser: "浏览器",
+  treeGroupCapture: "捕获",
+  treeGroupAdvanced: "高级",
+  treeStartChrome: "启动本地 Chrome (CDP)",
+  treeStartChromeTooltip:
+    "在本机以远程调试方式启动 Chrome。Remote SSH 请反向转发端口 9222。",
+  treeFullPackBadge: "完整包",
+  statusBarClone: "$(git-compare) 克隆: 开",
+  onLabel: "开",
 };
 
 const zhTW: Dict = {
@@ -1080,6 +1571,30 @@ const zhTW: Dict = {
   languagePickPlaceholder: "介面語言（儲存在使用者設定）",
   browserChannelFallback:
     'DaVinchi Element Picker：使用通道 "{0}" 開啟（偏好 "{1}" 不可用）。',
+  sectionPage: "頁面",
+  sectionCapture: "擷取模式",
+  sectionLast: "最近擷取",
+  openShort: "開啟",
+  connectedLabel: "已連線",
+  disconnectedLabel: "未連線瀏覽器",
+  selectModeDesc: "單一元素：截圖 + HTML/CSS",
+  cloneModeDesc: "完整包：HTML、CSS、資源、截圖",
+  emptyLastTitle: "尚無擷取",
+  emptyLastBody: "開啟頁面，選擇模式，然後在瀏覽器視窗點擊任意元素。",
+  attachShort: "終端機",
+  copyShort: "複製",
+  revealShort: "資料夾",
+  howItWorks: "使用說明",
+  cloneChipLabel: "克隆",
+  treeGroupBrowser: "瀏覽器",
+  treeGroupCapture: "擷取",
+  treeGroupAdvanced: "進階",
+  treeStartChrome: "啟動本機 Chrome (CDP)",
+  treeStartChromeTooltip:
+    "在本機以遠端偵錯啟動 Chrome。Remote SSH 請反向轉送連接埠 9222。",
+  treeFullPackBadge: "完整包",
+  statusBarClone: "$(git-compare) 克隆: 開",
+  onLabel: "開",
 };
 
 export const MESSAGES: Record<Locale, Dict> = {
