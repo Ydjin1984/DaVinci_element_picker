@@ -52,7 +52,7 @@ function Ensure-GhToken {
       Write-Host "    auth: GH_TOKEN from git credential" -ForegroundColor DarkGray
     }
   } catch {
-    # fall through — gh may already be logged in
+    # fall through - gh may already be logged in
   }
 }
 
@@ -84,7 +84,7 @@ function Get-ChangelogNotes([string] $version) {
   $buf.Add("### Install")
   $buf.Add("")
   $buf.Add("1. Download **element-picker-$version.vsix** below")
-  $buf.Add("2. VS Code / Cursor → Extensions → ``⋯`` → **Install from VSIX…**")
+  $buf.Add("2. VS Code / Cursor -> Extensions -> ``⋯`` -> **Install from VSIX...**")
   $buf.Add("3. Reload window")
   $buf.Add("")
   $buf.Add('```powershell')
@@ -119,7 +119,7 @@ $notes = Get-ChangelogNotes $version
 $notesFile = Join-Path $env:TEMP "davinchi-release-$version.md"
 Set-Content -Path $notesFile -Value $notes -Encoding UTF8
 
-Write-Host "==> GitHub Release $tag → $Repo" -ForegroundColor Cyan
+Write-Host "==> GitHub Release $tag -> $Repo" -ForegroundColor Cyan
 Write-Host "    asset: $vsix"
 
 $exists = $false
@@ -128,7 +128,7 @@ if ($LASTEXITCODE -eq 0) { $exists = $true }
 
 if ($exists) {
   if (-not $SkipIfExists) {
-    Write-Host "    release exists — uploading/clobbering VSIX…" -ForegroundColor Yellow
+    Write-Host "    release exists - uploading/clobbering VSIX..." -ForegroundColor Yellow
   }
   & $gh release upload $tag $vsix --repo $Repo --clobber
   if ($LASTEXITCODE -ne 0) { throw "gh release upload failed" }
