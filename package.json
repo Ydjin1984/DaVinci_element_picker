@@ -339,7 +339,8 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
-    "package:out": "npm run package && node -e \"const fs=require('fs');const p=require('./package.json');const n=p.name+'-'+p.version+'.vsix';fs.mkdirSync('dist',{recursive:true});fs.copyFileSync(n,'dist/'+n);console.log('dist/'+n)\""
+    "package:out": "npm run package && node -e \"const fs=require('fs');const p=require('./package.json');const n=p.name+'-'+p.version+'.vsix';fs.mkdirSync('dist',{recursive:true});fs.copyFileSync(n,'dist/'+n);console.log('dist/'+n)\"",
+    "release:github": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/github-release.ps1"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -32,7 +32,23 @@ npm run compile                                             # tsc типизац
    code --install-extension element-picker-<ver>.vsix --force
    cursor --install-extension element-picker-<ver>.vsix --force
    ```
-7. **Не коммитить** без явной просьбы пользователя.
+7. **GitHub Release (обязательно для каждой новой версии)** — tag `vX.Y.Z` + VSIX asset:
+   ```powershell
+   powershell -NoProfile -File .\scripts\github-release.ps1
+   ```
+   Нужны `gh` (winget install GitHub.cli) и push-доступ к
+   `Ydjin1984/DaVinci_element_picker`. Скрипт берёт notes из CHANGELOG и
+   кладёт `element-picker-<ver>.vsix` в
+   https://github.com/Ydjin1984/DaVinci_element_picker/releases
+8. **Коммит + push** на `main` (когда пользователь просит «запушь» / «release»):
+   ```powershell
+   git add -A   # не *.vsix — они в .gitignore
+   git commit -m "…"
+   git push origin main
+   powershell -NoProfile -File .\scripts\github-release.ps1
+   ```
+9. **Не коммитить** без явной просьбы — кроме случаев, когда пользователь
+   явно сказал «запушь / выпусти / на GitHub».
 
 ## Правила проекта (нарушение = дефект)
 
