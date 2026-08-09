@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.25-4fc3f7" alt="version 0.1.25" />
+  <img src="https://img.shields.io/badge/version-0.1.26-4fc3f7" alt="version 0.1.26" />
   <img src="https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Code 1.85+" />
   <img src="https://img.shields.io/badge/Cursor-supported-000000?logo=cursor&logoColor=white" alt="Cursor" />
   <img src="https://img.shields.io/badge/license-MIT-22c55e" alt="MIT" />
@@ -50,19 +50,19 @@ No Copilot lock-in. Agent-agnostic.
 
 ## Install
 
-**Current release: `0.1.25`** · package id `coin-rebalancer.element-picker`
+**Current release: `0.1.26`** · package id `coin-rebalancer.element-picker`
 
 ### From VSIX (recommended)
 
-1. Download **`element-picker-0.1.25.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or build locally.
+1. Download **`element-picker-0.1.26.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or build locally.
 2. VS Code / Cursor → Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…**
 3. Reload the window.
 
 CLI:
 
 ```powershell
-code --install-extension ".\element-picker-0.1.25.vsix" --force
-cursor --install-extension ".\element-picker-0.1.25.vsix" --force
+code --install-extension ".\element-picker-0.1.26.vsix" --force
+cursor --install-extension ".\element-picker-0.1.26.vsix" --force
 ```
 
 Step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · short EN: [INSTALL.md](INSTALL.md)
@@ -99,7 +99,7 @@ Step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · short EN: [INSTAL
 | `Ctrl+Shift+Alt+E` | Action menu (also status bar) |
 
 The panel, status bar, Controls tree, and action menu show a **version badge**  
-(`v0.1.25 · ui|workspace · platform`) so Local vs Remote host is obvious.
+(`v0.1.26 · ui · platform`) so Local UI host is obvious (must be `ui`, not `workspace`).
 
 ---
 
@@ -209,7 +209,7 @@ Picks still write into the **remote workspace** folder.
 
 All `clone*` toggles are also editable in the panel **Clone settings** section (saved to User settings).
 
-`extensionKind` is `ui` + `workspace` so the extension can run on your PC with Remote SSH; picks save into the open workspace.
+`extensionKind` is **`ui` only**: under Remote SSH the extension still runs on your **local PC**, so Chrome opens locally; picks save into the remote workspace. Install the VSIX on the **local** Cursor/VS Code (not only on the SSH host).
 
 ---
 
@@ -223,8 +223,8 @@ npm run compile
 ```
 
 - **F5** → Extension Development Host  
-- Package: `npm run package` → `element-picker-0.1.25.vsix`  
-- Or: `npm run package:out` → `dist/element-picker-0.1.25.vsix`  
+- Package: `npm run package` → `element-picker-0.1.26.vsix`  
+- Or: `npm run package:out` → `dist/element-picker-0.1.26.vsix`  
 - Preflight: `node .claude/skills/davinchi-release/scripts/preflight.js`
 
 ```jsonc

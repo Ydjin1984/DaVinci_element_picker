@@ -145,22 +145,6 @@ function showErr(e: unknown): void {
   void vscode.window.showErrorMessage(t("errPrefix", err));
 }
 
-/** True when the browser-open error should route to the CDP wizard. */
-function isCdpFailure(e: unknown, message: string): boolean {
-  const kind = (e as { davinchiErrorKind?: string } | null)?.davinchiErrorKind;
-  if (kind === "cdp") {
-    return true;
-  }
-  // Remote headless often surfaces as launch+cdp chain or ECONNREFUSED — still guide CDP.
-  return (
-    message.includes("ECONNREFUSED") ||
-    message.includes("connectOverCDP") ||
-    message.includes("Remote SSH") ||
-    message.includes("without DISPLAY") ||
-    message.includes("Start Local Chrome (CDP)")
-  );
-}
-
 async function openBrowser(url?: string): Promise<void> {
   if (openingBrowser) {
     return;
@@ -193,14 +177,11 @@ async function openBrowser(url?: string): Promise<void> {
     );
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
-    syncUi(t("statusError", err.split("\n")[0] || err), "error");
-    if (isCdpFailure(e, err)) {
-      // Remote CDP not ready → guided retry loop
-      openingBrowser = false;
-      await handleCdpConnectFailure(finalUrl, err);
-      return;
-    }
-    throw e;
+    const short = err.split("\n")[0] || err;
+    syncUi(t("statusError", short), "error");
+    // Short non-modal error only — no forced PowerShell dump / CDP wizard on Open
+    void vscode.window.showErrorMessage(t("errPrefix", short));
+    return;
   } finally {
     openingBrowser = false;
   }
@@ -210,80 +191,31 @@ async function openBrowser(url?: string): Promise<void> {
   void vscode.window.showInformationMessage(t("msgBrowserOpened"));
 }
 
-/**
- * Help user start local Chrome + reverse port, then retry CDP.
- */
-async function handleCdpConnectFailure(
-  finalUrl: string,
-  originalErr: string
-): Promise<void> {
-  const choice = await vscode.window.showErrorMessage(
-    t("cdpNeedLocalChrome"),
-    { modal: true, detail: originalErr } as vscode.MessageOptions,
-    t("cdpActionStartChrome"),
-    t("cdpActionRetry"),
-    t("cdpActionCopyCmd")
+/** Start Chrome on the local Windows PC (UI host), even under Remote SSH. */
+async function startLocalChromeProcess(finalUrl: string): Promise<void> {
+  const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
+  await vscode.env.clipboard.writeText(cmd);
+  // UI host stays win32 when Remote SSH is open — do NOT require !remoteName
+  if (process.platform === "win32") {
+    try {
+      const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
+      fs.writeFileSync(ps1, cmd, "utf8");
+      const term = vscode.window.createTerminal({
+        name: "DaVinchi Local Chrome",
+        shellPath: "powershell.exe",
+      });
+      term.show(true);
+      term.sendText(
+        `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`
+      );
+    } catch {
+      /* clipboard is enough */
+    }
+  }
+  void vscode.window.showInformationMessage(
+    t("msgLocalChromeStarted") +
+      (vscode.env.remoteName ? "\n\n" + t("cdpReversePortHint") : "")
   );
-
-  if (choice === t("cdpActionStartChrome") || choice === t("cdpActionCopyCmd")) {
-    const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
-    await vscode.env.clipboard.writeText(cmd);
-    if (choice === t("cdpActionStartChrome") && process.platform === "win32" && !vscode.env.remoteName) {
-      try {
-        const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
-        fs.writeFileSync(ps1, cmd, "utf8");
-        const term = vscode.window.createTerminal({
-          name: "DaVinchi Local Chrome",
-          shellPath: "powershell.exe",
-        });
-        term.show(true);
-        term.sendText(
-          `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`
-        );
-      } catch {
-        /* clipboard only */
-      }
-    }
-    void vscode.window.showInformationMessage(
-      t("msgLocalChromeStarted") +
-        (vscode.env.remoteName
-          ? "\n\n" + t("cdpReversePortHint")
-          : "")
-    );
-  }
-
-  if (
-    choice === t("cdpActionStartChrome") ||
-    choice === t("cdpActionRetry") ||
-    choice === t("cdpActionCopyCmd")
-  ) {
-    const again = await vscode.window.showInformationMessage(
-      t("cdpReadyRetry"),
-      t("cdpActionRetry")
-    );
-    if (again === t("cdpActionRetry")) {
-      syncUi(t("msgOpening", finalUrl), "busy");
-      try {
-        await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: t("msgOpening", finalUrl),
-            cancellable: false,
-          },
-          async () => {
-            await session.open(finalUrl);
-          }
-        );
-      } catch (e) {
-        const err = e instanceof Error ? e.message : String(e);
-        syncUi(t("statusError", err.split("\n")[0] || err), "error");
-        throw e;
-      }
-      await ensureGitignoreEntry();
-      syncUi(t("statusBrowserOpenUrl", finalUrl));
-      void vscode.window.showInformationMessage(t("msgBrowserOpened"));
-    }
-  }
 }
 
 async function toggleSelect(): Promise<boolean> {
@@ -521,51 +453,19 @@ export function activate(context: vscode.ExtensionContext): void {
   session.setModeHandler(() => syncUi());
   session.setCloneModeHandler(() => syncUi());
 
-  // Quiet diagnostics (no popups on activate unless mis-hosted on Remote SSH)
+  // Quiet diagnostics only (no popups on activate)
   console.log(
     "[DaVinchi] activate",
     host.detail,
     "| extensionKind=",
     host.extensionKind,
+    "| remoteName=",
+    vscode.env.remoteName || "(local)",
     "| uiKind=",
     vscode.env.uiKind
   );
 
-  // Pure UI preferred: Chrome launches on the local PC. If running as workspace on
-  // Remote SSH Linux, warn once so the user reinstalls as Local/UI or uses CDP.
-  if (
-    context.extension.extensionKind === vscode.ExtensionKind.Workspace &&
-    vscode.env.remoteName
-  ) {
-    void vscode.window
-      .showWarningMessage(
-        "DaVinchi runs on the SSH host (workspace). Chrome will not open on your PC until the extension runs as UI locally — or use Start Local Chrome (CDP) + reverse-forward 9222.",
-        "Copy fix steps",
-        "Dismiss"
-      )
-      .then(async (choice) => {
-        if (choice !== "Copy fix steps") return;
-        const tip =
-          "DaVinchi on Remote SSH — make Chrome open on your PC:\n\n" +
-          "A) Preferred — local UI host:\n" +
-          "1) On Windows (local Cursor/VS Code, not SSH): Install from VSIX\n" +
-          "2) Extensions → … → Install from VSIX → element-picker-*.vsix\n" +
-          "3) User settings (optional):\n" +
-          '   "remote.extensionKind": { "coin-rebalancer.element-picker": ["ui"] }\n' +
-          "4) Developer: Reload Window\n" +
-          "5) Open browser — Chrome opens on your PC; picks save into SSH workspace.\n\n" +
-          "B) Without local install — CDP:\n" +
-          "1) Command “DaVinchi: Start Local Chrome (CDP)” / copy script → run on Windows\n" +
-          "2) Ports panel → reverse-forward 9222 → 9222\n" +
-          "3) Open browser again in DaVinchi.";
-        await vscode.env.clipboard.writeText(tip);
-        void vscode.window.showInformationMessage(
-          "Fix steps copied to clipboard."
-        );
-      });
-  }
-
-  // Resolve Chrome/Edge path (clears poisoned Playwright paths; does not pin remotely)
+  // Resolve Chrome/Edge path on the UI host (clears poisoned Playwright paths)
   void ensureBrowserPathSetting().then((p) => {
     if (p) {
       console.log(
@@ -673,32 +573,8 @@ export function activate(context: vscode.ExtensionContext): void {
       async () => {
         const url = (await askUrl(session.currentUrl || defaultUrl())) || "";
         if (!url) return;
-        const finalUrl = normalizeUrl(url);
-        const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
-        await vscode.env.clipboard.writeText(cmd);
-
-        // Local workspace only: run PowerShell to start Chrome with CDP
-        if (process.platform === "win32" && !vscode.env.remoteName) {
-          try {
-            const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
-            fs.writeFileSync(ps1, cmd, "utf8");
-            const term = vscode.window.createTerminal({
-              name: "DaVinchi Local Chrome",
-              shellPath: "powershell.exe",
-            });
-            term.show(true);
-            term.sendText(
-              `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`
-            );
-          } catch {
-            /* clipboard is enough */
-          }
-        }
-
-        void vscode.window.showInformationMessage(
-          t("msgLocalChromeStarted") +
-            (vscode.env.remoteName ? "\n\n" + t("cdpReversePortHint") : "")
-        );
+        // Runs on UI host (local Windows) even when Remote SSH workspace is open
+        await startLocalChromeProcess(normalizeUrl(url));
       }
     ),
     vscode.commands.registerCommand("elementPicker.selectLanguage", async () => {

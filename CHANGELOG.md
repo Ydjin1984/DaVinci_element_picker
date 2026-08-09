@@ -2,6 +2,16 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.26] — 2026-08-09
+
+### Fixed
+- **Remote SSH: Chrome opens on the local PC again** (regression after 0.1.23–0.1.25). `extensionKind` is **`ui` only** so the extension host is always your Windows/macOS machine; Open browser launches local Chrome/Edge even when the workspace is Remote SSH (same as 0.1.22)
+- **No more forced CDP PowerShell dump** on Open browser failure — short error only; CDP helper remains as optional commands
+- **Start Local Chrome (CDP)** runs on `win32` even when `remoteName` is set (UI host under SSH)
+
+### Changed
+- Install VSIX on the **local** Cursor/VS Code (UI). Badge must show `v0.1.26 · ui · win32`, not `workspace · linux`
+
 ## [0.1.25] — 2026-08-09
 
 ### Fixed

@@ -50,10 +50,9 @@ export function findPreferredBrowserPath(): string {
 }
 
 /**
- * Resolve a usable Chrome/Edge path. Never pin Playwright-cache paths.
- * On Remote SSH workspace hosts (Linux, no DISPLAY) do not suggest a server binary —
- * Chrome must run on the local UI PC (or attach via CDP).
- * Does not write User settings (explicit browserPath only).
+ * If browserPath is empty and we found a real Chrome/Edge, save it to User settings.
+ * Never pin Playwright-cache paths. On Remote workspace hosts skip pinning entirely
+ * (Chrome must run on the local UI PC, not on the SSH box).
  */
 export async function ensureBrowserPathSetting(): Promise<string> {
   const cfg = vscode.workspace.getConfiguration("elementPicker");
@@ -66,29 +65,25 @@ export async function ensureBrowserPathSetting(): Promise<string> {
     } catch {
       /* ignore */
     }
-  } else if (
-    current &&
-    fs.existsSync(current) &&
-    !isPlaywrightCachePath(current)
-  ) {
+  } else if (current && fs.existsSync(current) && !isPlaywrightCachePath(current)) {
     return current;
   }
 
-  // Remote SSH workspace host: do not return a server-side binary as "preferred"
-  if (isRemoteHeadlessEnvironment()) {
+  // Remote SSH workspace host: do not pin a server-side binary
+  if (vscode.env.remoteName && process.platform === "linux" && !process.env.DISPLAY) {
     return "";
   }
 
-  return findPreferredBrowserPath();
-}
-
-/** Remote workspace extension host without a GUI (typical SSH Linux server). */
-function isRemoteHeadlessEnvironment(): boolean {
-  return (
-    !!vscode.env.remoteName &&
-    process.platform === "linux" &&
-    !process.env.DISPLAY
-  );
+  const found = findPreferredBrowserPath();
+  if (!found) {
+    return "";
+  }
+  try {
+    await cfg.update("browserPath", found, vscode.ConfigurationTarget.Global);
+  } catch {
+    /* read-only / restricted */
+  }
+  return found;
 }
 
 /** Resolve symlinks / which(1) style names when present. */
@@ -264,12 +259,8 @@ export class BrowserSession {
   private exposed = false;
   /** Connected to user's existing Chrome via CDP — do not kill Chrome on close. */
   private viaCdp = false;
-  /**
-   * Serialized open queue: concurrent open(url) keeps only the latest URL
-   * and always navigates to it after the in-flight open finishes.
-   */
-  private openChain: Promise<void> = Promise.resolve();
-  private pendingOpenUrl: string | null = null;
+  /** In-flight open() — a second call reuses it instead of opening twice. */
+  private openInFlight: Promise<void> | null = null;
 
   get isOpen(): boolean {
     return !!this.page && !this.page.isClosed();
@@ -323,16 +314,11 @@ export class BrowserSession {
     if (!vscode.workspace.isTrusted) {
       return "";
     }
-    const raw = (
+    return (
       vscode.workspace
         .getConfiguration("elementPicker")
         .get<string>("browserPath", "") || ""
     ).trim();
-    // Ignore Playwright-cache paths — they are not a real desktop Chrome for pick.
-    if (!raw || isPlaywrightCachePath(raw)) {
-      return "";
-    }
-    return raw;
   }
 
   private browserMode(): "auto" | "cdp" | "launch" {
@@ -361,11 +347,7 @@ export class BrowserSession {
    * host is Remote SSH Linux. Starts Chrome with --remote-debugging-port.
    */
   static localChromeDebugCommand(url: string, port = 9222): string {
-    // Quote-strip + drop control chars so the PowerShell single-quoted string stays safe.
-    const safeUrl = url
-      .replace(/["']/g, "")
-      .replace(/[\u0000-\u001f\u007f]/g, "")
-      .trim();
+    const safeUrl = url.replace(/"/g, "").replace(/'/g, "");
     return [
       `# DaVinchi — run this on your WINDOWS PC (local Chrome for remote SSH picks)`,
       `$port = ${port}`,
@@ -423,7 +405,7 @@ export class BrowserSession {
     const prefer = channel === "msedge" ? "msedge" : "chrome";
 
     const custom = this.configuredBrowserPath();
-    if (custom && !isPlaywrightCachePath(custom)) {
+    if (custom) {
       if (!fs.existsSync(custom)) {
         throw new Error(
           `elementPicker.browserPath not found:\n  ${custom}\n` +
@@ -436,10 +418,9 @@ export class BrowserSession {
       });
     }
 
-    // Paths FIRST — prefer real system Chrome/Edge over Playwright cache.
-    const discovered = discoverBrowserExecutables({
-      includePlaywright: true,
-    }).sort((a, b) => {
+    // Paths FIRST — channel often falls into empty ms-playwright cache on Linux/remote.
+    // Prefer real system Chrome/Edge over Playwright cache binaries.
+    const discovered = discoverBrowserExecutables({ includePlaywright: true }).sort((a, b) => {
       const aPw = isPlaywrightCachePath(a.executablePath) ? 1 : 0;
       const bPw = isPlaywrightCachePath(b.executablePath) ? 1 : 0;
       if (aPw !== bPw) return aPw - bPw;
@@ -473,9 +454,30 @@ export class BrowserSession {
       });
     }
 
-    // Playwright Chromium last resort — only on desktop hosts with a GUI.
-    // Never treat it as primary on Remote SSH Linux (no window for interactive pick).
-    if (!isRemoteHeadlessEnvironment() && channel === "chromium") {
+    // Bundled Playwright Chromium — only if already on disk (skip download trap)
+    const home = os.homedir();
+    const pwRoot = playwrightCacheRoot();
+    let hasPwChrome = false;
+    try {
+      if (fs.existsSync(pwRoot)) {
+        for (const name of fs.readdirSync(pwRoot)) {
+          if (!name.startsWith("chromium")) continue;
+          const p = path.join(pwRoot, name, "chrome-linux64", "chrome");
+          if (fs.existsSync(p)) {
+            hasPwChrome = true;
+            break;
+          }
+          const pWin = path.join(pwRoot, name, "chrome-win64", "chrome.exe");
+          if (fs.existsSync(pWin)) {
+            hasPwChrome = true;
+            break;
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    if (hasPwChrome || channel === "chromium") {
       attempts.push({
         how: "playwright-chromium",
         opts: { headless: false, args: launchArgs },
@@ -486,13 +488,6 @@ export class BrowserSession {
     for (const attempt of attempts) {
       try {
         const browser = await chromium.launch(attempt.opts);
-        // Notify when Playwright channel fell back to a different browser.
-        const m = /^channel=(chrome|msedge|chromium)$/.exec(attempt.how);
-        if (m && m[1] !== channel) {
-          void vscode.window.showInformationMessage(
-            t("browserChannelFallback", m[1], channel)
-          );
-        }
         return { browser, how: attempt.how };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -507,7 +502,7 @@ export class BrowserSession {
     const remote = vscode.env.remoteName
       ? `Remote host: ${vscode.env.remoteName}\n`
       : "";
-    const platform = `${process.platform} ${os.arch()} home=${os.homedir()}`;
+    const platform = `${process.platform} ${os.arch()} home=${home}`;
 
     throw new Error(
       `Could not launch a browser on the extension host.\n` +
@@ -516,7 +511,7 @@ export class BrowserSession {
         `Found browsers:\n  ${found}\n\n` +
         `Recommended (Remote SSH): use LOCAL Chrome via CDP — command\n` +
         `  “DaVinchi: Start Local Chrome (CDP)”\n` +
-        `then reverse-forward port 9222 and Open browser again (browserMode=auto|cdp).\n\n` +
+        `then Open browser again (browserMode=auto|cdp).\n\n` +
         `Attempts:\n  ${errors.slice(0, 8).join("\n  ")}`
     );
   }
@@ -535,7 +530,7 @@ export class BrowserSession {
       return true;
     }
     // Headless remote Linux: never claim we can open a picker window here
-    if (isRemoteHeadlessEnvironment()) {
+    if (this.isRemoteHost() && process.platform === "linux" && !process.env.DISPLAY) {
       return false;
     }
     return discoverBrowserExecutables({ includePlaywright: false }).length > 0;
@@ -544,12 +539,12 @@ export class BrowserSession {
   /**
    * Obtain a browser.
    *
-   * DaVinchi is a **UI** extension: the host is the local PC even under Remote SSH
-   * (`remoteName` may be set, but `process.platform` is win32/darwin). Always launch
-   * system Chrome/Edge on that local host first — same as 0.1.22.
+   * Preferred: extensionKind "ui" → host is the local PC → launch Chrome/Edge there.
+   * Fallback (workspace host on Remote SSH): CDP to reverse-forwarded local Chrome.
    *
-   * CDP is only a fallback (or explicit browserMode=cdp). Never prefer server-side
-   * Playwright Chromium on a headless Linux workspace host.
+   * auto: launch system Chrome if present → else CDP
+   * launch: only launch
+   * cdp: only CDP
    */
   private async obtainBrowser(): Promise<{
     browser: Browser;
@@ -559,15 +554,14 @@ export class BrowserSession {
     const mode = this.browserMode();
     const endpoint = this.cdpEndpoint();
     const canLaunch = this.canLaunchSystemBrowserHere();
-    // true only if extension somehow runs on SSH Linux without GUI (mis-install)
-    const remoteHeadless = isRemoteHeadlessEnvironment();
+    // Workspace extension on Remote SSH without GUI → never try server-side launch first
+    const remoteHeadless =
+      this.isRemoteHost() &&
+      process.platform === "linux" &&
+      !process.env.DISPLAY;
     const errors: string[] = [];
 
-    const tryLaunch = async (): Promise<{
-      browser: Browser;
-      how: string;
-      viaCdp: boolean;
-    } | null> => {
+    const tryLaunch = async (): Promise<{ browser: Browser; how: string; viaCdp: boolean } | null> => {
       try {
         const r = await this.launchLocalBrowser();
         return { ...r, viaCdp: false };
@@ -578,19 +572,13 @@ export class BrowserSession {
       }
     };
 
-    const tryCdp = async (): Promise<{
-      browser: Browser;
-      how: string;
-      viaCdp: boolean;
-    } | null> => {
+    const tryCdp = async (): Promise<{ browser: Browser; how: string; viaCdp: boolean } | null> => {
       try {
         const r = await this.connectCdp(endpoint);
         return { ...r, viaCdp: true };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        errors.push(
-          `cdp ${endpoint}: ${msg.replace(/\s+/g, " ").slice(0, 200)}`
-        );
+        errors.push(`cdp ${endpoint}: ${msg.replace(/\s+/g, " ").slice(0, 200)}`);
         return null;
       }
     };
@@ -607,23 +595,24 @@ export class BrowserSession {
       throw this.unifiedBrowserError(errors, endpoint, "launch");
     }
 
-    // auto: local UI host (Windows/macOS/Linux desktop) — even when remoteName is set
-    // because the workspace is Remote SSH. Launch Chrome on THIS machine first.
+    // auto: always try real system Chrome launch first when the host has a GUI
+    // (UI extension on Windows/macOS/Linux desktop — even if remoteName is set).
     if (!remoteHeadless) {
       if (canLaunch) {
         const launched = await tryLaunch();
         if (launched) return launched;
       } else {
-        // Channel / path discovery may still find Chrome when canLaunch was false
+        // Channel-based launch may still find Chrome when path discovery missed it
         const launched = await tryLaunch();
         if (launched) return launched;
       }
     }
 
+    // CDP attach (optional advanced / reverse-forwarded Chrome)
     const cdp = await tryCdp();
     if (cdp) return cdp;
 
-    // Last resort on mis-hosted remote workspace (usually fails without DISPLAY)
+    // Last resort launch on headless remote (usually fails without DISPLAY)
     if (remoteHeadless) {
       const launched = await tryLaunch();
       if (launched) return launched;
@@ -641,68 +630,42 @@ export class BrowserSession {
     endpoint: string,
     kind: "cdp" | "launch"
   ): Error {
-    const remoteHeadless = isRemoteHeadlessEnvironment();
-    const hostNote = remoteHeadless
-      ? `Remote SSH mis-host: extension is running on the Linux server (workspace), not on your PC.\n` +
-        `Install element-picker-*.vsix on the LOCAL Cursor/VS Code (UI host), then Reload.\n` +
-        `Badge must show: v… · ui · win32  (not workspace · linux).\n\n`
-      : this.isRemoteHost()
-        ? `Remote workspace open (${vscode.env.remoteName}); browser still launches on the local UI host.\n` +
-          `If Chrome did not start, set elementPicker.browserPath to your local chrome.exe.\n\n`
-        : "";
-    const found = discoverBrowserExecutables({ includePlaywright: false })
-      .map((d) => d.executablePath)
-      .join("\n  ");
+    // Keep user-facing text short — full attempts only in console
+    console.error("[DaVinchi] browser attach failed", { kind, endpoint, errors });
+    if (kind === "cdp") {
+      return Object.assign(
+        new Error(
+          `Chrome CDP ${endpoint} unavailable. Install/run Chrome on this PC, or set elementPicker.browserPath.`
+        ),
+        { davinchiErrorKind: kind }
+      );
+    }
     return Object.assign(
       new Error(
-        `Could not open a browser.\n` +
-          hostNote +
-          `Platform: ${process.platform} ${os.arch()}\n` +
-          `Browsers found here:\n  ${found || "(none)"}\n\n` +
-          `Fix:\n` +
-          `1) Install Google Chrome or Edge on this PC (the UI machine)\n` +
-          `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
-          `3) Advanced only: browserMode=cdp + local Chrome --remote-debugging-port=9222\n\n` +
-          `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
-          `(CDP endpoint tried: ${endpoint})`
+        `Could not launch Chrome/Edge on ${process.platform}. Install Chrome or set elementPicker.browserPath.`
       ),
       { davinchiErrorKind: kind }
     );
   }
 
   async open(url: string): Promise<void> {
-    // Always remember the latest URL. Each chained turn opens whatever is
-    // pending when it starts (so concurrent open() never drops the last request).
-    this.pendingOpenUrl = url;
-    const run = this.openChain.then(async () => {
-      const target = this.pendingOpenUrl;
-      if (!target) {
-        return;
-      }
-      this.pendingOpenUrl = null;
-      await this.openInternal(target);
-    });
-    // Keep the chain alive even if one open fails so later URLs still run.
-    this.openChain = run.catch(() => {
-      /* swallowed; callers still see the rejection via `run` */
-    });
-    return run;
-  }
-
-  /** Re-apply host mode flags onto the live page after navigation / reinstall. */
-  private async reapplyActiveModes(): Promise<void> {
-    if (this.cloneMode) {
-      await this.applyCloneMode(true);
-    } else if (this.selectMode) {
-      await this.applySelectMode(true);
+    if (this.openInFlight) {
+      return this.openInFlight;
     }
+    const inFlight = this.openInternal(url).finally(() => {
+      this.openInFlight = null;
+    });
+    this.openInFlight = inFlight;
+    return inFlight;
   }
 
   private async openInternal(url: string): Promise<void> {
     if (this.isOpen && this.page) {
       await this.page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
       await this.installPicker(this.page);
-      await this.reapplyActiveModes();
+      if (this.selectMode) {
+        await this.applySelectMode(true);
+      }
       return;
     }
 
@@ -924,21 +887,15 @@ export class BrowserSession {
 
   /**
    * Download a URL using the browser context (cookies / CORS as the page).
-   * Optional maxBytes skips oversized responses (Content-Length and body size).
    */
   async downloadUrl(
-    url: string,
-    opts?: { maxBytes?: number }
+    url: string
   ): Promise<{ bytes: Uint8Array; contentType?: string } | null> {
     if (!this.context) return null;
-    const maxBytes = opts?.maxBytes ?? 8 * 1024 * 1024;
     try {
       const res = await this.context.request.get(url, { timeout: 15000 });
       if (!res.ok()) return null;
-      const cl = Number(res.headers()["content-length"] || 0);
-      if (cl > 0 && cl > maxBytes) return null;
       const body = await res.body();
-      if (body.byteLength > maxBytes) return null;
       const contentType = res.headers()["content-type"];
       return { bytes: new Uint8Array(body), contentType };
     } catch {
@@ -946,40 +903,33 @@ export class BrowserSession {
       if (!this.page || this.page.isClosed()) return null;
       try {
         const result = await Promise.race([
-          this.page.evaluate(
-            async (args: { u: string; maxBytes: number }) => {
-              try {
-                const ctrl =
-                  typeof AbortController !== "undefined"
-                    ? new AbortController()
-                    : null;
-                const timer = ctrl
-                  ? setTimeout(() => ctrl.abort(), 12000)
+          this.page.evaluate(async (u: string) => {
+            try {
+              const ctrl =
+                typeof AbortController !== "undefined"
+                  ? new AbortController()
                   : null;
-                const r = await fetch(args.u, {
-                  credentials: "include",
-                  mode: "cors",
-                  signal: ctrl ? ctrl.signal : undefined,
-                });
-                if (timer) clearTimeout(timer);
-                if (!r.ok) return null;
-                const cl = Number(r.headers.get("content-length") || 0);
-                if (cl > 0 && cl > args.maxBytes) return null;
-                const ct = r.headers.get("content-type") || undefined;
-                const buf = await r.arrayBuffer();
-                if (buf.byteLength > args.maxBytes) return null;
-                const bytes = Array.from(new Uint8Array(buf));
-                return { bytes, contentType: ct };
-              } catch {
-                return null;
-              }
-            },
-            { u: url, maxBytes }
-          ),
+              const timer = ctrl
+                ? setTimeout(() => ctrl.abort(), 12000)
+                : null;
+              const r = await fetch(u, {
+                credentials: "include",
+                mode: "cors",
+                signal: ctrl ? ctrl.signal : undefined,
+              });
+              if (timer) clearTimeout(timer);
+              if (!r.ok) return null;
+              const ct = r.headers.get("content-type") || undefined;
+              const buf = await r.arrayBuffer();
+              const bytes = Array.from(new Uint8Array(buf));
+              return { bytes, contentType: ct };
+            } catch {
+              return null;
+            }
+          }, url),
           new Promise<null>((resolve) => setTimeout(() => resolve(null), 14000)),
         ]);
         if (!result?.bytes?.length) return null;
-        if (result.bytes.length > maxBytes) return null;
         return {
           bytes: new Uint8Array(result.bytes),
           contentType: result.contentType,
