@@ -15,6 +15,11 @@ export async function showActionMenu(state: PanelState): Promise<void> {
 
   const items: Item[] = [
     {
+      label: `$(versions) ${state.versionBadge || "DaVinchi"}`,
+      description: "version",
+      detail: state.versionDetail || undefined,
+    },
+    {
       label: `$(info) ${state.status || t("statusReady")}`,
       description: state.cloneMode
         ? t("badgeCloneOn")
@@ -93,7 +98,9 @@ export async function showActionMenu(state: PanelState): Promise<void> {
   ];
 
   const picked = await vscode.window.showQuickPick(items, {
-    title: t("panelTitle"),
+    title: state.versionBadge
+      ? `${t("panelTitle")} (${state.versionBadge})`
+      : t("panelTitle"),
     placeHolder: t("actionMenuPlaceholder"),
     matchOnDescription: true,
     matchOnDetail: true,

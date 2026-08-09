@@ -1,34 +1,37 @@
-# DaVinchi — установка (RU)
+# DaVinchi — установка
 
-Расширение **не** публикуется в Marketplace по умолчанию. Ставится из файла **`.vsix`**.
+Расширение ставится из файла **`.vsix`** (Marketplace по умолчанию не используется).
+
+**Актуальная версия: `0.1.23`** · id `coin-rebalancer.element-picker`
+
+---
 
 ## Требования
 
 | | |
 |--|--|
 | **VS Code** 1.85+ или **Cursor** | Хост расширения |
-| **Google Chrome** или **Microsoft Edge** | Окно выбора элементов (Playwright) |
+| **Google Chrome** или **Microsoft Edge** | Окно выбора элементов |
 | Открытая **папка workspace** | Сюда пишутся `.element-picks/` |
 
 Node.js нужен только тому, кто **собирает** `.vsix` из исходников.
 
 ---
 
-## Вариант A — GUI
+## Установка (GUI)
 
-1. Скачайте `element-picker-0.1.8.vsix` из **Releases** (или `dist/` после сборки).
+1. Скачайте `element-picker-0.1.23.vsix` из [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) или возьмите файл после локальной сборки.
 2. VS Code / Cursor → `Ctrl+Shift+X` → `⋯` → **Install from VSIX…**
 3. Выберите файл → **Install** → **Reload**.
-4. Слева в Activity Bar — иконка **DaVinchi** (прицел).
+4. Слева в Activity Bar — иконка **DaVinchi**.
 
 ---
 
-## Вариант B — CLI
+## Установка (CLI)
 
 ```powershell
-code --install-extension "C:\path\to\element-picker-0.1.8.vsix" --force
-# или
-cursor --install-extension "C:\path\to\element-picker-0.1.8.vsix" --force
+code --install-extension ".\element-picker-0.1.23.vsix" --force
+cursor --install-extension ".\element-picker-0.1.23.vsix" --force
 ```
 
 Проверка:
@@ -38,16 +41,16 @@ code --list-extensions --show-versions | findstr element-picker
 cursor --list-extensions --show-versions | findstr element-picker
 ```
 
-Ожидается: `coin-rebalancer.element-picker@0.1.8` (или актуальная версия).
+Ожидается: `coin-rebalancer.element-picker@0.1.23`
 
 ---
 
 ## Как пользоваться
 
 1. **File → Open Folder** — откройте проект (без workspace picks не сохранятся).
-2. Иконка **DaVinchi** слева → вкладка **Controls** (нативное дерево, без webview).
-3. **Open browser** → URL (например `http://localhost:8090/`).
-4. **Select mode** или `Ctrl+Shift+E`.
+2. Иконка **DaVinchi** слева → вкладка **Controls**.
+3. **Open browser** → вставьте URL.
+4. **Select mode** (`Ctrl+Shift+E`) или **Clone mode** (`Ctrl+Shift+Alt+C`).
 5. Наведите (подсветка) → клик по элементу.
 6. Файлы:
 
@@ -57,19 +60,24 @@ cursor --list-extensions --show-versions | findstr element-picker
 .element-picks/latest/...
 ```
 
-7. Пути вставляются в **терминал** и **буфер обмена** — допишите вопрос агенту.
+7. Пути попадают в **терминал** и **буфер обмена** — допишите вопрос агенту.
+
+В шапке панели, status bar, дереве Controls и меню виден **бейдж версии**  
+(`v0.1.23 · ui|workspace · platform`) — удобно понять, на каком хосте крутится расширение.
 
 ### Горячие клавиши
 
 | | |
 |--|--|
-| `Ctrl+Shift+E` | Режим выбора |
+| `Ctrl+Shift+E` | Режим Select |
+| `Ctrl+Shift+Alt+C` | Режим Clone |
 | `Ctrl+Shift+Alt+E` | Меню действий |
 
 ### Если вкладка UI с ошибкой Service Worker
 
-Это баг хоста VS Code/Cursor, **не** логики pick.  
-Используйте **Controls** или меню в status bar — расширение работает полностью.
+Это ограничение хоста VS Code/Cursor, не логики pick.  
+Используйте **Controls** или меню в status bar — расширение работает полностью.  
+Команды: **Reload Webview UI** / **Fix Webview Cache**.
 
 ---
 
@@ -79,8 +87,8 @@ cursor --list-extensions --show-versions | findstr element-picker
 git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
 cd DaVinci_element_picker
 npm install
-npm run package:out
-# → dist/element-picker-<version>.vsix
+npm run package
+# → element-picker-0.1.23.vsix
 ```
 
 ---
@@ -89,3 +97,5 @@ npm run package:out
 
 Command Palette → **DaVinchi: Select Language**  
 или Settings → `elementPicker.language` (сохраняется в User settings).
+
+Полное описание: [README.md](../README.md)

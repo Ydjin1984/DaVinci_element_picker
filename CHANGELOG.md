@@ -2,6 +2,12 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.23] — 2026-08-09
+
+### Added
+- **Version badge in UI** (ported from GitHub 0.1.28–0.1.29, browser stack stays 0.1.22): panel header chip + host bar, status bar (`vX.Y.Z` after mode text), Controls tree tag row, and action menu title show `vX.Y.Z · ui|workspace · platform` so Local vs Remote host is obvious at a glance
+- `hostInfo.ts` — single source for package version, extensionKind, platform, remoteName
+
 ## [0.1.22] — 2026-08-08
 
 ### Fixed

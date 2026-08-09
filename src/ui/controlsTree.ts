@@ -204,6 +204,15 @@ export class ControlsTreeProvider
     ];
 
     return [
+      new ControlItem(
+        "status",
+        s.versionBadge ? `DaVinchi ${s.versionBadge}` : "DaVinchi",
+        {
+          icon: "tag",
+          description: s.status || t("statusReady"),
+          tooltip: s.versionDetail || s.versionBadge || s.status,
+        }
+      ),
       new ControlItem("status", s.status || t("statusReady"), {
         icon: s.cloneMode
           ? "git-compare"
@@ -212,14 +221,14 @@ export class ControlsTreeProvider
             : s.browserOpen
               ? "globe"
               : "info",
-        tooltip: s.status,
+        tooltip: [s.versionDetail, s.status].filter(Boolean).join("\n"),
         description: s.cloneMode
           ? t("badgeCloneOn")
           : s.selectMode
             ? t("badgeSelectOn")
             : s.browserOpen
               ? t("badgeBrowserOpen")
-              : undefined,
+              : s.versionBadge || undefined,
       }),
       new ControlItem("group", t("treeGroupBrowser"), {
         id: "group.browser",

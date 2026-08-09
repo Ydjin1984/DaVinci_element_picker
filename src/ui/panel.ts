@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getHostInfo } from "../hostInfo";
 import {
   getLanguageOptions,
   getLocale,
@@ -37,6 +38,10 @@ export interface PanelState {
   lastPick: SavedPick | null;
   status: string;
   statusKind?: StatusKind;
+  /** e.g. v0.1.23 · ui · win32 */
+  versionBadge?: string;
+  /** Full host detail for tooltip */
+  versionDetail?: string;
 }
 
 export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
@@ -245,6 +250,8 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
         currentUrl: this.state.currentUrl,
         status: this.state.status,
         statusKind: this.state.statusKind || "idle",
+        versionBadge: this.state.versionBadge || "",
+        versionDetail: this.state.versionDetail || "",
         language: getLocale(),
         languages: getLanguageOptions(),
         strings,
@@ -288,13 +295,19 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       `script-src ${webview.cspSource} 'unsafe-inline'`,
     ].join("; ");
 
+    // Bake version into initial HTML so it is visible even before postMessage state
+    const host = getHostInfo();
+    const verBadge = escapeHtml(host.badge || `v${host.version}`);
+    const verDetail = escapeHtml(host.detail || verBadge);
+    const verOnly = escapeHtml(host.version !== "?" ? `v${host.version}` : "v?");
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DaVinchi Element Picker</title>
+  <title>DaVinchi Element Picker ${verOnly}</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -335,6 +348,10 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       font-weight: 600;
       letter-spacing: 0.01em;
       line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .hdr-sub {
       font-size: 10px;
@@ -342,6 +359,40 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       color: var(--vscode-descriptionForeground);
       letter-spacing: 0.04em;
       text-transform: uppercase;
+    }
+    /* High-visibility version chip — must stay readable on all themes */
+    .hdr-ver, .ver-chip {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+      font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
+      letter-spacing: 0.02em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--vscode-button-border, var(--border));
+      background: var(--vscode-badge-background, var(--vscode-button-secondaryBackground, rgba(79,140,255,0.22)));
+      color: var(--vscode-badge-foreground, var(--vscode-button-secondaryForeground, var(--vscode-foreground)));
+      white-space: nowrap;
+      user-select: text;
+      cursor: default;
+    }
+    .ver-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px 8px;
+      border-bottom: 1px solid var(--border);
+      background: var(--vscode-sideBarSectionHeader-background, transparent);
+      flex-wrap: wrap;
+    }
+    .ver-bar .ver-chip { font-size: 12px; }
+    .ver-bar .ver-host {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
+      user-select: text;
     }
     .pill {
       margin-left: auto;
@@ -740,11 +791,18 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
       <circle cx="12" cy="12" r="2" fill="currentColor"/>
     </svg>
     <div>
-      <div class="hdr-name">DaVinchi</div>
+      <div class="hdr-name">
+        <span>DaVinchi</span>
+        <span class="hdr-ver" id="hdrVerChip" title="${verDetail}">${verOnly}</span>
+      </div>
       <div class="hdr-sub" id="hdrSub">Element Picker</div>
     </div>
     <span class="pill" id="connPill"><span class="dot" id="connDot"></span><span id="connText"></span></span>
   </header>
+  <div class="ver-bar" id="verBar" title="${verDetail}">
+    <span class="ver-chip" id="hdrVer">${verBadge}</span>
+    <span class="ver-host" id="hdrVerHost">${verDetail}</span>
+  </div>
 
   <div class="main">
     <section class="sec">
@@ -1065,6 +1123,28 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
         (kind === 'ok' ? 'ok' : kind === 'busy' ? 'busy' : kind === 'error' ? 'err' : '');
       $('statusText').textContent = s.status || '';
 
+      // Version badge (always visible — chip + full bar)
+      const badge = s.versionBadge || ('v' + (s.version || '?'));
+      const detail = s.versionDetail || badge;
+      const verOnly = (badge.match(/v[\\d.]+/) || [badge])[0];
+      const verEl = $('hdrVer');
+      if (verEl) {
+        verEl.textContent = badge;
+        verEl.title = detail;
+      }
+      const chip = $('hdrVerChip');
+      if (chip) {
+        chip.textContent = verOnly;
+        chip.title = detail;
+      }
+      const hostEl = $('hdrVerHost');
+      if (hostEl) {
+        hostEl.textContent = detail;
+        hostEl.title = detail;
+      }
+      const bar = $('verBar');
+      if (bar) bar.title = detail;
+
       // Last capture
       const last = s.lastPick;
       $('lastEmpty').hidden = !!last;
@@ -1091,4 +1171,12 @@ export class ElementPickerPanelProvider implements vscode.WebviewViewProvider {
 
 function formatUi(template: string, ...args: string[]): string {
   return template.replace(/\{(\d+)\}/g, (_, i) => args[Number(i)] ?? "");
+}
+
+function escapeHtml(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

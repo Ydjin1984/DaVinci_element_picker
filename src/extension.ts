@@ -44,6 +44,7 @@ import {
 } from "./ui/panel";
 import { StatusBarController } from "./ui/statusBar";
 import { fixWebviewCache } from "./ui/webviewRepair";
+import { getHostInfo, initHostInfo } from "./hostInfo";
 
 let session: BrowserSession;
 let lastPick: SavedPick | null = null;
@@ -90,6 +91,7 @@ function autoAttach(): boolean {
 }
 
 function panelState(): PanelState {
+  const host = getHostInfo();
   return {
     browserOpen: session.isOpen,
     selectMode: session.isSelectMode,
@@ -106,6 +108,8 @@ function panelState(): PanelState {
         ? t("statusLastPick", lastPick.selector)
         : t("statusReady"),
     statusKind: session.isOpen ? "ok" : "idle",
+    versionBadge: host.badge,
+    versionDetail: host.detail,
   };
 }
 
@@ -506,12 +510,16 @@ function onLanguageChange(): void {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  const host = initHostInfo(context);
   session = new BrowserSession();
   statusBar = new StatusBarController();
 
   session.setPickHandler(handlePick);
   session.setModeHandler(() => syncUi());
   session.setCloneModeHandler(() => syncUi());
+
+  // Quiet diagnostics only (no popups on activate)
+  console.log("[DaVinchi] activate", host.detail, "| uiKind=", vscode.env.uiKind);
 
   // Pin system Chrome/Edge path so Playwright uses a real executable
   void ensureBrowserPathSetting().then((p) => {
