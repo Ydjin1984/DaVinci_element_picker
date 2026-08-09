@@ -434,6 +434,22 @@ const de: Dict = {
   openBrowser: "Browser öffnen",
   selectMode: "Auswahlmodus",
   selectModeOn: "Auswahlmodus AN",
+  cloneMode: "Klonmodus",
+  cloneModeOn: "Klonmodus AN",
+  statusCloneOn: "Klonmodus AN — klicken für volles Klon-Paket",
+  statusCloneOnHover:
+    "Klonmodus AN — klicken: HTML/CSS/Assets + Screenshots",
+  statusCloneOff: "Klonmodus AUS",
+  statusCloning: "Klone {0} (Tiefenpaket)…",
+  statusCloneSavedAttached: "Klon gespeichert {0} → Terminal + Zwischenablage ({1})",
+  statusCloneSaved: "Klon gespeichert {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: voller Klon von {0} gespeichert (clone/) → Terminal + Zwischenablage.",
+  msgCloneSavedManual:
+    "DaVinchi: voller Klon von {0} unter .element-picks/…/clone/. Mit Attach / Copy senden.",
+  badgeCloneOn: "KLON AN",
+  defaultCloneTerminalPrompt:
+    "Volles UI-Klonpaket angehängt (Screenshots + HTML/CSS + Assets + AGENT.md). 1:1 nachbauen: ",
   closeBrowser: "Browser schließen",
   attachLast: "In Terminal einfügen",
   copyPaths: "Pfade kopieren",
@@ -527,6 +543,22 @@ const es: Dict = {
   openBrowser: "Abrir navegador",
   selectMode: "Modo selección",
   selectModeOn: "Modo selección ON",
+  cloneMode: "Modo clon",
+  cloneModeOn: "Modo clon ON",
+  statusCloneOn: "Modo clon ON — clic para capturar el pack completo",
+  statusCloneOnHover:
+    "Modo clon ON — clic: HTML/CSS/assets + capturas",
+  statusCloneOff: "Modo clon OFF",
+  statusCloning: "Clonando {0} (pack profundo)…",
+  statusCloneSavedAttached: "Clon guardado {0} → terminal + portapapeles ({1})",
+  statusCloneSaved: "Clon guardado {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: clon completo de {0} guardado (clone/) → terminal + portapapeles.",
+  msgCloneSavedManual:
+    "DaVinchi: clon completo de {0} en .element-picks/…/clone/. Use Attach / Copy.",
+  badgeCloneOn: "CLON ON",
+  defaultCloneTerminalPrompt:
+    "Pack de clon UI adjunto (capturas + HTML/CSS + assets + AGENT.md). Recrear 1:1: ",
   closeBrowser: "Cerrar navegador",
   attachLast: "Pegar en terminal",
   copyPaths: "Copiar rutas",
@@ -620,6 +652,22 @@ const fr: Dict = {
   openBrowser: "Ouvrir le navigateur",
   selectMode: "Mode sélection",
   selectModeOn: "Mode sélection ON",
+  cloneMode: "Mode clone",
+  cloneModeOn: "Mode clone ON",
+  statusCloneOn: "Mode clone ON — clic pour capturer le pack complet",
+  statusCloneOnHover:
+    "Mode clone ON — clic : HTML/CSS/assets + captures",
+  statusCloneOff: "Mode clone OFF",
+  statusCloning: "Clonage de {0} (pack profond)…",
+  statusCloneSavedAttached: "Clone enregistré {0} → terminal + presse-papiers ({1})",
+  statusCloneSaved: "Clone enregistré {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi : clone complet de {0} enregistré (clone/) → terminal + presse-papiers.",
+  msgCloneSavedManual:
+    "DaVinchi : clone complet de {0} sous .element-picks/…/clone/. Utilisez Attach / Copy.",
+  badgeCloneOn: "CLONE ACTIF",
+  defaultCloneTerminalPrompt:
+    "Pack clone UI joint (captures + HTML/CSS + assets + AGENT.md). Recréer 1:1 : ",
   closeBrowser: "Fermer le navigateur",
   attachLast: "Coller dans le terminal",
   copyPaths: "Copier les chemins",
@@ -712,6 +760,22 @@ const it: Dict = {
   openBrowser: "Apri browser",
   selectMode: "Modalità selezione",
   selectModeOn: "Modalità selezione ON",
+  cloneMode: "Modalità clone",
+  cloneModeOn: "Modalità clone ON",
+  statusCloneOn: "Modalità clone ON — clic per catturare il pack completo",
+  statusCloneOnHover:
+    "Modalità clone ON — clic: HTML/CSS/asset + screenshot",
+  statusCloneOff: "Modalità clone OFF",
+  statusCloning: "Clonazione di {0} (pack profondo)…",
+  statusCloneSavedAttached: "Clone salvato {0} → terminale + appunti ({1})",
+  statusCloneSaved: "Clone salvato {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: clone completo di {0} salvato (clone/) → terminale + appunti.",
+  msgCloneSavedManual:
+    "DaVinchi: clone completo di {0} in .element-picks/…/clone/. Usa Attach / Copy.",
+  badgeCloneOn: "CLONE ATTIVO",
+  defaultCloneTerminalPrompt:
+    "Pack clone UI allegato (screenshot + HTML/CSS + asset + AGENT.md). Ricrea 1:1: ",
   closeBrowser: "Chiudi browser",
   attachLast: "Incolla nel terminal",
   copyPaths: "Copia percorsi",
@@ -804,6 +868,22 @@ const ptBR: Dict = {
   openBrowser: "Abrir navegador",
   selectMode: "Modo de seleção",
   selectModeOn: "Modo de seleção ON",
+  cloneMode: "Modo clone",
+  cloneModeOn: "Modo clone ON",
+  statusCloneOn: "Modo clone ON — clique para capturar o pack completo",
+  statusCloneOnHover:
+    "Modo clone ON — clique: HTML/CSS/assets + capturas",
+  statusCloneOff: "Modo clone OFF",
+  statusCloning: "Clonando {0} (pack profundo)…",
+  statusCloneSavedAttached: "Clone salvo {0} → terminal + área de transferência ({1})",
+  statusCloneSaved: "Clone salvo {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: clone completo de {0} salvo (clone/) → terminal + área de transferência.",
+  msgCloneSavedManual:
+    "DaVinchi: clone completo de {0} em .element-picks/…/clone/. Use Attach / Copy.",
+  badgeCloneOn: "CLONE ATIVO",
+  defaultCloneTerminalPrompt:
+    "Pack de clone UI anexado (capturas + HTML/CSS + assets + AGENT.md). Recriar 1:1: ",
   closeBrowser: "Fechar navegador",
   attachLast: "Colar no terminal",
   copyPaths: "Copiar caminhos",
@@ -896,6 +976,22 @@ const nl: Dict = {
   openBrowser: "Browser openen",
   selectMode: "Selectiemodus",
   selectModeOn: "Selectiemodus AAN",
+  cloneMode: "Kloonmodus",
+  cloneModeOn: "Kloonmodus AAN",
+  statusCloneOn: "Kloonmodus AAN — klik voor volledig kloonpakket",
+  statusCloneOnHover:
+    "Kloonmodus AAN — klik: HTML/CSS/assets + screenshots",
+  statusCloneOff: "Kloonmodus UIT",
+  statusCloning: "Klonen van {0} (diep pakket)…",
+  statusCloneSavedAttached: "Kloon opgeslagen {0} → terminal + klembord ({1})",
+  statusCloneSaved: "Kloon opgeslagen {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: volledige kloon van {0} opgeslagen (clone/) → terminal + klembord.",
+  msgCloneSavedManual:
+    "DaVinchi: volledige kloon van {0} onder .element-picks/…/clone/. Gebruik Attach / Copy.",
+  badgeCloneOn: "KLOON AAN",
+  defaultCloneTerminalPrompt:
+    "Volledig UI-kloonpakket bijgevoegd (screenshots + HTML/CSS + assets + AGENT.md). 1:1 nabouwen: ",
   closeBrowser: "Browser sluiten",
   attachLast: "Plakken in terminal",
   copyPaths: "Paden kopiëren",
@@ -989,6 +1085,22 @@ const pl: Dict = {
   openBrowser: "Otwórz przeglądarkę",
   selectMode: "Tryb wyboru",
   selectModeOn: "Tryb wyboru WŁ",
+  cloneMode: "Tryb klonu",
+  cloneModeOn: "Tryb klonu WŁ",
+  statusCloneOn: "Tryb klonu WŁ — kliknij, by przechwycić pełny pack",
+  statusCloneOnHover:
+    "Tryb klonu WŁ — klik: HTML/CSS/zasoby + zrzuty",
+  statusCloneOff: "Tryb klonu WYŁ",
+  statusCloning: "Klonowanie {0} (głęboki pack)…",
+  statusCloneSavedAttached: "Klon zapisany {0} → terminal + schowek ({1})",
+  statusCloneSaved: "Klon zapisany {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: pełny klon {0} zapisany (clone/) → terminal + schowek.",
+  msgCloneSavedManual:
+    "DaVinchi: pełny klon {0} w .element-picks/…/clone/. Użyj Attach / Copy.",
+  badgeCloneOn: "KLON WŁ",
+  defaultCloneTerminalPrompt:
+    "Pełny pack klonu UI dołączony (zrzuty + HTML/CSS + zasoby + AGENT.md). Odtwórz 1:1: ",
   closeBrowser: "Zamknij przeglądarkę",
   attachLast: "Wklej do terminala",
   copyPaths: "Kopiuj ścieżki",
@@ -1082,6 +1194,22 @@ const tr: Dict = {
   openBrowser: "Tarayıcıyı aç",
   selectMode: "Seçim modu",
   selectModeOn: "Seçim modu AÇIK",
+  cloneMode: "Klon modu",
+  cloneModeOn: "Klon modu AÇIK",
+  statusCloneOn: "Klon modu AÇIK — tam pack için tıklayın",
+  statusCloneOnHover:
+    "Klon modu AÇIK — tıkla: HTML/CSS/varlıklar + ekran görüntüleri",
+  statusCloneOff: "Klon modu KAPALI",
+  statusCloning: "{0} klonlanıyor (derin pack)…",
+  statusCloneSavedAttached: "Klon kaydedildi {0} → terminal + pano ({1})",
+  statusCloneSaved: "Klon kaydedildi {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: {0} tam klonu kaydedildi (clone/) → terminal + pano.",
+  msgCloneSavedManual:
+    "DaVinchi: {0} tam klonu .element-picks/…/clone/ altında. Attach / Copy kullanın.",
+  badgeCloneOn: "KLON AÇIK",
+  defaultCloneTerminalPrompt:
+    "Tam UI klon paketi eklendi (ekran görüntüleri + HTML/CSS + varlıklar + AGENT.md). 1:1 yeniden oluştur: ",
   closeBrowser: "Tarayıcıyı kapat",
   attachLast: "Terminale yapıştır",
   copyPaths: "Yolları kopyala",
@@ -1175,6 +1303,22 @@ const vi: Dict = {
   openBrowser: "Mở trình duyệt",
   selectMode: "Chế độ chọn",
   selectModeOn: "Chế độ chọn BẬT",
+  cloneMode: "Chế độ clone",
+  cloneModeOn: "Chế độ clone BẬT",
+  statusCloneOn: "Chế độ clone BẬT — nhấp để chụp pack đầy đủ",
+  statusCloneOnHover:
+    "Chế độ clone BẬT — nhấp: HTML/CSS/tài nguyên + ảnh chụp",
+  statusCloneOff: "Chế độ clone TẮT",
+  statusCloning: "Đang clone {0} (pack sâu)…",
+  statusCloneSavedAttached: "Đã lưu clone {0} → terminal + clipboard ({1})",
+  statusCloneSaved: "Đã lưu clone {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: clone đầy đủ của {0} đã lưu (clone/) → terminal + clipboard.",
+  msgCloneSavedManual:
+    "DaVinchi: clone đầy đủ của {0} trong .element-picks/…/clone/. Dùng Attach / Copy.",
+  badgeCloneOn: "CLONE BẬT",
+  defaultCloneTerminalPrompt:
+    "Pack clone UI đã đính kèm (ảnh + HTML/CSS + tài nguyên + AGENT.md). Tái tạo 1:1: ",
   closeBrowser: "Đóng trình duyệt",
   attachLast: "Dán vào terminal",
   copyPaths: "Sao chép đường dẫn",
@@ -1268,6 +1412,22 @@ const id: Dict = {
   openBrowser: "Buka browser",
   selectMode: "Mode pilih",
   selectModeOn: "Mode pilih ON",
+  cloneMode: "Mode klon",
+  cloneModeOn: "Mode klon ON",
+  statusCloneOn: "Mode klon ON — klik untuk capture pack lengkap",
+  statusCloneOnHover:
+    "Mode klon ON — klik: HTML/CSS/aset + screenshot",
+  statusCloneOff: "Mode klon OFF",
+  statusCloning: "Mengkloning {0} (pack dalam)…",
+  statusCloneSavedAttached: "Klon disimpan {0} → terminal + clipboard ({1})",
+  statusCloneSaved: "Klon disimpan {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: klon penuh {0} disimpan (clone/) → terminal + clipboard.",
+  msgCloneSavedManual:
+    "DaVinchi: klon penuh {0} di .element-picks/…/clone/. Gunakan Attach / Copy.",
+  badgeCloneOn: "KLON ON",
+  defaultCloneTerminalPrompt:
+    "Pack klon UI terlampir (screenshot + HTML/CSS + aset + AGENT.md). Buat ulang 1:1: ",
   closeBrowser: "Tutup browser",
   attachLast: "Tempel ke terminal",
   copyPaths: "Salin path",
@@ -1360,6 +1520,22 @@ const ca: Dict = {
   openBrowser: "Obre el navegador",
   selectMode: "Mode de selecció",
   selectModeOn: "Mode de selecció ON",
+  cloneMode: "Mode clon",
+  cloneModeOn: "Mode clon ON",
+  statusCloneOn: "Mode clon ON — feu clic per capturar el pack complet",
+  statusCloneOnHover:
+    "Mode clon ON — clic: HTML/CSS/actius + captures",
+  statusCloneOff: "Mode clon OFF",
+  statusCloning: "Clonant {0} (pack profund)…",
+  statusCloneSavedAttached: "Clon desat {0} → terminal + porta-retalls ({1})",
+  statusCloneSaved: "Clon desat {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: clon complet de {0} desat (clone/) → terminal + porta-retalls.",
+  msgCloneSavedManual:
+    "DaVinchi: clon complet de {0} a .element-picks/…/clone/. Useu Attach / Copy.",
+  badgeCloneOn: "CLON ON",
+  defaultCloneTerminalPrompt:
+    "Pack de clon UI adjunt (captures + HTML/CSS + actius + AGENT.md). Recrear 1:1: ",
   closeBrowser: "Tanca el navegador",
   attachLast: "Enganxa al terminal",
   copyPaths: "Copia els camins",
@@ -1452,6 +1628,22 @@ const hi: Dict = {
   openBrowser: "ब्राउज़र खोलें",
   selectMode: "चयन मोड",
   selectModeOn: "चयन मोड चालू",
+  cloneMode: "क्लोन मोड",
+  cloneModeOn: "क्लोन मोड चालू",
+  statusCloneOn: "क्लोन मोड चालू — पूरा pack कैप्चर करने के लिए क्लिक करें",
+  statusCloneOnHover:
+    "क्लोन मोड चालू — क्लिक: HTML/CSS/संपत्तियाँ + स्क्रीनशॉट",
+  statusCloneOff: "क्लोन मोड बंद",
+  statusCloning: "{0} क्लोन हो रहा है (गहरा pack)…",
+  statusCloneSavedAttached: "क्लोन सहेजा {0} → टर्मिनल + क्लिपबोर्ड ({1})",
+  statusCloneSaved: "क्लोन सहेजा {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: {0} का पूरा क्लोन सहेजा (clone/) → टर्मिनल + क्लिपबोर्ड।",
+  msgCloneSavedManual:
+    "DaVinchi: {0} का पूरा क्लोन .element-picks/…/clone/ में। Attach / Copy उपयोग करें।",
+  badgeCloneOn: "क्लोन चालू",
+  defaultCloneTerminalPrompt:
+    "पूरा UI क्लोन pack संलग्न (स्क्रीनशॉट + HTML/CSS + संपत्तियाँ + AGENT.md)। 1:1 फिर बनाएँ: ",
   closeBrowser: "ब्राउज़र बंद करें",
   attachLast: "टर्मिनल में पेस्ट करें",
   copyPaths: "पथ कॉपी करें",
@@ -1545,6 +1737,22 @@ const ja: Dict = {
   openBrowser: "ブラウザを開く",
   selectMode: "選択モード",
   selectModeOn: "選択モード ON",
+  cloneMode: "クローンモード",
+  cloneModeOn: "クローンモード ON",
+  statusCloneOn: "クローンモード ON — クリックでフルクローンパックを取得",
+  statusCloneOnHover:
+    "クローンモード ON — クリックで HTML/CSS/アセット + スクリーンショット",
+  statusCloneOff: "クローンモード OFF",
+  statusCloning: "{0} をクローン中（ディープパック）…",
+  statusCloneSavedAttached: "クローン保存 {0} → ターミナル + クリップボード ({1})",
+  statusCloneSaved: "クローン保存 {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: {0} のフルクローンを保存 (clone/) → ターミナル + クリップボード。",
+  msgCloneSavedManual:
+    "DaVinchi: {0} のフルクローンを .element-picks/…/clone/ に保存。Attach / Copy を使用。",
+  badgeCloneOn: "クローン ON",
+  defaultCloneTerminalPrompt:
+    "フル UI クローンパックを添付（スクリーンショット + HTML/CSS + アセット + AGENT.md）。1:1 で再現: ",
   closeBrowser: "ブラウザを閉じる",
   attachLast: "ターミナルに貼り付け",
   copyPaths: "パスをコピー",
@@ -1638,6 +1846,22 @@ const ko: Dict = {
   openBrowser: "브라우저 열기",
   selectMode: "선택 모드",
   selectModeOn: "선택 모드 켜짐",
+  cloneMode: "클론 모드",
+  cloneModeOn: "클론 모드 ON",
+  statusCloneOn: "클론 모드 ON — 클릭하여 전체 클론 팩 캡처",
+  statusCloneOnHover:
+    "클론 모드 ON — 클릭: HTML/CSS/에셋 + 스크린샷",
+  statusCloneOff: "클론 모드 OFF",
+  statusCloning: "{0} 클론 중 (딥 팩)…",
+  statusCloneSavedAttached: "클론 저장 {0} → 터미널 + 클립보드 ({1})",
+  statusCloneSaved: "클론 저장 {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi: {0} 전체 클론 저장 (clone/) → 터미널 + 클립보드.",
+  msgCloneSavedManual:
+    "DaVinchi: {0} 전체 클론이 .element-picks/…/clone/ 에 저장됨. Attach / Copy 사용.",
+  badgeCloneOn: "클론 ON",
+  defaultCloneTerminalPrompt:
+    "전체 UI 클론 팩 첨부 (스크린샷 + HTML/CSS + 에셋 + AGENT.md). 1:1 재현: ",
   closeBrowser: "브라우저 닫기",
   attachLast: "터미널에 붙여넣기",
   copyPaths: "경로 복사",
@@ -1731,6 +1955,22 @@ const zhCN: Dict = {
   openBrowser: "打开浏览器",
   selectMode: "选择模式",
   selectModeOn: "选择模式 开",
+  cloneMode: "克隆模式",
+  cloneModeOn: "克隆模式 开",
+  statusCloneOn: "克隆模式 开 — 点击以捕获完整克隆包",
+  statusCloneOnHover:
+    "克隆模式 开 — 点击获取 HTML/CSS/资源 + 截图",
+  statusCloneOff: "克隆模式 关",
+  statusCloning: "正在克隆 {0}（深度包）…",
+  statusCloneSavedAttached: "克隆已保存 {0} → 终端 + 剪贴板 ({1})",
+  statusCloneSaved: "克隆已保存 {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi：已保存 {0} 的完整克隆 (clone/) → 终端 + 剪贴板。",
+  msgCloneSavedManual:
+    "DaVinchi：{0} 的完整克隆已保存到 .element-picks/…/clone/。请使用 Attach / Copy。",
+  badgeCloneOn: "克隆 开",
+  defaultCloneTerminalPrompt:
+    "已附加完整 UI 克隆包（截图 + HTML/CSS + 资源 + AGENT.md）。1:1 复现：",
   closeBrowser: "关闭浏览器",
   attachLast: "粘贴到终端",
   copyPaths: "复制路径",
@@ -1818,6 +2058,22 @@ const zhTW: Dict = {
   openBrowser: "開啟瀏覽器",
   selectMode: "選取模式",
   selectModeOn: "選取模式 開",
+  cloneMode: "克隆模式",
+  cloneModeOn: "克隆模式 開",
+  statusCloneOn: "克隆模式 開 — 點擊以擷取完整克隆包",
+  statusCloneOnHover:
+    "克隆模式 開 — 點擊取得 HTML/CSS/資源 + 截圖",
+  statusCloneOff: "克隆模式 關",
+  statusCloning: "正在克隆 {0}（深度包）…",
+  statusCloneSavedAttached: "克隆已儲存 {0} → 終端機 + 剪貼簿 ({1})",
+  statusCloneSaved: "克隆已儲存 {0} ({1})",
+  msgCloneSavedAttached:
+    "DaVinchi：已儲存 {0} 的完整克隆 (clone/) → 終端機 + 剪貼簿。",
+  msgCloneSavedManual:
+    "DaVinchi：{0} 的完整克隆已儲存至 .element-picks/…/clone/。請使用 Attach / Copy。",
+  badgeCloneOn: "克隆 開",
+  defaultCloneTerminalPrompt:
+    "已附加完整 UI 克隆包（截圖 + HTML/CSS + 資源 + AGENT.md）。1:1 重現：",
   closeBrowser: "關閉瀏覽器",
   attachLast: "貼到終端機",
   copyPaths: "複製路徑",

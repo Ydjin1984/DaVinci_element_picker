@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.23",
+  "version": "0.1.25",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -338,7 +338,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package --allow-missing-repository",
+    "package": "vsce package",
     "package:out": "npm run package && node -e \"const fs=require('fs');const p=require('./package.json');const n=p.name+'-'+p.version+'.vsix';fs.mkdirSync('dist',{recursive:true});fs.copyFileSync(n,'dist/'+n);console.log('dist/'+n)\""
   },
   "devDependencies": {

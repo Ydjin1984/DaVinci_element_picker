@@ -38,7 +38,7 @@ export interface PanelState {
   lastPick: SavedPick | null;
   status: string;
   statusKind?: StatusKind;
-  /** e.g. v0.1.23 · ui · win32 */
+  /** e.g. v0.1.24 · ui · win32 */
   versionBadge?: string;
   /** Full host detail for tooltip */
   versionDetail?: string;

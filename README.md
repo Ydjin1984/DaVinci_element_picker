@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/media/hero.jpg" alt="DaVinchi — Pick the element. Feed the agent." width="920" />
+  <img src="media/hero.jpg" alt="DaVinchi — Pick the element. Feed the agent." width="920" />
 </p>
 
 <h1 align="center">DaVinchi</h1>
@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.23-4fc3f7" alt="version 0.1.23" />
+  <img src="https://img.shields.io/badge/version-0.1.25-4fc3f7" alt="version 0.1.25" />
   <img src="https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Code 1.85+" />
   <img src="https://img.shields.io/badge/Cursor-supported-000000?logo=cursor&logoColor=white" alt="Cursor" />
   <img src="https://img.shields.io/badge/license-MIT-22c55e" alt="MIT" />
@@ -50,19 +50,19 @@ No Copilot lock-in. Agent-agnostic.
 
 ## Install
 
-**Current release: `0.1.23`** · package id `coin-rebalancer.element-picker`
+**Current release: `0.1.25`** · package id `coin-rebalancer.element-picker`
 
 ### From VSIX (recommended)
 
-1. Download **`element-picker-0.1.23.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or build locally.
+1. Download **`element-picker-0.1.25.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or build locally.
 2. VS Code / Cursor → Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…**
 3. Reload the window.
 
 CLI:
 
 ```powershell
-code --install-extension ".\element-picker-0.1.23.vsix" --force
-cursor --install-extension ".\element-picker-0.1.23.vsix" --force
+code --install-extension ".\element-picker-0.1.25.vsix" --force
+cursor --install-extension ".\element-picker-0.1.25.vsix" --force
 ```
 
 Step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · short EN: [INSTALL.md](INSTALL.md)
@@ -99,7 +99,7 @@ Step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · short EN: [INSTAL
 | `Ctrl+Shift+Alt+E` | Action menu (also status bar) |
 
 The panel, status bar, Controls tree, and action menu show a **version badge**  
-(`v0.1.23 · ui|workspace · platform`) so Local vs Remote host is obvious.
+(`v0.1.25 · ui|workspace · platform`) so Local vs Remote host is obvious.
 
 ---
 
@@ -108,7 +108,7 @@ The panel, status bar, Controls tree, and action menu show a **version badge**
 ### Real capture (canvas chart)
 
 <p align="center">
-  <img src="docs/media/screenshot-element-canvas.png" alt="Captured chart canvas" width="860" />
+  <img src="media/screenshot-element-canvas.png" alt="Captured chart canvas" width="860" />
 </p>
 
 ### Context the agent actually needs
@@ -133,7 +133,7 @@ Canvas metrics:
 ### Tabs / layout elements
 
 <p align="center">
-  <img src="docs/media/screenshot-element-tabs.png" alt="Captured navigation tabs" width="720" />
+  <img src="media/screenshot-element-tabs.png" alt="Captured navigation tabs" width="720" />
 </p>
 
 ---
@@ -161,12 +161,24 @@ Canvas metrics:
 | `DaVinchi: Toggle Select Mode` | `Ctrl+Shift+E` |
 | `DaVinchi: Toggle Clone Mode` | `Ctrl+Shift+Alt+C` |
 | `DaVinchi: Show Action Menu` | `Ctrl+Shift+Alt+E` |
-| `DaVinchi: Attach Last Pick to Terminal` | Paste paths |
-| `DaVinchi: Copy Last Paths to Clipboard` | Copy paths |
+| `DaVinchi: Attach Last Pick to Terminal` | Paste paths into active terminal |
+| `DaVinchi: Copy Last Paths to Clipboard` | Copy attach block |
+| `DaVinchi: Reveal Last Pick Folder` | Open last capture folder |
+| `DaVinchi: Close Browser` | Disconnect / close managed session |
 | `DaVinchi: Open Rich UI in Editor` | Editor webview panel |
 | `DaVinchi: Reload Webview UI` | Remount if webview stuck |
 | `DaVinchi: Fix Webview Cache` | Repair SW cache (Windows) |
 | `DaVinchi: Select Language` | UI language (User settings) |
+| `DaVinchi: Start Local Chrome (CDP)` | Start Chrome with `--remote-debugging-port=9222` (Windows helper) |
+| `DaVinchi: Copy Local Chrome CDP Command` | Copy the PowerShell start script only |
+
+### Remote SSH (local Chrome via CDP)
+
+1. On your **Windows PC**: run **Start Local Chrome (CDP)** (or paste the copied script).
+2. In VS Code/Cursor Remote: **Ports** → reverse-forward `9222` → `9222`.
+3. Set `elementPicker.browserMode` to `auto` (default) or `cdp`, then **Open browser**.
+
+Picks still write into the **remote workspace** folder.
 
 ---
 
@@ -174,16 +186,28 @@ Canvas metrics:
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
-| `elementPicker.language` | `en` | UI language (`ca` … `zh-TW`) |
-| `elementPicker.defaultUrl` | *(empty)* | Optional preferred URL |
-| `elementPicker.browserMode` | `auto` | `auto` / `launch` / `cdp` |
-| `elementPicker.cdpEndpoint` | `http://127.0.0.1:9222` | CDP endpoint for advanced attach |
-| `elementPicker.browserChannel` | `chrome` | `chrome` / `msedge` / `chromium` |
-| `elementPicker.outputDir` | `.element-picks` | Save folder (workspace-relative) |
+| `elementPicker.language` | `en` | UI language (`ca` … `zh-TW`), 18 locales |
+| `elementPicker.defaultUrl` | *(empty)* | Optional preferred URL (never a forced preset) |
+| `elementPicker.browserMode` | `auto` | `auto` / `launch` / `cdp` (application-scoped) |
+| `elementPicker.cdpEndpoint` | `http://127.0.0.1:9222` | CDP endpoint (application-scoped) |
+| `elementPicker.browserChannel` | `chrome` | `chrome` / `msedge` / `chromium` (application-scoped) |
+| `elementPicker.browserPath` | *(empty)* | Optional full path to `chrome.exe` / `msedge.exe` (application-scoped; ignored in Restricted Mode) |
+| `elementPicker.outputDir` | `.element-picks` | Save folder (workspace-relative name only) |
 | `elementPicker.autoAttach` | `true` | Terminal + clipboard after pick |
-| `elementPicker.terminalPrompt` | *(localized)* | Prefix before paths |
-| `elementPicker.maxHtmlBytes` | `100000` | outerHTML truncate size |
-| `elementPicker.clone*` | see panel | Granular clone-pack toggles |
+| `elementPicker.terminalPrompt` | *(localized)* | Prefix before paths; empty → locale default |
+| `elementPicker.maxHtmlBytes` | `100000` | outerHTML truncate size in `context.md` |
+| `elementPicker.cloneZip` | `false` | Write `clone.zip` |
+| `elementPicker.cloneLatest` | `true` | Mirror pack into `latest/` |
+| `elementPicker.clonePreviewHtml` | `true` | Self-contained `clone/preview.html` |
+| `elementPicker.cloneAssets` | `true` | Download images/fonts/icons |
+| `elementPicker.clonePageScreenshot` | `true` | Full-page `page.png` |
+| `elementPicker.cloneParentScreenshot` | `true` | Parent-area `parent.png` |
+| `elementPicker.cloneComputedJson` | `true` | `computed.json` + `fonts.json` |
+| `elementPicker.cloneInlineSvgs` | `true` | Write inline SVG files |
+| `elementPicker.cloneFullSite` | `false` | Capture whole page on any click |
+| `elementPicker.cloneOneShot` | `false` | Deactivate Clone mode after one successful capture |
+
+All `clone*` toggles are also editable in the panel **Clone settings** section (saved to User settings).
 
 `extensionKind` is `ui` + `workspace` so the extension can run on your PC with Remote SSH; picks save into the open workspace.
 
@@ -199,8 +223,9 @@ npm run compile
 ```
 
 - **F5** → Extension Development Host  
-- Package: `npm run package` → `element-picker-0.1.23.vsix`  
-- Or: `npm run package:out` → `dist/element-picker-0.1.23.vsix`
+- Package: `npm run package` → `element-picker-0.1.25.vsix`  
+- Or: `npm run package:out` → `dist/element-picker-0.1.25.vsix`  
+- Preflight: `node .claude/skills/davinchi-release/scripts/preflight.js`
 
 ```jsonc
 // .vscode/launch.json
@@ -222,7 +247,7 @@ npm run compile
 ## Brand
 
 <p align="center">
-  <img src="docs/media/brand-board.jpg" alt="DaVinchi brand board" width="920" />
+  <img src="media/brand-board.jpg" alt="DaVinchi brand board" width="920" />
 </p>
 
 | | |
@@ -232,7 +257,7 @@ npm run compile
 | **Mark** | Precision reticle × selection diamond |
 | **Palette** | `#0b0e14` · `#4fc3f7` · `#4f8cff` · `#dce3f0` |
 
-More: [docs/BRAND.md](docs/BRAND.md) · OG card: [docs/media/og-card.jpg](docs/media/og-card.jpg)
+More: [docs/BRAND.md](docs/BRAND.md) · OG card: [media/og-card.jpg](media/og-card.jpg)
 
 ---
 

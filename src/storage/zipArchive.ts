@@ -60,7 +60,13 @@ export function createZipBuffer(entries: ZipEntry[]): Uint8Array {
     (now.getDate() & 0x1f);
 
   for (const entry of entries) {
-    const name = entry.name.replace(/\\/g, "/").replace(/^\/+/, "");
+    // Normalize + reject path traversal (call sites use fixed names; defense-in-depth).
+    const name = entry.name
+      .replace(/\\/g, "/")
+      .replace(/^\/+/, "")
+      .split("/")
+      .filter((seg) => seg && seg !== "." && seg !== "..")
+      .join("/");
     if (!name || name.endsWith("/")) continue;
     const nameBuf = Buffer.from(name, "utf8");
     const raw = Buffer.from(

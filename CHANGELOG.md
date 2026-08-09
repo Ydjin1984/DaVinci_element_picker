@@ -2,6 +2,29 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.25] — 2026-08-09
+
+### Fixed
+- **Remote SSH: no more server-side Playwright Chromium launch** — when the extension host is Linux without `DISPLAY`, auto mode uses **CDP only** (local Chrome on your PC via reverse-forwarded `9222`). Headless Chromium under `~/.cache/ms-playwright/` is no longer treated as a launchable browser for interactive pick
+- **Poisoned `browserPath`**: Playwright-cache paths are ignored and cleared so Remote SSH recovery does not keep retrying a server binary
+- **CDP wizard**: open failures on Remote SSH (ECONNREFUSED / without DISPLAY) always open the “Start Local Chrome (CDP)” flow instead of a dead-end launch error
+- **Workspace host warning** on activate when extensionKind is workspace under Remote SSH, with copyable fix steps (install VSIX as local UI, or CDP)
+
+## [0.1.24] — 2026-08-09
+
+### Fixed
+- **Clone mode re-apply after re-open/re-navigate**: when the browser is already open and a new URL is loaded, Clone mode (not only Select) is restored on the page after picker reinstall
+- **Concurrent `open(url)`**: stacked Open Browser calls keep the **latest** URL and navigate to it after the in-flight open finishes (no dropped requests)
+- **Asset download size guard**: CDP + in-page fetch skip oversized responses via `Content-Length` and body length (`maxBytes`, default 6–8 MB)
+- **ZIP entry names**: path segments `.` / `..` stripped (defense-in-depth)
+- **Local Chrome CDP helper URL**: control characters stripped before PowerShell embedding
+
+### Changed
+- **i18n**: clone mode / status / toast / terminal-prompt strings translated for all 18 locales (no longer fall through to English outside `en`/`ru`)
+- **`browserPath` discovery**: no longer silently writes the discovered Chrome path into User settings; only an explicit user setting is persisted
+- **README / INSTALL**: full commands + settings tables, Remote SSH CDP flow, version `0.1.24`; marketplace-safe images live under `media/` (shipped in VSIX)
+- **Package script**: dropped obsolete `--allow-missing-repository` (repository is set)
+
 ## [0.1.23] — 2026-08-09
 
 ### Added

@@ -148,13 +148,16 @@ function showErr(e: unknown): void {
 /** True when the browser-open error should route to the CDP wizard. */
 function isCdpFailure(e: unknown, message: string): boolean {
   const kind = (e as { davinchiErrorKind?: string } | null)?.davinchiErrorKind;
-  if (kind) {
-    return kind === "cdp";
+  if (kind === "cdp") {
+    return true;
   }
-  // Fallback for errors without a kind: only unambiguous CDP signals
+  // Remote headless often surfaces as launch+cdp chain or ECONNREFUSED — still guide CDP.
   return (
-    message.includes("ECONNREFUSED 127.0.0.1:9222") ||
-    message.includes("Remote SSH")
+    message.includes("ECONNREFUSED") ||
+    message.includes("connectOverCDP") ||
+    message.includes("Remote SSH") ||
+    message.includes("without DISPLAY") ||
+    message.includes("Start Local Chrome (CDP)")
   );
 }
 
@@ -392,7 +395,7 @@ async function handlePick(
       };
 
       const saved = await saveClonePack(full, shots, (url) =>
-        session.downloadUrl(url)
+        session.downloadUrl(url, { maxBytes: 6 * 1024 * 1024 })
       );
       lastPick = saved;
 
@@ -518,10 +521,51 @@ export function activate(context: vscode.ExtensionContext): void {
   session.setModeHandler(() => syncUi());
   session.setCloneModeHandler(() => syncUi());
 
-  // Quiet diagnostics only (no popups on activate)
-  console.log("[DaVinchi] activate", host.detail, "| uiKind=", vscode.env.uiKind);
+  // Quiet diagnostics (no popups on activate unless mis-hosted on Remote SSH)
+  console.log(
+    "[DaVinchi] activate",
+    host.detail,
+    "| extensionKind=",
+    host.extensionKind,
+    "| uiKind=",
+    vscode.env.uiKind
+  );
 
-  // Pin system Chrome/Edge path so Playwright uses a real executable
+  // Pure UI preferred: Chrome launches on the local PC. If running as workspace on
+  // Remote SSH Linux, warn once so the user reinstalls as Local/UI or uses CDP.
+  if (
+    context.extension.extensionKind === vscode.ExtensionKind.Workspace &&
+    vscode.env.remoteName
+  ) {
+    void vscode.window
+      .showWarningMessage(
+        "DaVinchi runs on the SSH host (workspace). Chrome will not open on your PC until the extension runs as UI locally — or use Start Local Chrome (CDP) + reverse-forward 9222.",
+        "Copy fix steps",
+        "Dismiss"
+      )
+      .then(async (choice) => {
+        if (choice !== "Copy fix steps") return;
+        const tip =
+          "DaVinchi on Remote SSH — make Chrome open on your PC:\n\n" +
+          "A) Preferred — local UI host:\n" +
+          "1) On Windows (local Cursor/VS Code, not SSH): Install from VSIX\n" +
+          "2) Extensions → … → Install from VSIX → element-picker-*.vsix\n" +
+          "3) User settings (optional):\n" +
+          '   "remote.extensionKind": { "coin-rebalancer.element-picker": ["ui"] }\n' +
+          "4) Developer: Reload Window\n" +
+          "5) Open browser — Chrome opens on your PC; picks save into SSH workspace.\n\n" +
+          "B) Without local install — CDP:\n" +
+          "1) Command “DaVinchi: Start Local Chrome (CDP)” / copy script → run on Windows\n" +
+          "2) Ports panel → reverse-forward 9222 → 9222\n" +
+          "3) Open browser again in DaVinchi.";
+        await vscode.env.clipboard.writeText(tip);
+        void vscode.window.showInformationMessage(
+          "Fix steps copied to clipboard."
+        );
+      });
+  }
+
+  // Resolve Chrome/Edge path (clears poisoned Playwright paths; does not pin remotely)
   void ensureBrowserPathSetting().then((p) => {
     if (p) {
       console.log(

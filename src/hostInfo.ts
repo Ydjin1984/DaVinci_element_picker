@@ -7,9 +7,9 @@ export type HostInfo = {
   extensionKind: "ui" | "workspace";
   platform: string;
   remoteName: string;
-  /** Short one-liner: v0.1.23 · ui · win32 */
+  /** Short one-liner: v0.1.24 · ui · win32 */
   badge: string;
-  /** Longer: DaVinchi v0.1.23 · host ui · win32 · local */
+  /** Longer: DaVinchi v0.1.24 · host ui · win32 · local */
   detail: string;
 };
 
