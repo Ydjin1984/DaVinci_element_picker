@@ -1,111 +1,148 @@
-# DaVinchi — установка
+# DaVinchi — установка и настройка
 
-Расширение ставится из файла **`.vsix`** (Marketplace по умолчанию не используется).
+Расширение для VS Code и Cursor: кликаете по элементу на странице — получаете скриншот и полный контекст (HTML, CSS, селекторы) для ИИ-агента в терминале.
 
-**Актуальная версия: `0.1.31`** · id `coin-rebalancer.element-picker`
+**Актуальная версия: `0.1.32`** · id `coin-rebalancer.element-picker` · [Все релизы](https://github.com/Ydjin1984/DaVinci_element_picker/releases)
 
 ---
 
-## Требования
+## Что нужно
 
 | | |
 |--|--|
-| **VS Code** 1.85+ или **Cursor** | Хост расширения |
-| **Google Chrome** или **Microsoft Edge** | Окно выбора элементов |
-| Открытая **папка workspace** | Сюда пишутся `.element-picks/` |
-
-Node.js нужен только тому, кто **собирает** `.vsix` из исходников.
+| **VS Code** 1.85+ или **Cursor** | редактор |
+| **Google Chrome** | окно выбора элементов (Edge — как запасной вариант) |
+| Открытая **папка проекта** | в неё сохраняются результаты |
 
 ---
 
-## Установка (GUI)
+## Установка
 
-1. Скачайте `element-picker-0.1.31.vsix` из [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) или возьмите файл после локальной сборки.
-2. VS Code / Cursor → `Ctrl+Shift+X` → `⋯` → **Install from VSIX…**
-3. Выберите файл → **Install** → **Reload**.
-4. Слева в Activity Bar — иконка **DaVinchi**.
-
----
-
-## Установка (CLI)
+Скачайте `element-picker-0.1.32.vsix` со страницы [последнего релиза](https://github.com/Ydjin1984/DaVinci_element_picker/releases/latest) и выполните **на своём компьютере**:
 
 ```powershell
-code --install-extension ".\element-picker-0.1.31.vsix" --force
-cursor --install-extension ".\element-picker-0.1.31.vsix" --force
+code --install-extension element-picker-0.1.32.vsix --force
+# для Cursor:
+cursor --install-extension element-picker-0.1.32.vsix --force
 ```
+
+Либо через интерфейс: `Ctrl+Shift+X` → `⋯` → **Install from VSIX…** → выбрать файл → перезагрузить окно.
 
 Проверка:
 
 ```powershell
 code --list-extensions --show-versions | findstr element-picker
-cursor --list-extensions --show-versions | findstr element-picker
 ```
 
-Ожидается: `coin-rebalancer.element-picker@0.1.31`
+Ожидается `coin-rebalancer.element-picker@0.1.32`.
+
+> **Куда ставить.** Ставьте расширение на ту машину, **за которой вы сидите** — на ней стоит браузер, а браузером и управляет пикер. Это правило работает и когда проект лежит на SSH-сервере: расширение всё равно сохранит результаты в серверный проект. Если вы хотите, чтобы само расширение жило на сервере, см. раздел [Работа с сервером](#работа-с-сервером).
 
 ---
 
 ## Как пользоваться
 
-1. **File → Open Folder** — откройте проект (без workspace picks не сохранятся).
-2. Иконка **DaVinchi** слева → вкладка **Controls**.
-3. **Open browser** → вставьте URL.
-4. **Select mode** (`Ctrl+Shift+E`) или **Clone mode** (`Ctrl+Shift+Alt+C`).
-5. Наведите (подсветка) → клик по элементу.
-6. Файлы:
+1. Иконка **DaVinchi** в левой панели → вкладка **Controls**.
+2. **Open browser** → вставьте любой адрес.
+3. **Select mode** (`Ctrl+Shift+E`) или **Clone mode** (`Ctrl+Shift+Alt+C`).
+4. Наведите курсор — элемент подсветится — и кликните.
+5. Файлы появятся в проекте:
 
 ```text
-.element-picks/<timestamp>/context.md
-.element-picks/<timestamp>/element.png
+.element-picks/<время>/context.md
+.element-picks/<время>/element.png
 .element-picks/latest/...
 ```
 
-7. Пути попадают в **терминал** и **буфер обмена** — допишите вопрос агенту.
+6. Пути автоматически попадут в терминал и буфер обмена — допишите вопрос и отправьте агенту.
 
-В шапке панели, status bar, дереве Controls и меню виден **бейдж версии**  
-(`v0.1.31 · ui|workspace · platform`) — удобно понять, на каком хосте крутится расширение.
-
-### Горячие клавиши
-
-| | |
+| Клавиши | Действие |
 |--|--|
-| `Ctrl+Shift+E` | Режим Select |
-| `Ctrl+Shift+Alt+C` | Режим Clone |
-| `Ctrl+Shift+Alt+E` | Меню действий |
+| `Ctrl+Shift+E` | режим Select |
+| `Ctrl+Shift+Alt+C` | режим Clone |
+| `Ctrl+Shift+Alt+E` | меню действий |
 
-### Если вкладка UI с ошибкой Service Worker
-
-Это ограничение хоста VS Code/Cursor, не логики pick.  
-Используйте **Controls** или меню в status bar — расширение работает полностью.  
-Команды: **Reload Webview UI** / **Fix Webview Cache**.
+В шапке панели, статус-баре и дереве Controls виден **бейдж версии** вида `v0.1.32 · ui · win32`. Средняя часть говорит, где выполняется расширение: `ui` — ваш компьютер, `workspace` — сервер.
 
 ---
 
-## Remote SSH (проект на сервере)
+## Работа с сервером
 
-Ставьте VSIX в **локальный** VS Code/Cursor на своём ПК — **не** на SSH-хост. Расширение UI-only: Chrome открывается **локально**, а пики автоматически сохраняются в **удалённый** workspace на сервере. CDP и проброс портов для этого не нужны.
+Проект лежит на SSH-сервере, а браузер должен открываться у вас. Это делается двумя способами; в обоих файлы сохраняются в проект на сервере. Выберите один.
 
-Проверка: бейдж в панели DaVinchi должен показывать `v… · ui · win32` (не `workspace · linux`). Если видите `workspace` — переустановите VSIX локально (GUI/CLI выше, на своём ПК) и выполните **Reload Window**.
+### Вариант А — расширение на вашем компьютере (рекомендуется, настраивать нечего)
 
-Продвинутый fallback (CDP), только если расширение вынужденно осталось на сервере: команда **DaVinchi: Start Local Chrome (CDP)** на своём ПК (предпочитается Chrome, Edge — лишь когда Chrome не найден), затем `ssh -R 9222:127.0.0.1:9222 <host>` (или `RemoteForward 9222 localhost:9222` в `~/.ssh/config`) и снова **Open browser**.
+Поставьте VSIX **локально** (команда выше, выполнять на своём ПК, а не в SSH-окне). Открывайте удалённую папку как обычно — бейдж покажет `ui`. Нажимаете **Open browser**, Chrome открывается у вас на экране, а пики пишутся прямо в проект на сервере.
 
----
+Больше ничего не нужно: ни туннелей, ни портов, ни фоновых процессов.
 
-## Сборка из исходников
+> Если бейдж показывает `workspace · linux`, значит расширение установлено на сервере. Либо удалите его там (Extensions → запись в разделе «SSH: … — Installed» → Uninstall), либо переходите к варианту Б.
+
+### Вариант Б — расширение на сервере (одна команда для подготовки ПК)
+
+Этот вариант нужен, если расширение должно жить именно на сервере. Запустить браузер на вашей машине оно не может, поэтому управляет им через отладочный порт, который SSH пробрасывает обратно к вам.
+
+**Шаг 1 — на сервере:** установите VSIX в SSH-окне (Extensions → Install from VSIX) или со своего ПК:
 
 ```powershell
-git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
-cd DaVinci_element_picker
-npm install
-npm run package
-# → element-picker-0.1.31.vsix
+code --remote ssh-remote+<хост> --install-extension element-picker-0.1.32.vsix --force
 ```
+
+**Шаг 2 — на вашем ПК (Windows), одна команда:**
+
+```powershell
+# если репозиторий склонирован
+.\scripts\setup-windows-cdp.ps1 -SshHost <хост>
+
+# либо без клонирования
+iwr -useb https://raw.githubusercontent.com/Ydjin1984/DaVinci_element_picker/main/scripts/setup-windows-cdp.ps1 -OutFile "$env:TEMP\davinchi-setup.ps1"
+& "$env:TEMP\davinchi-setup.ps1" -SshHost <хост>
+```
+
+Права администратора не нужны. Скрипт настраивает:
+
+| Что | Зачем |
+|--|--|
+| `%LOCALAPPDATA%\DaVinchi\start-chrome-cdp.cmd` | запускает Chrome с `--remote-debugging-port=9222` в **отдельном профиле** — начиная с Chrome 136 отладочный порт на обычном профиле запрещён |
+| Автозапуск при входе в Windows | нужный Chrome готов сразу после входа |
+| Задача «DaVinchi Chrome CDP» в планировщике | вернёт браузер в течение 2 минут, если вы его закроете |
+| Обработчик ссылок `davinchi-chrome:` | позволяет кнопке **Open browser** на сервере запустить Chrome на вашем ПК |
+| `RemoteForward 9222` в `~/.ssh/config` | сервер получает доступ к вашему отладочному порту (добавляется для указанного хоста) |
+
+**Шаг 3:** переподключите SSH-окно. Туннель создаётся в момент соединения, поэтому простой перезагрузки окна недостаточно.
+
+Дальше нажимайте **Open browser**. Если Chrome не запущен, расширение само попросит вашу машину его открыть и дождётся готовности.
+
+Отменить все настройки: `.\scripts\setup-windows-cdp.ps1 -Uninstall`.
+
+Для macOS и Linux скрипта пока нет, но механизм тот же: запустить Chrome с `--remote-debugging-port=9222 --user-data-dir=<отдельная папка>` и добавить `RemoteForward 9222 localhost:9222` в `~/.ssh/config`.
+
+---
+
+## Если что-то не работает
+
+**Бейдж показывает `workspace · linux`, Open browser выдаёт ошибку.**
+Расширение выполняется на сервере. Либо поставьте его на свой компьютер (вариант А), либо подготовьте ПК скриптом (вариант Б).
+
+**«local Chrome is not reachable at http://localhost:9222».**
+Не запущен отладочный Chrome или нет туннеля. Проверьте из терминала на сервере: `curl -s http://localhost:9222/json/version` — должен вернуться JSON с полем `Browser`. Если нет, запустите лаунчер на своём ПК и переподключите SSH-окно.
+
+**Chrome открыт, но порт не отвечает.**
+Обычное окно Chrome не подойдёт: с версии 136 отладочный порт на профиле по умолчанию запрещён. Используйте лаунчер — он запускает Chrome с отдельным профилем.
+
+**Chrome постоянно закрывается.**
+Задача-сторож вернёт его в течение двух минут. Учтите: закрытие последней вкладки закрывает и окно, поэтому не закрывайте вкладку `about:blank`.
+
+**Клики внутри `<iframe>` не перехватываются.**
+Известное и осознанное ограничение: пикер внедряется только в главный фрейм.
+
+**Вкладка UI показывает ошибку Service Worker.**
+Это ограничение редактора, а не пикера. Пользуйтесь вкладкой **Controls** или меню в статус-баре; команды **Reload Webview UI** и **Fix Webview Cache** чинят кэш.
 
 ---
 
 ## Язык интерфейса
 
-Command Palette → **DaVinchi: Select Language**  
-или Settings → `elementPicker.language` (сохраняется в User settings).
+Палитра команд → **DaVinchi: Select Language**, либо настройка `elementPicker.language` (18 языков, сохраняется в пользовательских настройках).
 
-Полное описание: [README.md](../README.md)
+Полное описание возможностей: [README.md](../README.md)

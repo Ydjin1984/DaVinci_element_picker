@@ -32,3 +32,7 @@ finandy-order-clone.html
 
 # TypeScript incremental
 *.tsbuildinfo
+
+# Internal AI-collaboration log (kept local, not published)
+Обсуждения.md
+scripts/watch-discussions.ps1

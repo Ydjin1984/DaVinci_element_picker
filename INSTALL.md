@@ -1,77 +1,61 @@
 # DaVinchi — Install
 
-> **Русский:** [docs/INSTALL.ru.md](docs/INSTALL.ru.md)
+> **Русская версия:** [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · Full documentation: [README.md](./README.md)
 
-Install from a **`.vsix`** (GitHub Release or local build).  
-**Current version: `0.1.31`** · id `coin-rebalancer.element-picker`
-
----
-
-## Requirements
-
-| | |
-|--|--|
-| **VS Code** 1.85+ or **Cursor** | Extension host |
-| **Chrome** or **Edge** | Element picker window |
-| Open **workspace folder** | Writes `.element-picks/` |
-
-Node.js is needed only if you **build** the VSIX from source.
+**Current version: `0.1.32`** · id `coin-rebalancer.element-picker`
 
 ---
 
-## Install (GUI)
+## 1. Install
 
-1. Download `element-picker-0.1.31.vsix` from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or the repo root / `dist/` after a local build.
-2. Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…**
-3. Choose the file → **Install** → **Reload**.
-
----
-
-## Install (CLI)
+Download `element-picker-0.1.32.vsix` from the [latest release](https://github.com/Ydjin1984/DaVinci_element_picker/releases/latest) and run it **on your own computer**:
 
 ```powershell
-code --install-extension ".\element-picker-0.1.31.vsix" --force
-cursor --install-extension ".\element-picker-0.1.31.vsix" --force
+code --install-extension element-picker-0.1.32.vsix --force
+cursor --install-extension element-picker-0.1.32.vsix --force
 ```
+
+Or: Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…** → reload the window.
 
 Verify:
 
 ```powershell
 code --list-extensions --show-versions | findstr element-picker
-cursor --list-extensions --show-versions | findstr element-picker
+# expected: coin-rebalancer.element-picker@0.1.32
 ```
 
-Expected: `coin-rebalancer.element-picker@0.1.31`
+Requirements: VS Code 1.85+ or Cursor · Google Chrome · an open workspace folder.
 
 ---
 
-## First use
+## 2. First pick
 
-1. **File → Open Folder** (your project).
+1. **File → Open Folder** — your project.
 2. Activity Bar → **DaVinchi** → **Controls**.
-3. **Open browser** → URL → **Select mode** (`Ctrl+Shift+E`) → click an element.
-4. Artifacts: `.element-picks/latest/context.md` + `element.png`.
-
-Full product docs: [README.md](./README.md)
+3. **Open browser** → paste a URL → **Select mode** (`Ctrl+Shift+E`) → click an element.
+4. Artifacts: `.element-picks/latest/context.md` and `element.png`; the paths also land in the terminal and clipboard.
 
 ---
 
-## Remote SSH (project on a server)
+## 3. Project on an SSH server
 
-Install the VSIX on the **local** VS Code/Cursor on your PC — **not** on the SSH host. The extension is UI-only: Chrome opens **locally**, picks save into the **remote** workspace automatically.
+Install DaVinchi on **your own machine**, then open the remote folder as usual. Chrome starts on your desktop, and picks are saved into the project on the server. The version badge in the panel must read `ui` (your machine), not `workspace` (the server).
 
-Check: the badge in the DaVinchi panel must show `v… · ui · win32` (not `workspace · linux`). If it shows `workspace`, reinstall the VSIX locally (GUI/CLI above, run on your PC) and **Reload Window**.
+Want the extension itself to live on the server? Install it there, then prepare your PC with one command:
+
+```powershell
+.\scripts\setup-windows-cdp.ps1 -SshHost <host>
+```
+
+and reconnect the SSH window. Details and the macOS/Linux equivalent: [README — Working on a remote server](./README.md#working-on-a-remote-server).
 
 ---
 
-## Build from source
+## 4. Build from source
 
 ```powershell
 git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
 cd DaVinci_element_picker
 npm install
-npm run package
-# → element-picker-0.1.31.vsix
+npm run package     # → element-picker-0.1.32.vsix
 ```
-
-Or `npm run package:out` → `dist/element-picker-0.1.31.vsix`

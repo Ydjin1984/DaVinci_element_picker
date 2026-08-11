@@ -96,8 +96,62 @@ function Get-ChangelogNotes([string] $version) {
   return ($buf -join "`n").Trim() + "`n"
 }
 
-$gh = Find-Gh
-Ensure-GhToken
+# Token stored by git credential helper — the fallback path when `gh` is
+# missing or not logged in (a git push works long before `gh auth login` does).
+function Get-GitToken {
+  try {
+    $out = "protocol=https`nhost=github.com`n" | & git credential fill 2>$null
+    $line = $out | Where-Object { $_ -like "password=*" } | Select-Object -First 1
+    if ($line) { return $line.Substring(9) }
+  } catch { }
+  return ""
+}
+
+function Publish-ViaApi {
+  param([string]$Token, [string]$Repo, [string]$Tag, [string]$Title, [string]$Notes, [string]$Vsix)
+
+  $headers = @{ Authorization = "Bearer $Token"; Accept = "application/vnd.github+json" }
+  $base = "https://api.github.com/repos/$Repo"
+
+  $rel = $null
+  try { $rel = Invoke-RestMethod -Uri "$base/releases/tags/$Tag" -Headers $headers } catch { }
+
+  if (-not $rel) {
+    $body = @{ tag_name = $Tag; name = $Title; body = $Notes; target_commitish = "main" } | ConvertTo-Json
+    $rel = Invoke-RestMethod -Method Post -Uri "$base/releases" -Headers $headers `
+      -ContentType "application/json; charset=utf-8" -Body $body
+    Write-Host "    release created via API" -ForegroundColor Green
+  } else {
+    $body = @{ name = $Title; body = $Notes } | ConvertTo-Json
+    $rel = Invoke-RestMethod -Method Patch -Uri "$base/releases/$($rel.id)" -Headers $headers `
+      -ContentType "application/json; charset=utf-8" -Body $body
+    # Replace an asset of the same name, otherwise the upload is rejected
+    $name = Split-Path $Vsix -Leaf
+    foreach ($a in @($rel.assets)) {
+      if ($a.name -eq $name) {
+        Invoke-RestMethod -Method Delete -Uri "$base/releases/assets/$($a.id)" -Headers $headers | Out-Null
+      }
+    }
+    Write-Host "    release updated via API" -ForegroundColor Yellow
+  }
+
+  $upload = ($rel.upload_url -replace '\{.*\}', '') + "?name=" + (Split-Path $Vsix -Leaf)
+  Invoke-RestMethod -Method Post -Uri $upload -Headers @{ Authorization = "Bearer $Token" } `
+    -ContentType "application/octet-stream" -InFile $Vsix | Out-Null
+}
+
+$gh = $null
+try {
+  $gh = Find-Gh
+  Ensure-GhToken
+  & $gh auth status 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) { $gh = $null }
+} catch {
+  $gh = $null
+}
+if (-not $gh) {
+  Write-Host "==> gh unavailable or not logged in — using the GitHub API directly" -ForegroundColor Yellow
+}
 
 $pkg = Get-Content (Join-Path $root "package.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 $version = [string]$pkg.version
@@ -121,6 +175,17 @@ Set-Content -Path $notesFile -Value $notes -Encoding UTF8
 
 Write-Host "==> GitHub Release $tag -> $Repo" -ForegroundColor Cyan
 Write-Host "    asset: $vsix"
+
+if (-not $gh) {
+  $token = Get-GitToken
+  if (-not $token) {
+    throw "No GitHub credentials: run `gh auth login`, or push once so the git credential helper stores a token."
+  }
+  Publish-ViaApi -Token $token -Repo $Repo -Tag $tag -Title $title -Notes $notes -Vsix $vsix
+  Write-Host "==> https://github.com/$Repo/releases/tag/$tag" -ForegroundColor Green
+  Remove-Item $notesFile -Force -ErrorAction SilentlyContinue
+  return
+}
 
 $exists = $false
 & $gh release view $tag --repo $Repo 1>$null 2>$null

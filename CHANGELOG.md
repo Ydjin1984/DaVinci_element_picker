@@ -2,6 +2,19 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.32] — 2026-08-11
+
+### Added
+- **`scripts/setup-windows-cdp.ps1`** — one command that prepares a Windows machine for the “extension on the SSH server” setup. Until now that setup existed only as a sequence of manual steps nobody could reproduce from the repository. The script needs no administrator rights and is idempotent: it writes the Chrome launcher (separate profile, because Chrome 136+ refuses the debug port on the default one), a logon entry, a watchdog task that restores the browser within two minutes, the `davinchi-chrome:` URI handler that lets **Open browser** start Chrome from the server, and `RemoteForward` in `~/.ssh/config` for the host you name. `-Uninstall` removes all of it
+
+### Changed
+- **Documentation rewritten around the two real topologies.** README, `INSTALL.md`, and `docs/INSTALL.ru.md` now open with the rule that decides everything — install the extension on the machine you are sitting at — then describe the remote-server case as two explicit setups: extension local (nothing to configure) or extension on the server (one command). Added a troubleshooting section covering every failure this project actually hit: the `workspace · linux` badge, an unreachable debug port, the default-profile restriction, and the browser being closed
+- `scripts/github-release.ps1` publishes through the GitHub API when `gh` is missing or not logged in, using the token the git credential helper already holds — the previous version simply failed, since a working `git push` does not imply a working `gh auth`
+
+### Removed
+- `scripts/publish-github.ps1` — one-time bootstrap for creating the repository, obsolete since it exists
+- Internal AI-collaboration log and its watcher script are no longer tracked in the repository
+
 ## [0.1.31] — 2026-08-11
 
 ### Added
