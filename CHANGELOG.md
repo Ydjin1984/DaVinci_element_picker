@@ -2,6 +2,13 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.28] — 2026-08-11
+
+### Fixed
+- **Remote SSH / Cursor: extension stuck as `workspace · linux`** — on activate, when the host is a remote Linux workspace, DaVinchi now writes User setting `remote.extensionKind["coin-rebalancer.element-picker"] = ["ui"]` and offers **Reload Window**. Expanded copyable fix steps (uninstall Remote copy, force UI, reinstall local VSIX). This addresses the real user failure mode after 0.1.27 where Open browser showed “running on the REMOTE host” even with a local VSIX present.
+- **No more reload loop when the override does not help** — the settings write is verified through `inspect()` instead of assuming success, and the three states are now distinguished: just forced (offers **Reload Window**), already forced but still hosted remotely (new message: remove the **server-side copy** of the extension — the editor keeps one under `~/.vscode-server/extensions/` and `~/.cursor-server/extensions/`), or write failed (generic install-locally hint). Reload is offered only in the state where it can actually change the outcome
+- Copyable fix steps reference the **running version** of the VSIX instead of a hardcoded file name, and now include the exact server-side cleanup commands
+
 ## [0.1.27] — 2026-08-11
 
 ### Fixed

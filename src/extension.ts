@@ -232,17 +232,87 @@ async function startLocalChromeProcess(finalUrl: string): Promise<void> {
  * server instead of the local PC). English on purpose: pasted into docs,
  * issues and terminals.
  */
-const WORKSPACE_HOST_FIX_STEPS = [
-  "# DaVinchi is running on the remote host (workspace) — fix:",
-  "1) On your LOCAL PC: install the extension VSIX in VS Code/Cursor (Extensions -> ... -> Install from VSIX).",
-  "2) Reload Window. The badge in the DaVinchi panel must show:  v... · ui · win32",
-  "3) Open browser — Chrome starts locally; picks save into this SSH workspace.",
-  "",
-  "# Advanced fallback (CDP), only if the extension must stay on the server:",
-  "1) Run \"DaVinchi: Start Local Chrome (CDP)\" (or paste the copied script into PowerShell on your PC).",
-  "2) Reconnect SSH with:  ssh -R 9222:127.0.0.1:9222 <host>   (or add \"RemoteForward 9222 localhost:9222\" to ~/.ssh/config).",
-  "3) Open browser again (browserMode auto|cdp).",
-].join("\n");
+function workspaceHostFixSteps(): string {
+  const vsix = `element-picker-${getHostInfo().version}.vsix`;
+  return [
+    "# DaVinchi is running on the REMOTE host (workspace · linux) — Chrome cannot start on your PC.",
+    "",
+    "# Fix A (recommended) — force UI host + local VSIX",
+    "1) Open Command Palette → Preferences: Open User Settings (JSON)  [on your LOCAL PC]",
+    "2) Add (merge if remote.extensionKind already exists):",
+    '   "remote.extensionKind": {',
+    '     "coin-rebalancer.element-picker": ["ui"]',
+    "   }",
+    "3) Install the VSIX on your LOCAL PC (not from the SSH window):",
+    `   cursor --install-extension path\\to\\${vsix} --force`,
+    "   (or code --install-extension … --force)",
+    "4) Reconnect SSH → Developer: Reload Window.",
+    "5) Badge in DaVinchi panel MUST show:  v… · ui · win32   (not workspace · linux).",
+    "",
+    "# Fix A2 — still 'workspace' after the reload? Remove the SERVER copy",
+    "In the SSH window: Extensions → filter DaVinchi → the entry listed under",
+    '"SSH: <host> — Installed" → Uninstall. Keep the Local install. Then Reload Window.',
+    "Manual equivalent in the SSH terminal (both server runtimes):",
+    "   rm -rf ~/.vscode-server/extensions/coin-rebalancer.element-picker-*",
+    "   rm -rf ~/.cursor-server/extensions/coin-rebalancer.element-picker-*",
+    "(the editor rewrites its extensions.json on the next connect)",
+    "",
+    "# Fix B (advanced CDP) — only if the extension must stay on the server:",
+    "1) On Windows PowerShell (local PC, not SSH terminal), run the script from",
+    "   “DaVinchi: Copy Local Chrome CDP Command”.",
+    "2) In Cursor/VS Code: Ports → Forward / reverse 9222 → 9222,",
+    "   or reconnect:  ssh -R 9222:127.0.0.1:9222 <host>",
+    "3) Open browser again (browserMode auto|cdp).",
+  ].join("\n");
+}
+
+const EXT_ID = "coin-rebalancer.element-picker";
+
+type ForcedUiResult = "forced" | "already" | "failed";
+
+/**
+ * Force this extension onto the local UI host under Remote SSH/Cursor.
+ * Package already declares extensionKind:ui, but Cursor/VS Code still
+ * sometimes activate a remote workspace copy — remote.extensionKind wins.
+ *
+ * "already" means the override is in place yet the host is STILL remote, so
+ * writing it again cannot help — the server-side copy has to go instead.
+ * The write is verified through inspect(): a silent no-op (or a value that
+ * lands somewhere the remote host cannot see) must not be reported as fixed.
+ */
+async function ensureForcedUiExtensionKind(): Promise<ForcedUiResult> {
+  const cfg = vscode.workspace.getConfiguration();
+  const isUi = (entry: string | string[] | undefined): boolean =>
+    entry === "ui" ||
+    (Array.isArray(entry) && entry.length === 1 && entry[0] === "ui");
+
+  const current =
+    cfg.get<Record<string, string | string[]>>("remote.extensionKind") || {};
+  if (isUi(current[EXT_ID])) {
+    return "already";
+  }
+  try {
+    await cfg.update(
+      "remote.extensionKind",
+      { ...current, [EXT_ID]: ["ui"] },
+      vscode.ConfigurationTarget.Global
+    );
+  } catch {
+    return "failed";
+  }
+  const after = vscode.workspace
+    .getConfiguration()
+    .inspect<Record<string, string | string[]>>("remote.extensionKind");
+  const landed =
+    isUi(after?.globalValue?.[EXT_ID]) ||
+    isUi(after?.workspaceValue?.[EXT_ID]) ||
+    isUi(
+      (
+        cfg.get<Record<string, string | string[]>>("remote.extensionKind") || {}
+      )[EXT_ID]
+    );
+  return landed ? "forced" : "failed";
+}
 
 /** Loud warning when the extension landed on the SSH server (workspace host). */
 function warnIfWorkspaceHosted(host: {
@@ -258,14 +328,30 @@ function warnIfWorkspaceHosted(host: {
   ) {
     return;
   }
-  const copyLabel = t("actionCopyFixSteps");
-  void vscode.window
-    .showWarningMessage(t("msgWorkspaceHostWarning", host.badge), copyLabel)
-    .then(async (choice) => {
-      if (choice === copyLabel) {
-        await vscode.env.clipboard.writeText(WORKSPACE_HOST_FIX_STEPS);
-      }
-    });
+
+  void (async () => {
+    const result = await ensureForcedUiExtensionKind();
+    const copyLabel = t("actionCopyFixSteps");
+    const reloadLabel = t("actionReloadWindow");
+    const msg =
+      result === "forced"
+        ? t("msgWorkspaceHostForcedUi", host.badge)
+        : result === "already"
+          ? t("msgWorkspaceHostStillRemote", host.badge)
+          : t("msgWorkspaceHostWarning", host.badge);
+    // Reload only helps right after the override was written; once it is
+    // already set, offering Reload again just loops the same toast.
+    const actions =
+      result === "forced" ? [reloadLabel, copyLabel] : [copyLabel];
+    const choice = await vscode.window.showWarningMessage(msg, ...actions);
+    if (choice === copyLabel) {
+      await vscode.env.clipboard.writeText(workspaceHostFixSteps());
+      return;
+    }
+    if (choice === reloadLabel) {
+      await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }
+  })();
 }
 
 async function toggleSelect(): Promise<boolean> {
