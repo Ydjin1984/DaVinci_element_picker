@@ -367,8 +367,8 @@ export class BrowserSession {
     return (
       vscode.workspace
         .getConfiguration("elementPicker")
-        .get<string>("cdpEndpoint", "http://127.0.0.1:9222") ||
-      "http://127.0.0.1:9222"
+        .get<string>("cdpEndpoint", "http://localhost:9222") ||
+      "http://localhost:9222"
     ).trim();
   }
 
@@ -653,18 +653,21 @@ export class BrowserSession {
     endpoint: string,
     kind: "cdp" | "launch"
   ): Error {
-    const misHosted = isRemoteLinuxWorkspaceHost();
+    const remoteWorkspace = isRemoteLinuxWorkspaceHost();
     // First line is all the user sees in the toast — carry the key insight there.
-    const firstLine = misHosted
-      ? `Could not open a browser — DaVinchi is running on the REMOTE host; install the VSIX locally (badge must show “ui”).\n`
+    // Remote workspace host is a supported topology: local Chrome via reverse-forwarded CDP.
+    const firstLine = remoteWorkspace
+      ? `Could not open a browser — extension is on the SSH server; local Chrome is not reachable at ${endpoint}.\n`
       : `Could not open a browser.\n`;
-    const hostNote = misHosted
-      ? `Remote SSH mis-host: extension is running on the Linux server (workspace), not on your PC.\n` +
-        `Fix A (recommended): install element-picker-*.vsix on the LOCAL Cursor/VS Code (UI host), then Reload Window.\n` +
-        `Badge must show: v… · ui · win32  (not workspace · linux).\n` +
-        `Fix B (advanced CDP): run “DaVinchi: Start Local Chrome (CDP)” on your PC, reconnect with\n` +
-        `  ssh -R 9222:127.0.0.1:9222 <host>   (or RemoteForward 9222 localhost:9222 in ~/.ssh/config),\n` +
-        `then Open browser again.\n\n`
+    const hostNote = remoteWorkspace
+      ? `DaVinchi is running on the remote host (workspace). Chrome must run on YOUR PC with remote debugging,\n` +
+        `and the SSH session must reverse-forward that port so the server can reach it.\n` +
+        `1) On your PC: start Chrome (desktop launcher or “DaVinchi: Start Local Chrome (CDP)”).\n` +
+        `2) ~/.ssh/config: RemoteForward 9222 localhost:9222  (then reconnect SSH — not only Reload).\n` +
+        `3) From the SSH terminal: curl -s ${endpoint}/json/version  (must return Browser JSON).\n` +
+        `4) Open browser again.\n` +
+        `Alternative: install the VSIX only on the local PC and set remote.extensionKind → ui\n` +
+        `(then the extension launches Chrome directly without a tunnel).\n\n`
       : this.isRemoteHost()
         ? `Remote workspace open (${vscode.env.remoteName}); browser still launches on the local UI host.\n` +
           `If Chrome did not start, set elementPicker.browserPath to your local chrome.exe.\n\n`
@@ -678,12 +681,15 @@ export class BrowserSession {
           hostNote +
           `Platform: ${process.platform} ${os.arch()}\n` +
           `Browsers found here:\n  ${found || "(none)"}\n\n` +
-          `Fix:\n` +
-          `1) Install Google Chrome or Edge on this PC (the UI machine)\n` +
-          `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
-          `3) Advanced only: browserMode=cdp + local Chrome --remote-debugging-port=9222\n\n` +
-          `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
-          `(CDP endpoint tried: ${endpoint})`
+          (remoteWorkspace
+            ? `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
+              `(CDP endpoint tried: ${endpoint})`
+            : `Fix:\n` +
+              `1) Install Google Chrome or Edge on this PC (the UI machine)\n` +
+              `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
+              `3) Advanced only: browserMode=cdp + local Chrome --remote-debugging-port=9222\n\n` +
+              `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
+              `(CDP endpoint tried: ${endpoint})`)
       ),
       { davinchiErrorKind: kind }
     );

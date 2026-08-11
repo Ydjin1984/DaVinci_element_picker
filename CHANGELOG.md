@@ -2,6 +2,16 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.30] — 2026-08-11
+
+### Changed
+- **Running on the SSH server is now a supported setup, not an error.** DaVinchi installed on the remote host drives the browser on your PC over a reverse-forwarded CDP port, and picks are written into the server workspace as before. On activate the extension probes the configured `elementPicker.cdpEndpoint` and stays completely silent when that link answers — earlier builds warned on every start regardless of whether anything was actually broken
+- The warning now appears **only** when the extension is remote-hosted *and* the endpoint does not answer, and it says which endpoint was tried. Its buttons copy the Chrome start script or the full setup steps: start Chrome with the debug port on your PC → `RemoteForward 9222 localhost:9222` in `~/.ssh/config` → verify from the SSH terminal with `curl $endpoint/json/version`. Installing the extension locally is now documented as the alternative topology rather than the only correct one
+- Dropped the automatic write of `remote.extensionKind` and the self-uninstall path — both pushed the extension towards the local machine, which is wrong when the server-side install is deliberate
+
+### Fixed
+- **Default `cdpEndpoint` could never connect to a current Chrome.** Chrome 148 answers `/json/version` on `http://localhost:9222` but returns nothing for `http://127.0.0.1:9222`, and `127.0.0.1` was the shipped default — so every CDP attempt failed before it began. Verified end to end: local Chrome with `--remote-debugging-port=9222`, `ssh -R 9222:localhost:9222`, and the endpoint answering from the server through the tunnel. The default is now `http://localhost:9222`
+
 ## [0.1.29] — 2026-08-11
 
 ### Fixed

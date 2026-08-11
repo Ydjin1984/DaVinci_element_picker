@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.29",
+  "version": "0.1.30",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -261,7 +261,7 @@
         },
         "elementPicker.cdpEndpoint": {
           "type": "string",
-          "default": "http://127.0.0.1:9222",
+          "default": "http://localhost:9222",
           "description": "Chrome DevTools endpoint. Start local Chrome with --remote-debugging-port=9222. On Remote SSH reverse-forward this port to your PC.",
           "scope": "application"
         },

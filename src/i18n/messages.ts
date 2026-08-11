@@ -122,11 +122,9 @@ export type MessageKey =
   | "cloneOptParentShot"
   | "cloneOptComputed"
   | "cloneOptSvg"
-  | "msgWorkspaceHostWarning"
-  | "msgWorkspaceHostForcedUi"
-  | "msgWorkspaceHostStillRemote"
-  | "actionCopyFixSteps"
-  | "actionReloadWindow";
+  | "msgRemoteHostNoCdp"
+  | "actionCopySetupSteps"
+  | "actionCopyChromeScript";
 
 type Dict = Record<MessageKey, string>;
 
@@ -263,14 +261,10 @@ const en: Dict = {
   treeFullPackBadge: "full pack",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi is installed on the remote host ({0}) — Chrome cannot start on your PC from there. Install the VSIX on your local VS Code/Cursor (badge must show “ui”), then Reload Window.",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi is STILL running on the remote host ({0}) although remote.extensionKind is already “ui”. The editor keeps a server-side copy of the extension: open Extensions in this SSH window and Uninstall the entry listed under “SSH: … — Installed”, then Reload Window.",
-  actionCopyFixSteps: "Copy fix steps",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi runs on the SSH server ({0}) and cannot reach a browser on your PC: {1} does not answer. Start Chrome with the debug port on your PC and reverse-forward that port, then reload.",
+  actionCopySetupSteps: "Copy setup steps",
+  actionCopyChromeScript: "Copy Chrome script",
   sectionCloneSettings: "Clone settings",
   cloneOptFullSite: "Clone the whole page (full reference)",
   cloneOptFullSiteHint:
@@ -423,14 +417,10 @@ const ru: Dict = {
   treeFullPackBadge: "полный пакет",
   statusBarClone: "$(git-compare) Клон: ВКЛ",
   onLabel: "ВКЛ",
-  msgWorkspaceHostWarning:
-    "DaVinchi установлен на удалённом хосте ({0}) — оттуда нельзя запустить Chrome на вашем ПК. Установите VSIX в локальный VS Code/Cursor (бейдж должен показывать «ui») и выполните Reload Window.",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi работал на удалённом хосте ({0}). Выставлено remote.extensionKind → ui. Нажмите Reload Window и проверьте бейдж «ui · win32». Если всё ещё «workspace» — удалите Remote-копию расширения.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi по-прежнему работает на удалённом хосте ({0}), хотя remote.extensionKind уже «ui». В редакторе осталась серверная копия расширения: откройте Extensions в этом SSH-окне и удалите запись из раздела «SSH: … — Installed», затем выполните Reload Window.",
-  actionCopyFixSteps: "Скопировать шаги исправления",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi работает на SSH-сервере ({0}) и не видит браузер на вашем ПК: {1} не отвечает. Запустите на ПК Chrome с портом отладки и пробросьте этот порт на сервер, затем перезагрузите окно.",
+  actionCopySetupSteps: "Скопировать шаги настройки",
+  actionCopyChromeScript: "Скопировать скрипт Chrome",
   sectionCloneSettings: "Настройки клона",
   cloneOptFullSite: "Клонировать всю страницу (полный референс)",
   cloneOptFullSiteHint:
@@ -541,14 +531,10 @@ const de: Dict = {
   treeFullPackBadge: "Komplettpaket",
   statusBarClone: "$(git-compare) Klon: AN",
   onLabel: "AN",
-  msgWorkspaceHostWarning:
-    "DaVinchi ist auf dem Remote-Host installiert ({0}) — von dort kann Chrome auf Ihrem PC nicht gestartet werden. Installieren Sie die VSIX im lokalen VS Code/Cursor (Badge muss „ui“ zeigen), dann Reload Window.",
-  actionCopyFixSteps: "Korrekturschritte kopieren",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi läuft weiterhin auf dem Remote-Host ({0}), obwohl remote.extensionKind bereits „ui“ ist. Der Editor hat noch eine serverseitige Kopie: Öffnen Sie Extensions in diesem SSH-Fenster, deinstallieren Sie den Eintrag unter „SSH: … — Installed“ und führen Sie Reload Window aus.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi läuft auf dem SSH-Server ({0}) und erreicht keinen Browser auf Ihrem PC: {1} antwortet nicht. Starten Sie Chrome mit dem Debug-Port auf Ihrem PC, leiten Sie den Port rückwärts weiter und laden Sie das Fenster neu.",
+  actionCopySetupSteps: "Einrichtungsschritte kopieren",
+  actionCopyChromeScript: "Chrome-Skript kopieren",
   sectionCloneSettings: "Klon-Einstellungen",
   cloneOptFullSite: "Ganze Seite klonen (volle Referenz)",
   cloneOptFullSiteHint:
@@ -658,14 +644,10 @@ const es: Dict = {
   treeFullPackBadge: "paquete completo",
   statusBarClone: "$(git-compare) Clon: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi está instalado en el host remoto ({0}): desde ahí no se puede iniciar Chrome en tu PC. Instala el VSIX en el VS Code/Cursor local (la insignia debe mostrar «ui») y ejecuta Reload Window.",
-  actionCopyFixSteps: "Copiar pasos de corrección",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi sigue ejecutándose en el host remoto ({0}) aunque remote.extensionKind ya es «ui». Queda una copia de la extensión en el servidor: abre Extensions en esta ventana SSH, desinstala la entrada de «SSH: … — Installed» y ejecuta Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi se ejecuta en el servidor SSH ({0}) y no alcanza ningún navegador en tu PC: {1} no responde. Inicia Chrome con el puerto de depuración en tu PC, reenvía ese puerto en sentido inverso y recarga la ventana.",
+  actionCopySetupSteps: "Copiar pasos de configuración",
+  actionCopyChromeScript: "Copiar script de Chrome",
   sectionCloneSettings: "Ajustes de clonación",
   cloneOptFullSite: "Clonar toda la página (referencia completa)",
   cloneOptFullSiteHint:
@@ -774,14 +756,10 @@ const fr: Dict = {
   treeFullPackBadge: "pack complet",
   statusBarClone: "$(git-compare) Clone : ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi est installé sur l'hôte distant ({0}) — impossible de lancer Chrome sur votre PC depuis là. Installez le VSIX dans le VS Code/Cursor local (le badge doit afficher « ui »), puis Reload Window.",
-  actionCopyFixSteps: "Copier les étapes de correction",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi s'exécute toujours sur l'hôte distant ({0}) bien que remote.extensionKind soit déjà « ui ». Une copie serveur de l'extension subsiste : ouvrez Extensions dans cette fenêtre SSH, désinstallez l'entrée sous « SSH : … — Installed », puis faites Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi s'exécute sur le serveur SSH ({0}) et n'atteint aucun navigateur sur votre PC : {1} ne répond pas. Lancez Chrome avec le port de débogage sur votre PC, faites un transfert inverse de ce port, puis rechargez la fenêtre.",
+  actionCopySetupSteps: "Copier les étapes de configuration",
+  actionCopyChromeScript: "Copier le script Chrome",
   sectionCloneSettings: "Réglages de clonage",
   cloneOptFullSite: "Cloner la page entière (référence complète)",
   cloneOptFullSiteHint:
@@ -890,14 +868,10 @@ const it: Dict = {
   treeFullPackBadge: "pacchetto completo",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi è installato sull'host remoto ({0}): da lì non è possibile avviare Chrome sul tuo PC. Installa il VSIX nel VS Code/Cursor locale (il badge deve mostrare «ui»), poi Reload Window.",
-  actionCopyFixSteps: "Copia i passaggi di correzione",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi è ancora in esecuzione sull'host remoto ({0}) benché remote.extensionKind sia già «ui». Resta una copia dell'estensione sul server: apri Extensions in questa finestra SSH, disinstalla la voce sotto «SSH: … — Installed» ed esegui Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi è in esecuzione sul server SSH ({0}) e non raggiunge alcun browser sul tuo PC: {1} non risponde. Avvia Chrome con la porta di debug sul PC, inoltra quella porta in senso inverso e ricarica la finestra.",
+  actionCopySetupSteps: "Copia i passaggi di configurazione",
+  actionCopyChromeScript: "Copia lo script di Chrome",
   sectionCloneSettings: "Impostazioni clonazione",
   cloneOptFullSite: "Clona l'intera pagina (riferimento completo)",
   cloneOptFullSiteHint:
@@ -1006,14 +980,10 @@ const ptBR: Dict = {
   treeFullPackBadge: "pacote completo",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "O DaVinchi está instalado no host remoto ({0}) — de lá não é possível iniciar o Chrome no seu PC. Instale o VSIX no VS Code/Cursor local (o selo deve mostrar “ui”) e execute Reload Window.",
-  actionCopyFixSteps: "Copiar passos de correção",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "O DaVinchi continua sendo executado no host remoto ({0}) embora remote.extensionKind já seja “ui”. Ainda existe uma cópia da extensão no servidor: abra Extensions nesta janela SSH, desinstale a entrada em “SSH: … — Installed” e execute Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "O DaVinchi roda no servidor SSH ({0}) e não alcança nenhum navegador no seu PC: {1} não responde. Inicie o Chrome com a porta de depuração no seu PC, faça o encaminhamento reverso dessa porta e recarregue a janela.",
+  actionCopySetupSteps: "Copiar passos de configuração",
+  actionCopyChromeScript: "Copiar script do Chrome",
   sectionCloneSettings: "Configurações de clonagem",
   cloneOptFullSite: "Clonar a página inteira (referência completa)",
   cloneOptFullSiteHint:
@@ -1123,14 +1093,10 @@ const nl: Dict = {
   treeFullPackBadge: "volledig pakket",
   statusBarClone: "$(git-compare) Kloon: AAN",
   onLabel: "AAN",
-  msgWorkspaceHostWarning:
-    "DaVinchi is geïnstalleerd op de externe host ({0}) — Chrome kan daarvandaan niet op uw pc starten. Installeer de VSIX in de lokale VS Code/Cursor (badge moet “ui” tonen) en voer Reload Window uit.",
-  actionCopyFixSteps: "Herstelstappen kopiëren",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi draait nog steeds op de externe host ({0}) hoewel remote.extensionKind al “ui” is. Er staat nog een kopie van de extensie op de server: open Extensions in dit SSH-venster, verwijder het item onder “SSH: … — Installed” en voer Reload Window uit.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi draait op de SSH-server ({0}) en bereikt geen browser op uw pc: {1} antwoordt niet. Start Chrome met de debugpoort op uw pc, stuur die poort omgekeerd door en herlaad het venster.",
+  actionCopySetupSteps: "Installatiestappen kopiëren",
+  actionCopyChromeScript: "Chrome-script kopiëren",
   sectionCloneSettings: "Kloon-instellingen",
   cloneOptFullSite: "Hele pagina klonen (volledige referentie)",
   cloneOptFullSiteHint:
@@ -1240,14 +1206,10 @@ const pl: Dict = {
   treeFullPackBadge: "pełny pakiet",
   statusBarClone: "$(git-compare) Klon: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi jest zainstalowany na zdalnym hoście ({0}) — nie można stamtąd uruchomić Chrome na Twoim komputerze. Zainstaluj VSIX w lokalnym VS Code/Cursor (plakietka musi pokazywać „ui”), potem Reload Window.",
-  actionCopyFixSteps: "Skopiuj kroki naprawy",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi nadal działa na zdalnym hoście ({0}), choć remote.extensionKind to już „ui”. Na serwerze pozostała kopia rozszerzenia: otwórz Extensions w tym oknie SSH, odinstaluj wpis z sekcji „SSH: … — Installed” i wykonaj Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi działa na serwerze SSH ({0}) i nie widzi przeglądarki na Twoim komputerze: {1} nie odpowiada. Uruchom Chrome z portem debugowania na komputerze, przekieruj ten port zwrotnie i przeładuj okno.",
+  actionCopySetupSteps: "Skopiuj kroki konfiguracji",
+  actionCopyChromeScript: "Skopiuj skrypt Chrome",
   sectionCloneSettings: "Ustawienia klonowania",
   cloneOptFullSite: "Klonuj całą stronę (pełna referencja)",
   cloneOptFullSiteHint:
@@ -1357,14 +1319,10 @@ const tr: Dict = {
   treeFullPackBadge: "tam paket",
   statusBarClone: "$(git-compare) Klon: AÇIK",
   onLabel: "AÇIK",
-  msgWorkspaceHostWarning:
-    "DaVinchi uzak ana bilgisayarda kurulu ({0}) — oradan bilgisayarınızda Chrome başlatılamaz. VSIX'i yerel VS Code/Cursor'a kurun (rozet “ui” göstermeli), ardından Reload Window çalıştırın.",
-  actionCopyFixSteps: "Düzeltme adımlarını kopyala",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "remote.extensionKind zaten “ui” olmasına rağmen DaVinchi hâlâ uzak ana bilgisayarda ({0}) çalışıyor. Sunucuda uzantının bir kopyası kalmış: bu SSH penceresinde Extensions'ı açın, “SSH: … — Installed” altındaki girdiyi kaldırın ve Reload Window çalıştırın.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi SSH sunucusunda ({0}) çalışıyor ve bilgisayarınızdaki tarayıcıya ulaşamıyor: {1} yanıt vermiyor. Bilgisayarınızda Chrome'u hata ayıklama portuyla başlatın, bu portu ters yönde iletin ve pencereyi yeniden yükleyin.",
+  actionCopySetupSteps: "Kurulum adımlarını kopyala",
+  actionCopyChromeScript: "Chrome betiğini kopyala",
   sectionCloneSettings: "Klon ayarları",
   cloneOptFullSite: "Tüm sayfayı klonla (tam referans)",
   cloneOptFullSiteHint:
@@ -1474,14 +1432,10 @@ const vi: Dict = {
   treeFullPackBadge: "gói đầy đủ",
   statusBarClone: "$(git-compare) Clone: BẬT",
   onLabel: "BẬT",
-  msgWorkspaceHostWarning:
-    "DaVinchi được cài trên máy chủ từ xa ({0}) — không thể khởi động Chrome trên PC của bạn từ đó. Hãy cài VSIX vào VS Code/Cursor cục bộ (huy hiệu phải hiển thị “ui”), rồi chạy Reload Window.",
-  actionCopyFixSteps: "Sao chép các bước khắc phục",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi vẫn đang chạy trên máy chủ từ xa ({0}) dù remote.extensionKind đã là “ui”. Trên máy chủ vẫn còn một bản sao của tiện ích: mở Extensions trong cửa sổ SSH này, gỡ mục nằm dưới “SSH: … — Installed”, rồi chạy Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi chạy trên máy chủ SSH ({0}) và không tới được trình duyệt trên máy bạn: {1} không phản hồi. Hãy khởi động Chrome kèm cổng gỡ lỗi trên máy bạn, chuyển tiếp ngược cổng đó, rồi tải lại cửa sổ.",
+  actionCopySetupSteps: "Sao chép các bước cài đặt",
+  actionCopyChromeScript: "Sao chép script Chrome",
   sectionCloneSettings: "Cài đặt nhân bản",
   cloneOptFullSite: "Nhân bản toàn bộ trang (tham chiếu đầy đủ)",
   cloneOptFullSiteHint:
@@ -1590,14 +1544,10 @@ const id: Dict = {
   treeFullPackBadge: "paket lengkap",
   statusBarClone: "$(git-compare) Klon: AKTIF",
   onLabel: "AKTIF",
-  msgWorkspaceHostWarning:
-    "DaVinchi terpasang di host jarak jauh ({0}) — Chrome tidak dapat dijalankan di PC Anda dari sana. Pasang VSIX di VS Code/Cursor lokal (lencana harus menampilkan “ui”), lalu jalankan Reload Window.",
-  actionCopyFixSteps: "Salin langkah perbaikan",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi masih berjalan di host jarak jauh ({0}) meskipun remote.extensionKind sudah “ui”. Masih ada salinan ekstensi di server: buka Extensions di jendela SSH ini, hapus entri di bawah “SSH: … — Installed”, lalu jalankan Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi berjalan di server SSH ({0}) dan tidak dapat menjangkau peramban di PC Anda: {1} tidak merespons. Jalankan Chrome dengan port debug di PC Anda, teruskan port itu secara terbalik, lalu muat ulang jendela.",
+  actionCopySetupSteps: "Salin langkah penyiapan",
+  actionCopyChromeScript: "Salin skrip Chrome",
   sectionCloneSettings: "Pengaturan kloning",
   cloneOptFullSite: "Klon seluruh halaman (referensi penuh)",
   cloneOptFullSiteHint:
@@ -1706,14 +1656,10 @@ const ca: Dict = {
   treeFullPackBadge: "paquet complet",
   statusBarClone: "$(git-compare) Clon: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi està instal·lat a l'amfitrió remot ({0}): des d'allà no es pot iniciar Chrome al teu PC. Instal·la el VSIX al VS Code/Cursor local (la insígnia ha de mostrar «ui») i executa Reload Window.",
-  actionCopyFixSteps: "Copia els passos de correcció",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "DaVinchi encara s'executa a l'amfitrió remot ({0}) tot i que remote.extensionKind ja és «ui». Queda una còpia de l'extensió al servidor: obre Extensions en aquesta finestra SSH, desinstal·la l'entrada de «SSH: … — Installed» i executa Reload Window.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi s'executa al servidor SSH ({0}) i no arriba a cap navegador al teu PC: {1} no respon. Inicia el Chrome amb el port de depuració al PC, reenvia aquest port en sentit invers i torna a carregar la finestra.",
+  actionCopySetupSteps: "Copia els passos de configuració",
+  actionCopyChromeScript: "Copia l'script del Chrome",
   sectionCloneSettings: "Configuració de clonació",
   cloneOptFullSite: "Clona tota la pàgina (referència completa)",
   cloneOptFullSiteHint:
@@ -1823,14 +1769,10 @@ const hi: Dict = {
   treeFullPackBadge: "पूरा पैक",
   statusBarClone: "$(git-compare) क्लोन: चालू",
   onLabel: "चालू",
-  msgWorkspaceHostWarning:
-    "DaVinchi रिमोट होस्ट ({0}) पर इंस्टॉल है — वहाँ से आपके PC पर Chrome शुरू नहीं हो सकता। VSIX को लोकल VS Code/Cursor में इंस्टॉल करें (बैज में “ui” दिखना चाहिए), फिर Reload Window करें।",
-  actionCopyFixSteps: "समाधान चरण कॉपी करें",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "remote.extensionKind पहले से “ui” होने के बावजूद DaVinchi अब भी रिमोट होस्ट ({0}) पर चल रहा है। सर्वर पर एक्सटेंशन की प्रति बची है: इस SSH विंडो में Extensions खोलें, “SSH: … — Installed” वाली प्रविष्टि अनइंस्टॉल करें, फिर Reload Window करें।",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi SSH सर्वर ({0}) पर चल रहा है और आपके PC के ब्राउज़र तक नहीं पहुँच पा रहा: {1} उत्तर नहीं दे रहा। अपने PC पर डिबग पोर्ट के साथ Chrome चलाएँ, उस पोर्ट को रिवर्स-फ़ॉरवर्ड करें और विंडो रीलोड करें।",
+  actionCopySetupSteps: "सेटअप चरण कॉपी करें",
+  actionCopyChromeScript: "Chrome स्क्रिप्ट कॉपी करें",
   sectionCloneSettings: "क्लोन सेटिंग्स",
   cloneOptFullSite: "पूरा पेज क्लोन करें (पूर्ण संदर्भ)",
   cloneOptFullSiteHint:
@@ -1940,14 +1882,10 @@ const ja: Dict = {
   treeFullPackBadge: "フルパック",
   statusBarClone: "$(git-compare) クローン: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi はリモートホスト（{0}）にインストールされています — そこからローカル PC の Chrome は起動できません。ローカルの VS Code/Cursor に VSIX をインストールし（バッジが「ui」と表示されること）、Reload Window を実行してください。",
-  actionCopyFixSteps: "修正手順をコピー",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "remote.extensionKind が既に「ui」であるにもかかわらず、DaVinchi は依然としてリモートホスト（{0}）で実行されています。サーバー側に拡張機能のコピーが残っています。この SSH ウィンドウで Extensions を開き、「SSH: … — Installed」の項目をアンインストールしてから Reload Window を実行してください。",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi は SSH サーバー（{0}）で実行されており、お使いの PC のブラウザーに接続できません（{1} が応答しません）。PC でデバッグポート付きの Chrome を起動し、そのポートをリバースフォワードしてからウィンドウを再読み込みしてください。",
+  actionCopySetupSteps: "設定手順をコピー",
+  actionCopyChromeScript: "Chrome スクリプトをコピー",
   sectionCloneSettings: "クローン設定",
   cloneOptFullSite: "ページ全体をクローン（完全リファレンス）",
   cloneOptFullSiteHint:
@@ -2057,14 +1995,10 @@ const ko: Dict = {
   treeFullPackBadge: "풀 팩",
   statusBarClone: "$(git-compare) 클론: ON",
   onLabel: "ON",
-  msgWorkspaceHostWarning:
-    "DaVinchi가 원격 호스트({0})에 설치되어 있어 로컬 PC에서 Chrome을 시작할 수 없습니다. 로컬 VS Code/Cursor에 VSIX를 설치하고(배지가 “ui”로 표시되어야 함) Reload Window를 실행하세요.",
-  actionCopyFixSteps: "해결 단계 복사",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "remote.extensionKind가 이미 “ui”인데도 DaVinchi가 여전히 원격 호스트({0})에서 실행되고 있습니다. 서버에 확장 프로그램 사본이 남아 있습니다. 이 SSH 창에서 Extensions를 열고 “SSH: … — Installed” 항목을 제거한 뒤 Reload Window를 실행하세요.",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi가 SSH 서버({0})에서 실행 중이며 PC의 브라우저에 연결할 수 없습니다({1} 무응답). PC에서 디버그 포트로 Chrome을 실행하고 해당 포트를 역방향 전달한 뒤 창을 다시 로드하세요.",
+  actionCopySetupSteps: "설정 단계 복사",
+  actionCopyChromeScript: "Chrome 스크립트 복사",
   sectionCloneSettings: "클론 설정",
   cloneOptFullSite: "전체 페이지 클론 (완전한 레퍼런스)",
   cloneOptFullSiteHint:
@@ -2169,14 +2103,10 @@ const zhCN: Dict = {
   treeFullPackBadge: "完整包",
   statusBarClone: "$(git-compare) 克隆: 开",
   onLabel: "开",
-  msgWorkspaceHostWarning:
-    "DaVinchi 安装在远程主机（{0}）上——无法从那里在本机启动 Chrome。请在本地 VS Code/Cursor 安装 VSIX（徽章须显示“ui”），然后执行 Reload Window。",
-  actionCopyFixSteps: "复制修复步骤",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "尽管 remote.extensionKind 已为“ui”，DaVinchi 仍在远程主机（{0}）上运行。服务器上仍留有扩展副本：在此 SSH 窗口打开 Extensions，卸载“SSH: … — Installed”下的条目，然后执行 Reload Window。",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi 运行在 SSH 服务器（{0}）上，无法连接到你电脑上的浏览器：{1} 无响应。请在本机以调试端口启动 Chrome，将该端口反向转发到服务器，然后重新加载窗口。",
+  actionCopySetupSteps: "复制配置步骤",
+  actionCopyChromeScript: "复制 Chrome 脚本",
   sectionCloneSettings: "克隆设置",
   cloneOptFullSite: "克隆整个页面（完整参考）",
   cloneOptFullSiteHint:
@@ -2280,14 +2210,10 @@ const zhTW: Dict = {
   treeFullPackBadge: "完整包",
   statusBarClone: "$(git-compare) 克隆: 開",
   onLabel: "開",
-  msgWorkspaceHostWarning:
-    "DaVinchi 安裝在遠端主機（{0}）上——無法從那裡在本機啟動 Chrome。請在本機 VS Code/Cursor 安裝 VSIX（徽章須顯示「ui」），然後執行 Reload Window。",
-  actionCopyFixSteps: "複製修復步驟",
-  msgWorkspaceHostForcedUi:
-    "DaVinchi was running on the remote host ({0}). Forced remote.extensionKind → ui. Click Reload Window, then check the badge is “ui · win32”. If still “workspace”, uninstall the Remote copy of the extension.",
-  msgWorkspaceHostStillRemote:
-    "儘管 remote.extensionKind 已為「ui」，DaVinchi 仍在遠端主機（{0}）上執行。伺服器上仍留有擴充功能副本：在此 SSH 視窗開啟 Extensions，解除安裝「SSH: … — Installed」下的項目，然後執行 Reload Window。",
-  actionReloadWindow: "Reload Window",
+  msgRemoteHostNoCdp:
+    "DaVinchi 執行於 SSH 伺服器（{0}），無法連線到你電腦上的瀏覽器：{1} 沒有回應。請在本機以偵錯連接埠啟動 Chrome，將該連接埠反向轉送到伺服器，然後重新載入視窗。",
+  actionCopySetupSteps: "複製設定步驟",
+  actionCopyChromeScript: "複製 Chrome 指令碼",
   sectionCloneSettings: "克隆設定",
   cloneOptFullSite: "克隆整個頁面（完整參考）",
   cloneOptFullSiteHint:

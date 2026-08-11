@@ -5,6 +5,8 @@ import {
   ensureBrowserPathSetting,
 } from "./browser/browserSession";
 import { spawn } from "child_process";
+import * as http from "http";
+import * as https from "https";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -227,102 +229,87 @@ async function startLocalChromeProcess(finalUrl: string): Promise<void> {
   );
 }
 
+const EXT_ID = "coin-rebalancer.element-picker";
+
+/** Configured CDP endpoint (defaults to the reverse-forwarded debug port). */
+function cdpEndpointSetting(): string {
+  return (
+    vscode.workspace
+      .getConfiguration("elementPicker")
+      .get<string>("cdpEndpoint", "http://localhost:9222") ||
+    "http://localhost:9222"
+  ).trim();
+}
+
 /**
- * Copyable recovery steps for a mis-hosted install (extension on the SSH
- * server instead of the local PC). English on purpose: pasted into docs,
- * issues and terminals.
+ * Setup instructions for running the extension ON the SSH server while the
+ * browser stays on the user's PC. English on purpose: pasted into terminals,
+ * docs and issues.
  */
-function workspaceHostFixSteps(): string {
-  const vsix = `element-picker-${getHostInfo().version}.vsix`;
+function remoteHostSetupSteps(): string {
+  const endpoint = cdpEndpointSetting();
+  const port = /:(\d+)/.exec(endpoint)?.[1] || "9222";
   return [
-    "# DaVinchi is running on the REMOTE host (workspace · linux) — Chrome cannot start on your PC.",
+    "# DaVinchi runs on the SSH server; the browser must run on YOUR PC.",
+    "# The server reaches that browser through a reverse-forwarded debug port.",
     "",
-    "# Fix A (recommended) — force UI host + local VSIX",
-    "1) Open Command Palette → Preferences: Open User Settings (JSON)  [on your LOCAL PC]",
-    "2) Add (merge if remote.extensionKind already exists):",
-    '   "remote.extensionKind": {',
-    '     "coin-rebalancer.element-picker": ["ui"]',
-    "   }",
-    "3) Install the VSIX on your LOCAL PC (not from the SSH window):",
-    `   cursor --install-extension path\\to\\${vsix} --force`,
-    "   (or code --install-extension … --force)",
-    "4) Reconnect SSH → Developer: Reload Window.",
-    "5) Badge in DaVinchi panel MUST show:  v… · ui · win32   (not workspace · linux).",
+    "# 1) On your PC — start Chrome with the debug port (keep it open)",
+    '   Run "DaVinchi: Copy Local Chrome CDP Command" and paste it into PowerShell,',
+    "   or use the desktop launcher if you already created one.",
     "",
-    "# Fix A2 — still 'workspace' after the reload? Remove the SERVER copy",
-    "In the SSH window: Extensions → filter DaVinchi → the entry listed under",
-    '"SSH: <host> — Installed" → Uninstall. Keep the Local install. Then Reload Window.',
-    "Manual equivalent in the SSH terminal (both server runtimes):",
-    "   rm -rf ~/.vscode-server/extensions/coin-rebalancer.element-picker-*",
-    "   rm -rf ~/.cursor-server/extensions/coin-rebalancer.element-picker-*",
-    "(the editor rewrites its extensions.json on the next connect)",
+    "# 2) Reverse-forward the port so the server can reach that Chrome",
+    "   Add to ~/.ssh/config on your PC, under the entry for this host:",
+    `     RemoteForward ${port} localhost:${port}`,
+    `   or connect with:  ssh -R ${port}:127.0.0.1:${port} <host>`,
+    "   Then reconnect the SSH window (a new connection is required).",
     "",
-    "# Fix B (advanced CDP) — only if the extension must stay on the server:",
-    "1) On Windows PowerShell (local PC, not SSH terminal), run the script from",
-    "   “DaVinchi: Copy Local Chrome CDP Command”.",
-    "2) In Cursor/VS Code: Ports → Forward / reverse 9222 → 9222,",
-    "   or reconnect:  ssh -R 9222:127.0.0.1:9222 <host>",
-    "3) Open browser again (browserMode auto|cdp).",
+    "# 3) Check from the SSH terminal — this must print a JSON with a Browser field:",
+    `     curl -s ${endpoint}/json/version`,
+    "",
+    "# 4) Open browser in DaVinchi — Chrome on your PC is driven over CDP,",
+    "#    picks are written into this server workspace.",
+    "",
+    "# Alternative topology (no tunnel, no manual Chrome start):",
+    "# install the VSIX on your LOCAL PC instead and set",
+    '#   "remote.extensionKind": { "coin-rebalancer.element-picker": ["ui"] }',
+    "# The extension then runs on your PC, launches Chrome directly, and still",
+    "# saves every pick into this server workspace.",
   ].join("\n");
 }
 
-const EXT_ID = "coin-rebalancer.element-picker";
-/** Remembers that the UI override was already written from this host. */
-const FORCED_UI_KEY = "davinchi.forcedUiExtensionKind";
-
-type ForcedUiResult = "forced" | "already" | "failed";
-
 /**
- * Force this extension onto the local UI host under Remote SSH/Cursor.
- * Package already declares extensionKind:ui, but Cursor/VS Code still
- * sometimes activate a remote workspace copy — remote.extensionKind wins.
- *
- * "already" means writing it again cannot help — the server-side copy has to
- * go instead. A remembered previous attempt counts as "already" even when the
- * setting reads back as unset: `remote.extensionKind` is application-scoped,
- * so a remote extension host may never see the value that lives in the local
- * User settings, and re-writing it every activation would loop the toast.
+ * True when the configured CDP endpoint answers — i.e. the reverse tunnel is
+ * up and a debuggable Chrome is listening on the other end.
  */
-async function ensureForcedUiExtensionKind(
-  memento: vscode.Memento
-): Promise<ForcedUiResult> {
-  const cfg = vscode.workspace.getConfiguration();
-  const isUi = (entry: string | string[] | undefined): boolean =>
-    entry === "ui" ||
-    (Array.isArray(entry) && entry.length === 1 && entry[0] === "ui");
-
-  const effective =
-    cfg.get<Record<string, string | string[]>>("remote.extensionKind") || {};
-  if (isUi(effective[EXT_ID]) || memento.get<boolean>(FORCED_UI_KEY, false)) {
-    return "already";
-  }
-  // Merge onto the user's OWN value, never onto get()'s effective object —
-  // that one carries VS Code's schema default {"pub.name": ["ui"]} and would
-  // persist that placeholder into settings.json.
-  const own =
-    cfg.inspect<Record<string, string | string[]>>("remote.extensionKind")
-      ?.globalValue || {};
-  try {
-    await cfg.update(
-      "remote.extensionKind",
-      { ...own, [EXT_ID]: ["ui"] },
-      vscode.ConfigurationTarget.Global
-    );
-  } catch {
-    return "failed";
-  }
-  await memento.update(FORCED_UI_KEY, true);
-  return "forced";
+function probeCdpEndpoint(endpoint: string, timeoutMs = 1500): Promise<boolean> {
+  return new Promise((resolve) => {
+    let url: URL;
+    try {
+      url = new URL("/json/version", endpoint);
+    } catch {
+      resolve(false);
+      return;
+    }
+    const client = url.protocol === "https:" ? https : http;
+    const req = client.get(url, (res) => {
+      res.resume();
+      resolve((res.statusCode ?? 0) < 400);
+    });
+    req.setTimeout(timeoutMs, () => req.destroy());
+    req.on("error", () => resolve(false));
+  });
 }
 
-/** Loud warning when the extension landed on the SSH server (workspace host). */
-function warnIfWorkspaceHosted(
-  host: {
-    extensionKind: "ui" | "workspace";
-    badge: string;
-  },
-  memento: vscode.Memento
-): void {
+/**
+ * The extension host is the SSH server. That is a supported topology as long
+ * as a reverse-forwarded CDP port reaches the browser on the user's machine,
+ * so the warning appears only when that link is missing — nagging about it
+ * while everything works would be pure noise.
+ */
+function warnIfWorkspaceHosted(host: {
+  extensionKind: "ui" | "workspace";
+  badge: string;
+}): void {
   if (
     host.extensionKind !== "workspace" ||
     !vscode.env.remoteName ||
@@ -334,26 +321,24 @@ function warnIfWorkspaceHosted(
   }
 
   void (async () => {
-    const result = await ensureForcedUiExtensionKind(memento);
-    const copyLabel = t("actionCopyFixSteps");
-    const reloadLabel = t("actionReloadWindow");
-    const msg =
-      result === "forced"
-        ? t("msgWorkspaceHostForcedUi", host.badge)
-        : result === "already"
-          ? t("msgWorkspaceHostStillRemote", host.badge)
-          : t("msgWorkspaceHostWarning", host.badge);
-    // Reload only helps right after the override was written; once it is
-    // already set, offering Reload again just loops the same toast.
-    const actions =
-      result === "forced" ? [reloadLabel, copyLabel] : [copyLabel];
-    const choice = await vscode.window.showWarningMessage(msg, ...actions);
-    if (choice === copyLabel) {
-      await vscode.env.clipboard.writeText(workspaceHostFixSteps());
+    const endpoint = cdpEndpointSetting();
+    if (await probeCdpEndpoint(endpoint)) {
+      console.log(`[DaVinchi] remote host + local browser via ${endpoint}`);
       return;
     }
-    if (choice === reloadLabel) {
-      await vscode.commands.executeCommand("workbench.action.reloadWindow");
+    const copyLabel = t("actionCopySetupSteps");
+    const chromeLabel = t("actionCopyChromeScript");
+    const choice = await vscode.window.showWarningMessage(
+      t("msgRemoteHostNoCdp", host.badge, endpoint),
+      chromeLabel,
+      copyLabel
+    );
+    if (choice === copyLabel) {
+      await vscode.env.clipboard.writeText(remoteHostSetupSteps());
+      return;
+    }
+    if (choice === chromeLabel) {
+      await vscode.commands.executeCommand("elementPicker.copyLocalChromeCmd");
     }
   })();
 }
@@ -607,7 +592,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Exception to "no popups": a mis-hosted install (extension on the SSH
   // server) makes Open Browser dead on arrival — warn once, with copy-steps.
-  warnIfWorkspaceHosted(host, context.globalState);
+  warnIfWorkspaceHosted(host);
 
   // Resolve Chrome/Edge path on the UI host (clears poisoned Playwright paths)
   void ensureBrowserPathSetting().then((p) => {
