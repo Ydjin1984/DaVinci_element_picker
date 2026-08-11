@@ -267,6 +267,8 @@ function workspaceHostFixSteps(): string {
 }
 
 const EXT_ID = "coin-rebalancer.element-picker";
+/** Remembers that the UI override was already written from this host. */
+const FORCED_UI_KEY = "davinchi.forcedUiExtensionKind";
 
 type ForcedUiResult = "forced" | "already" | "failed";
 
@@ -275,50 +277,52 @@ type ForcedUiResult = "forced" | "already" | "failed";
  * Package already declares extensionKind:ui, but Cursor/VS Code still
  * sometimes activate a remote workspace copy — remote.extensionKind wins.
  *
- * "already" means the override is in place yet the host is STILL remote, so
- * writing it again cannot help — the server-side copy has to go instead.
- * The write is verified through inspect(): a silent no-op (or a value that
- * lands somewhere the remote host cannot see) must not be reported as fixed.
+ * "already" means writing it again cannot help — the server-side copy has to
+ * go instead. A remembered previous attempt counts as "already" even when the
+ * setting reads back as unset: `remote.extensionKind` is application-scoped,
+ * so a remote extension host may never see the value that lives in the local
+ * User settings, and re-writing it every activation would loop the toast.
  */
-async function ensureForcedUiExtensionKind(): Promise<ForcedUiResult> {
+async function ensureForcedUiExtensionKind(
+  memento: vscode.Memento
+): Promise<ForcedUiResult> {
   const cfg = vscode.workspace.getConfiguration();
   const isUi = (entry: string | string[] | undefined): boolean =>
     entry === "ui" ||
     (Array.isArray(entry) && entry.length === 1 && entry[0] === "ui");
 
-  const current =
+  const effective =
     cfg.get<Record<string, string | string[]>>("remote.extensionKind") || {};
-  if (isUi(current[EXT_ID])) {
+  if (isUi(effective[EXT_ID]) || memento.get<boolean>(FORCED_UI_KEY, false)) {
     return "already";
   }
+  // Merge onto the user's OWN value, never onto get()'s effective object —
+  // that one carries VS Code's schema default {"pub.name": ["ui"]} and would
+  // persist that placeholder into settings.json.
+  const own =
+    cfg.inspect<Record<string, string | string[]>>("remote.extensionKind")
+      ?.globalValue || {};
   try {
     await cfg.update(
       "remote.extensionKind",
-      { ...current, [EXT_ID]: ["ui"] },
+      { ...own, [EXT_ID]: ["ui"] },
       vscode.ConfigurationTarget.Global
     );
   } catch {
     return "failed";
   }
-  const after = vscode.workspace
-    .getConfiguration()
-    .inspect<Record<string, string | string[]>>("remote.extensionKind");
-  const landed =
-    isUi(after?.globalValue?.[EXT_ID]) ||
-    isUi(after?.workspaceValue?.[EXT_ID]) ||
-    isUi(
-      (
-        cfg.get<Record<string, string | string[]>>("remote.extensionKind") || {}
-      )[EXT_ID]
-    );
-  return landed ? "forced" : "failed";
+  await memento.update(FORCED_UI_KEY, true);
+  return "forced";
 }
 
 /** Loud warning when the extension landed on the SSH server (workspace host). */
-function warnIfWorkspaceHosted(host: {
-  extensionKind: "ui" | "workspace";
-  badge: string;
-}): void {
+function warnIfWorkspaceHosted(
+  host: {
+    extensionKind: "ui" | "workspace";
+    badge: string;
+  },
+  memento: vscode.Memento
+): void {
   if (
     host.extensionKind !== "workspace" ||
     !vscode.env.remoteName ||
@@ -330,7 +334,7 @@ function warnIfWorkspaceHosted(host: {
   }
 
   void (async () => {
-    const result = await ensureForcedUiExtensionKind();
+    const result = await ensureForcedUiExtensionKind(memento);
     const copyLabel = t("actionCopyFixSteps");
     const reloadLabel = t("actionReloadWindow");
     const msg =
@@ -603,7 +607,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Exception to "no popups": a mis-hosted install (extension on the SSH
   // server) makes Open Browser dead on arrival — warn once, with copy-steps.
-  warnIfWorkspaceHosted(host);
+  warnIfWorkspaceHosted(host, context.globalState);
 
   // Resolve Chrome/Edge path on the UI host (clears poisoned Playwright paths)
   void ensureBrowserPathSetting().then((p) => {

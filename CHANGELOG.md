@@ -2,6 +2,12 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.29] — 2026-08-11
+
+### Fixed
+- **Toast loop on a mis-hosted install** — field evidence from a real Remote SSH session: the server-side copy wrote `remote.extensionKind → ui`, the reload changed nothing, and the same “forced → Reload Window” toast came back on every activation. `remote.extensionKind` is application-scoped, so a remote extension host cannot read the value that lives in the local User settings and kept believing the override was never written. The attempt is now remembered in `globalState`, so the second activation goes straight to the message that names the real blocker (remove the server-side copy of the extension)
+- **Settings pollution** — the merge was built on the *effective* configuration value, which carries VS Code's schema default `{"pub.name": ["ui"]}`; that placeholder was then persisted into the user's `settings.json`. The override now merges onto the user's own value from `inspect().globalValue`
+
 ## [0.1.28] — 2026-08-11
 
 ### Fixed

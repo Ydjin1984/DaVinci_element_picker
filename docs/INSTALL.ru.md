@@ -2,7 +2,7 @@
 
 Расширение ставится из файла **`.vsix`** (Marketplace по умолчанию не используется).
 
-**Актуальная версия: `0.1.28`** · id `coin-rebalancer.element-picker`
+**Актуальная версия: `0.1.29`** · id `coin-rebalancer.element-picker`
 
 ---
 
@@ -20,7 +20,7 @@ Node.js нужен только тому, кто **собирает** `.vsix` и
 
 ## Установка (GUI)
 
-1. Скачайте `element-picker-0.1.28.vsix` из [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) или возьмите файл после локальной сборки.
+1. Скачайте `element-picker-0.1.29.vsix` из [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) или возьмите файл после локальной сборки.
 2. VS Code / Cursor → `Ctrl+Shift+X` → `⋯` → **Install from VSIX…**
 3. Выберите файл → **Install** → **Reload**.
 4. Слева в Activity Bar — иконка **DaVinchi**.
@@ -30,8 +30,8 @@ Node.js нужен только тому, кто **собирает** `.vsix` и
 ## Установка (CLI)
 
 ```powershell
-code --install-extension ".\element-picker-0.1.28.vsix" --force
-cursor --install-extension ".\element-picker-0.1.28.vsix" --force
+code --install-extension ".\element-picker-0.1.29.vsix" --force
+cursor --install-extension ".\element-picker-0.1.29.vsix" --force
 ```
 
 Проверка:
@@ -41,7 +41,7 @@ code --list-extensions --show-versions | findstr element-picker
 cursor --list-extensions --show-versions | findstr element-picker
 ```
 
-Ожидается: `coin-rebalancer.element-picker@0.1.28`
+Ожидается: `coin-rebalancer.element-picker@0.1.29`
 
 ---
 
@@ -63,7 +63,7 @@ cursor --list-extensions --show-versions | findstr element-picker
 7. Пути попадают в **терминал** и **буфер обмена** — допишите вопрос агенту.
 
 В шапке панели, status bar, дереве Controls и меню виден **бейдж версии**  
-(`v0.1.28 · ui|workspace · platform`) — удобно понять, на каком хосте крутится расширение.
+(`v0.1.29 · ui|workspace · platform`) — удобно понять, на каком хосте крутится расширение.
 
 ### Горячие клавиши
 
@@ -98,7 +98,7 @@ git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
 cd DaVinci_element_picker
 npm install
 npm run package
-# → element-picker-0.1.28.vsix
+# → element-picker-0.1.29.vsix
 ```
 
 ---
