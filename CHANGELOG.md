@@ -2,6 +2,15 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.31] — 2026-08-11
+
+### Added
+- **Open browser starts the browser on your machine even when DaVinchi runs on the SSH server.** Closing that browser used to end the session for good: the next Open browser could only report that `localhost:9222` was unreachable, and the user had to go start Chrome by hand. The extension now asks the local machine to launch it — `vscode.env.openExternal("davinchi-chrome://start")` is handled by the editor client on that machine, so the URI handler registered there starts the debug Chrome — then waits for the endpoint (up to 15 s) and connects. With no handler registered nothing opens and the previous error path is unchanged
+- The wake-and-retry runs in `browserMode: cdp` and in `auto` whenever CDP is the preferred route (extension hosted on a remote Linux workspace)
+
+### Changed
+- The CDP reachability probe lives in `browserSession` and is shared with the activation check instead of being duplicated
+
 ## [0.1.30] — 2026-08-11
 
 ### Changed

@@ -3,10 +3,9 @@ import type { Page } from "playwright-core";
 import {
   BrowserSession,
   ensureBrowserPathSetting,
+  probeCdpEndpoint,
 } from "./browser/browserSession";
 import { spawn } from "child_process";
-import * as http from "http";
-import * as https from "https";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -275,29 +274,6 @@ function remoteHostSetupSteps(): string {
     "# The extension then runs on your PC, launches Chrome directly, and still",
     "# saves every pick into this server workspace.",
   ].join("\n");
-}
-
-/**
- * True when the configured CDP endpoint answers — i.e. the reverse tunnel is
- * up and a debuggable Chrome is listening on the other end.
- */
-function probeCdpEndpoint(endpoint: string, timeoutMs = 1500): Promise<boolean> {
-  return new Promise((resolve) => {
-    let url: URL;
-    try {
-      url = new URL("/json/version", endpoint);
-    } catch {
-      resolve(false);
-      return;
-    }
-    const client = url.protocol === "https:" ? https : http;
-    const req = client.get(url, (res) => {
-      res.resume();
-      resolve((res.statusCode ?? 0) < 400);
-    });
-    req.setTimeout(timeoutMs, () => req.destroy());
-    req.on("error", () => resolve(false));
-  });
 }
 
 /**

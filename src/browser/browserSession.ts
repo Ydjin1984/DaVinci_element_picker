@@ -1,4 +1,6 @@
 import * as fs from "fs";
+import * as http from "http";
+import * as https from "https";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -83,6 +85,32 @@ export async function ensureBrowserPathSetting(): Promise<string> {
   }
 
   return findPreferredBrowserPath();
+}
+
+/**
+ * True when the CDP endpoint answers — the browser on the user's machine is
+ * reachable (directly, or through a reverse-forwarded port under Remote SSH).
+ */
+export function probeCdpEndpoint(
+  endpoint: string,
+  timeoutMs = 1500
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    let url: URL;
+    try {
+      url = new URL("/json/version", endpoint);
+    } catch {
+      resolve(false);
+      return;
+    }
+    const client = url.protocol === "https:" ? https : http;
+    const req = client.get(url, (res) => {
+      res.resume();
+      resolve((res.statusCode ?? 0) < 400);
+    });
+    req.setTimeout(timeoutMs, () => req.destroy());
+    req.on("error", () => resolve(false));
+  });
 }
 
 /** Remote workspace extension host without a GUI (typical SSH Linux server). */
@@ -436,6 +464,34 @@ export class BrowserSession {
    * On Remote SSH: start Chrome on Windows with --remote-debugging-port=9222,
    * then reverse-forward remote:9222 → local:9222 (or SSH RemoteForward).
    */
+  /**
+   * Ask the user's OWN machine to start the debug browser and wait for it.
+   *
+   * `openExternal` is handled by the local editor client even when this code
+   * runs on the SSH server, so the `davinchi-chrome:` URI handler registered
+   * on that machine launches Chrome there. Without a handler nothing opens and
+   * the probe simply times out, leaving the normal error path intact.
+   */
+  private async wakeLocalBrowser(endpoint: string): Promise<boolean> {
+    try {
+      const opened = await vscode.env.openExternal(
+        vscode.Uri.parse("davinchi-chrome://start")
+      );
+      if (!opened) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+    for (let i = 0; i < 15; i++) {
+      await new Promise((r) => setTimeout(r, 1000));
+      if (await probeCdpEndpoint(endpoint, 1200)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private async connectCdp(
     endpoint: string
   ): Promise<{ browser: Browser; how: string }> {
@@ -617,8 +673,22 @@ export class BrowserSession {
       }
     };
 
+    // The browser on the user's machine may simply not be running (they closed
+    // it, or the last tab went away). Ask that machine to start it and retry
+    // before reporting a failure the user would have to fix by hand.
+    const tryCdpWithWake = async (): Promise<{
+      browser: Browser;
+      how: string;
+      viaCdp: boolean;
+    } | null> => {
+      const first = await tryCdp();
+      if (first) return first;
+      if (!(await this.wakeLocalBrowser(endpoint))) return null;
+      return tryCdp();
+    };
+
     if (mode === "cdp") {
-      const cdp = await tryCdp();
+      const cdp = await tryCdpWithWake();
       if (cdp) return cdp;
       throw this.unifiedBrowserError(errors, endpoint, "cdp");
     }
@@ -636,7 +706,7 @@ export class BrowserSession {
       if (launched) return launched;
     }
 
-    const cdp = await tryCdp();
+    const cdp = cdpFirst ? await tryCdpWithWake() : await tryCdp();
     if (cdp) return cdp;
 
     // Last resort on mis-hosted remote workspace (usually fails without DISPLAY)

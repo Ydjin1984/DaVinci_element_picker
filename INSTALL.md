@@ -3,7 +3,7 @@
 > **Русский:** [docs/INSTALL.ru.md](docs/INSTALL.ru.md)
 
 Install from a **`.vsix`** (GitHub Release or local build).  
-**Current version: `0.1.30`** · id `coin-rebalancer.element-picker`
+**Current version: `0.1.31`** · id `coin-rebalancer.element-picker`
 
 ---
 
@@ -21,7 +21,7 @@ Node.js is needed only if you **build** the VSIX from source.
 
 ## Install (GUI)
 
-1. Download `element-picker-0.1.30.vsix` from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or the repo root / `dist/` after a local build.
+1. Download `element-picker-0.1.31.vsix` from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or the repo root / `dist/` after a local build.
 2. Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…**
 3. Choose the file → **Install** → **Reload**.
 
@@ -30,8 +30,8 @@ Node.js is needed only if you **build** the VSIX from source.
 ## Install (CLI)
 
 ```powershell
-code --install-extension ".\element-picker-0.1.30.vsix" --force
-cursor --install-extension ".\element-picker-0.1.30.vsix" --force
+code --install-extension ".\element-picker-0.1.31.vsix" --force
+cursor --install-extension ".\element-picker-0.1.31.vsix" --force
 ```
 
 Verify:
@@ -41,7 +41,7 @@ code --list-extensions --show-versions | findstr element-picker
 cursor --list-extensions --show-versions | findstr element-picker
 ```
 
-Expected: `coin-rebalancer.element-picker@0.1.30`
+Expected: `coin-rebalancer.element-picker@0.1.31`
 
 ---
 
@@ -71,7 +71,7 @@ git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
 cd DaVinci_element_picker
 npm install
 npm run package
-# → element-picker-0.1.30.vsix
+# → element-picker-0.1.31.vsix
 ```
 
-Or `npm run package:out` → `dist/element-picker-0.1.30.vsix`
+Or `npm run package:out` → `dist/element-picker-0.1.31.vsix`
