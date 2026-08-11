@@ -4,6 +4,7 @@ import {
   BrowserSession,
   ensureBrowserPathSetting,
 } from "./browser/browserSession";
+import { spawn } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -195,19 +196,27 @@ async function openBrowser(url?: string): Promise<void> {
 async function startLocalChromeProcess(finalUrl: string): Promise<void> {
   const cmd = BrowserSession.localChromeDebugCommand(finalUrl, 9222);
   await vscode.env.clipboard.writeText(cmd);
-  // UI host stays win32 when Remote SSH is open — do NOT require !remoteName
+  // UI host stays win32 when Remote SSH is open — do NOT require !remoteName.
+  // spawn() runs on THIS extension-host process (the local PC for a UI
+  // extension); createTerminal in a remote window may open a REMOTE shell,
+  // where powershell.exe does not exist (same pattern as webviewRepair.ts).
   if (process.platform === "win32") {
     try {
       const ps1 = path.join(os.tmpdir(), "davinci-start-chrome.ps1");
       fs.writeFileSync(ps1, cmd, "utf8");
-      const term = vscode.window.createTerminal({
-        name: "DaVinchi Local Chrome",
-        shellPath: "powershell.exe",
-      });
-      term.show(true);
-      term.sendText(
-        `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1}"`
-      );
+      spawn(
+        "powershell.exe",
+        [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-WindowStyle",
+          "Hidden",
+          "-File",
+          ps1,
+        ],
+        { detached: true, stdio: "ignore", windowsHide: true }
+      ).unref();
     } catch {
       /* clipboard is enough */
     }
@@ -216,6 +225,47 @@ async function startLocalChromeProcess(finalUrl: string): Promise<void> {
     t("msgLocalChromeStarted") +
       (vscode.env.remoteName ? "\n\n" + t("cdpReversePortHint") : "")
   );
+}
+
+/**
+ * Copyable recovery steps for a mis-hosted install (extension on the SSH
+ * server instead of the local PC). English on purpose: pasted into docs,
+ * issues and terminals.
+ */
+const WORKSPACE_HOST_FIX_STEPS = [
+  "# DaVinchi is running on the remote host (workspace) — fix:",
+  "1) On your LOCAL PC: install the extension VSIX in VS Code/Cursor (Extensions -> ... -> Install from VSIX).",
+  "2) Reload Window. The badge in the DaVinchi panel must show:  v... · ui · win32",
+  "3) Open browser — Chrome starts locally; picks save into this SSH workspace.",
+  "",
+  "# Advanced fallback (CDP), only if the extension must stay on the server:",
+  "1) Run \"DaVinchi: Start Local Chrome (CDP)\" (or paste the copied script into PowerShell on your PC).",
+  "2) Reconnect SSH with:  ssh -R 9222:127.0.0.1:9222 <host>   (or add \"RemoteForward 9222 localhost:9222\" to ~/.ssh/config).",
+  "3) Open browser again (browserMode auto|cdp).",
+].join("\n");
+
+/** Loud warning when the extension landed on the SSH server (workspace host). */
+function warnIfWorkspaceHosted(host: {
+  extensionKind: "ui" | "workspace";
+  badge: string;
+}): void {
+  if (
+    host.extensionKind !== "workspace" ||
+    !vscode.env.remoteName ||
+    vscode.env.remoteName === "wsl" ||
+    process.platform === "win32" ||
+    process.platform === "darwin"
+  ) {
+    return;
+  }
+  const copyLabel = t("actionCopyFixSteps");
+  void vscode.window
+    .showWarningMessage(t("msgWorkspaceHostWarning", host.badge), copyLabel)
+    .then(async (choice) => {
+      if (choice === copyLabel) {
+        await vscode.env.clipboard.writeText(WORKSPACE_HOST_FIX_STEPS);
+      }
+    });
 }
 
 async function toggleSelect(): Promise<boolean> {
@@ -464,6 +514,10 @@ export function activate(context: vscode.ExtensionContext): void {
     "| uiKind=",
     vscode.env.uiKind
   );
+
+  // Exception to "no popups": a mis-hosted install (extension on the SSH
+  // server) makes Open Browser dead on arrival — warn once, with copy-steps.
+  warnIfWorkspaceHosted(host);
 
   // Resolve Chrome/Edge path on the UI host (clears poisoned Playwright paths)
   void ensureBrowserPathSetting().then((p) => {

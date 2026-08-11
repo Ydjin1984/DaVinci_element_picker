@@ -2,6 +2,20 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.27] — 2026-08-11
+
+### Fixed
+- **Remote SSH: «браузер не запускается» / вместо Chrome стартовал Edge** — закрыт весь класс сбоев:
+  - CDP-first теперь применяется **только** к реально mis-hosted установке (extension host на удалённом Linux workspace, проверка по фактическому `extensionKind`) и работает даже при заданном `DISPLAY` (X11/VNC) — серверное окно браузера никогда не используется для интерактивного pick. UI-хосты (win32/darwin/Linux-десктоп) сохраняют launch-first из 0.1.26
+  - **CDP-хелпер запускал Edge вместо Chrome**: `Start Local Chrome (CDP)` теперь проверяет все стандартные пути Chrome (LOCALAPPDATA, Program Files, Program Files (x86)) и `elementPicker.browserPath` до фолбэка на Edge; при фолбэке скрипт печатает NOTE
+  - **CDP-хелпер уходил в удалённый терминал**: под Remote SSH `createTerminal` может открыть серверный shell, где нет `powershell.exe` — хелпер теперь запускает PowerShell напрямую на UI-хосте через `child_process.spawn` (паттерн webview repair), detached
+  - **Attach-пути были нечитаемы на сервере**: при удалённом workspace абсолютные `fsPath` приходили с win32-разделителями (`\home\user\…`) — attach-блок восстанавливает POSIX-форму; локальные file-workspace не затронуты
+  - **Mis-hosted установка теперь заметна**: на activate показывается предупреждение с кнопкой «Copy fix steps» (переведено на все 18 локалей); ошибка Open Browser несёт суть в первой строке (видна в тосте) и точные шаги `ssh -R 9222:127.0.0.1:9222` / `RemoteForward`
+  - `ensureBrowserPathSetting` больше не предлагает серверный бинарник на mis-hosted workspace-хосте даже при заданном `DISPLAY`
+
+### Changed
+- **Документация описывает реальную архитектуру**: README / INSTALL / INSTALL.ru начинаются с «установите VSIX локально → Chrome открывается на вашем ПК → пики сохраняются в удалённый workspace»; CDP-ритуал перенесён в advanced-fallback
+
 ## [0.1.26] — 2026-08-09
 
 ### Fixed

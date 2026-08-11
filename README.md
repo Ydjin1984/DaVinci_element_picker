@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.26-4fc3f7" alt="version 0.1.26" />
+  <img src="https://img.shields.io/badge/version-0.1.27-4fc3f7" alt="version 0.1.27" />
   <img src="https://img.shields.io/badge/VS%20Code-1.85%2B-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Code 1.85+" />
   <img src="https://img.shields.io/badge/Cursor-supported-000000?logo=cursor&logoColor=white" alt="Cursor" />
   <img src="https://img.shields.io/badge/license-MIT-22c55e" alt="MIT" />
@@ -50,19 +50,19 @@ No Copilot lock-in. Agent-agnostic.
 
 ## Install
 
-**Current release: `0.1.26`** · package id `coin-rebalancer.element-picker`
+**Current release: `0.1.27`** · package id `coin-rebalancer.element-picker`
 
 ### From VSIX (recommended)
 
-1. Download **`element-picker-0.1.26.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or build locally.
+1. Download **`element-picker-0.1.27.vsix`** from [Releases](https://github.com/Ydjin1984/DaVinci_element_picker/releases) or build locally.
 2. VS Code / Cursor → Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…**
 3. Reload the window.
 
 CLI:
 
 ```powershell
-code --install-extension ".\element-picker-0.1.26.vsix" --force
-cursor --install-extension ".\element-picker-0.1.26.vsix" --force
+code --install-extension ".\element-picker-0.1.27.vsix" --force
+cursor --install-extension ".\element-picker-0.1.27.vsix" --force
 ```
 
 Step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · short EN: [INSTALL.md](INSTALL.md)
@@ -99,7 +99,7 @@ Step-by-step (RU): [docs/INSTALL.ru.md](docs/INSTALL.ru.md) · short EN: [INSTAL
 | `Ctrl+Shift+Alt+E` | Action menu (also status bar) |
 
 The panel, status bar, Controls tree, and action menu show a **version badge**  
-(`v0.1.26 · ui · platform`) so Local UI host is obvious (must be `ui`, not `workspace`).
+(`v0.1.27 · ui · platform`) so Local UI host is obvious (must be `ui`, not `workspace`).
 
 ---
 
@@ -172,13 +172,24 @@ Canvas metrics:
 | `DaVinchi: Start Local Chrome (CDP)` | Start Chrome with `--remote-debugging-port=9222` (Windows helper) |
 | `DaVinchi: Copy Local Chrome CDP Command` | Copy the PowerShell start script only |
 
-### Remote SSH (local Chrome via CDP)
+### Remote SSH — Chrome runs locally, files save to the server
 
-1. On your **Windows PC**: run **Start Local Chrome (CDP)** (or paste the copied script).
-2. In VS Code/Cursor Remote: **Ports** → reverse-forward `9222` → `9222`.
+No CDP, no port forwarding needed. The extension is **UI-only** (`extensionKind: ["ui"]`), so under Remote SSH it runs on your **local PC**:
+
+1. Install the VSIX on the **local** VS Code/Cursor (not on the SSH host). The badge in the DaVinchi panel must show `v… · ui · win32` (not `workspace · linux`).
+2. **Open browser** — Chrome starts on your PC, exactly like with a local folder.
+3. Pick / Clone as usual — all files land in the **remote workspace** (`.element-picks/` on the server).
+
+If the badge shows `workspace · linux`, the extension was installed on the server: reinstall the VSIX locally and Reload Window.
+
+<details>
+<summary><b>Advanced fallback: CDP</b> (only if the extension must stay on the SSH host)</summary>
+
+1. On your **Windows PC**: run **Start Local Chrome (CDP)** (or paste the copied script into PowerShell). Chrome is preferred; Edge is used only when no Chrome install is found.
+2. Reverse-forward port `9222` (`ssh -R 9222:127.0.0.1:9222 <host>`, or `RemoteForward 9222 localhost:9222` in `~/.ssh/config`).
 3. Set `elementPicker.browserMode` to `auto` (default) or `cdp`, then **Open browser**.
 
-Picks still write into the **remote workspace** folder.
+</details>
 
 ---
 
@@ -223,8 +234,8 @@ npm run compile
 ```
 
 - **F5** → Extension Development Host  
-- Package: `npm run package` → `element-picker-0.1.26.vsix`  
-- Or: `npm run package:out` → `dist/element-picker-0.1.26.vsix`  
+- Package: `npm run package` → `element-picker-0.1.27.vsix`  
+- Or: `npm run package:out` → `dist/element-picker-0.1.27.vsix`  
 - Preflight: `node .claude/skills/davinchi-release/scripts/preflight.js`
 
 ```jsonc

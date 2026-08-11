@@ -9,6 +9,7 @@ import {
   type LaunchOptions,
   type Page,
 } from "playwright-core";
+import { getHostInfo } from "../hostInfo";
 import { t } from "../i18n";
 import { getCloneOptions } from "../storage/cloneOptions";
 import type { BrowserChannel, ElementPickPayload } from "../types";
@@ -74,8 +75,10 @@ export async function ensureBrowserPathSetting(): Promise<string> {
     return current;
   }
 
-  // Remote SSH workspace host: do not return a server-side binary as "preferred"
-  if (isRemoteHeadlessEnvironment()) {
+  // Remote SSH workspace host: do not return a server-side binary as
+  // "preferred" — even with DISPLAY set (mis-hosted install), the pick
+  // window belongs on the user's local PC (review nit N1).
+  if (isRemoteHeadlessEnvironment() || isRemoteLinuxWorkspaceHost()) {
     return "";
   }
 
@@ -88,6 +91,23 @@ function isRemoteHeadlessEnvironment(): boolean {
     !!vscode.env.remoteName &&
     process.platform === "linux" &&
     !process.env.DISPLAY
+  );
+}
+
+/**
+ * Extension host is a remote Linux WORKSPACE host (SSH server / container) —
+ * even when DISPLAY is set (X11/VNC): a server-side browser window is never
+ * what a user at a local monitor wants for interactive pick, so prefer CDP to
+ * their local Chrome. The extensionKind check keeps a Linux DESKTOP acting as
+ * the UI host (VS Code/Cursor on Linux + Remote SSH) on the normal local
+ * launch path. WSL is excluded (WSLg windows appear on the local desktop).
+ */
+function isRemoteLinuxWorkspaceHost(): boolean {
+  return (
+    !!vscode.env.remoteName &&
+    vscode.env.remoteName !== "wsl" &&
+    process.platform === "linux" &&
+    getHostInfo().extensionKind === "workspace"
   );
 }
 
@@ -359,21 +379,42 @@ export class BrowserSession {
   /**
    * PowerShell script for the USER'S WINDOWS PC (always), even when extension
    * host is Remote SSH Linux. Starts Chrome with --remote-debugging-port.
+   * Chrome is searched in every standard install location FIRST; Edge is a
+   * last-resort fallback only (the old 2-path probe kept starting Edge for
+   * users whose Chrome lives in Program Files (x86) or a custom dir).
    */
   static localChromeDebugCommand(url: string, port = 9222): string {
     // Quote-strip + drop control chars so the PowerShell single-quoted string stays safe.
-    const safeUrl = url
-      .replace(/["']/g, "")
-      .replace(/[\u0000-\u001f\u007f]/g, "")
-      .trim();
+    const sanitize = (s: string): string =>
+      s
+        .replace(/["']/g, "")
+        .replace(/[\u0000-\u001f\u007f]/g, "")
+        .trim();
+    const safeUrl = sanitize(url);
+    // Explicit browserPath wins when it points at a Windows executable —
+    // the script always runs on the local Windows PC.
+    const cfgPath = sanitize(
+      vscode.workspace
+        .getConfiguration("elementPicker")
+        .get<string>("browserPath", "") || ""
+    );
+    const custom = /^[a-zA-Z]:[\\/]/.test(cfgPath) ? cfgPath : "";
     return [
       `# DaVinchi — run this on your WINDOWS PC (local Chrome for remote SSH picks)`,
       `$port = ${port}`,
       `$url = '${safeUrl}'`,
-      `$chrome = Join-Path $env:LOCALAPPDATA 'Google\\Chrome\\Application\\chrome.exe'`,
-      `if (-not (Test-Path $chrome)) { $chrome = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' }`,
-      `if (-not (Test-Path $chrome)) { $chrome = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe' }`,
-      `if (-not (Test-Path $chrome)) { throw 'Chrome/Edge not found. Install Google Chrome.' }`,
+      `$candidates = @(`,
+      ...(custom ? [`  '${custom}',`] : []),
+      `  (Join-Path $env:LOCALAPPDATA 'Google\\Chrome\\Application\\chrome.exe'),`,
+      `  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',`,
+      `  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',`,
+      `  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',`,
+      `  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',`,
+      `  (Join-Path $env:LOCALAPPDATA 'Microsoft\\Edge\\Application\\msedge.exe')`,
+      `)`,
+      `$chrome = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1`,
+      `if (-not $chrome) { throw 'Chrome/Edge not found. Install Google Chrome.' }`,
+      `if ($chrome -like '*msedge*') { Write-Host 'NOTE: Chrome not found in standard locations — starting Edge instead.' }`,
       `$dir = Join-Path $env:TEMP 'davinci-chrome-profile'`,
       `New-Item -ItemType Directory -Force -Path $dir | Out-Null`,
       `Write-Host "Starting: $chrome"`,
@@ -522,26 +563,6 @@ export class BrowserSession {
   }
 
   /**
-   * True if a real system Chrome/Edge is available on THIS extension-host machine
-   * and a GUI launch is plausible. Playwright cache alone is not enough on headless SSH.
-   */
-  private canLaunchSystemBrowserHere(): boolean {
-    const custom = this.configuredBrowserPath();
-    if (
-      custom &&
-      fs.existsSync(custom) &&
-      !isPlaywrightCachePath(custom)
-    ) {
-      return true;
-    }
-    // Headless remote Linux: never claim we can open a picker window here
-    if (isRemoteHeadlessEnvironment()) {
-      return false;
-    }
-    return discoverBrowserExecutables({ includePlaywright: false }).length > 0;
-  }
-
-  /**
    * Obtain a browser.
    *
    * DaVinchi is a **UI** extension: the host is the local PC even under Remote SSH
@@ -558,9 +579,10 @@ export class BrowserSession {
   }> {
     const mode = this.browserMode();
     const endpoint = this.cdpEndpoint();
-    const canLaunch = this.canLaunchSystemBrowserHere();
-    // true only if extension somehow runs on SSH Linux without GUI (mis-install)
-    const remoteHeadless = isRemoteHeadlessEnvironment();
+    // Mis-hosted on the SSH server (should be a UI extension): prefer CDP to
+    // the user's local Chrome even when DISPLAY is set — an X11/VNC window on
+    // the server is never the interactive pick surface the user asked for.
+    const cdpFirst = isRemoteLinuxWorkspaceHost();
     const errors: string[] = [];
 
     const tryLaunch = async (): Promise<{
@@ -609,31 +631,21 @@ export class BrowserSession {
 
     // auto: local UI host (Windows/macOS/Linux desktop) — even when remoteName is set
     // because the workspace is Remote SSH. Launch Chrome on THIS machine first.
-    if (!remoteHeadless) {
-      if (canLaunch) {
-        const launched = await tryLaunch();
-        if (launched) return launched;
-      } else {
-        // Channel / path discovery may still find Chrome when canLaunch was false
-        const launched = await tryLaunch();
-        if (launched) return launched;
-      }
+    if (!cdpFirst) {
+      const launched = await tryLaunch();
+      if (launched) return launched;
     }
 
     const cdp = await tryCdp();
     if (cdp) return cdp;
 
     // Last resort on mis-hosted remote workspace (usually fails without DISPLAY)
-    if (remoteHeadless) {
+    if (cdpFirst) {
       const launched = await tryLaunch();
       if (launched) return launched;
     }
 
-    throw this.unifiedBrowserError(
-      errors,
-      endpoint,
-      remoteHeadless || (!canLaunch && this.isRemoteHost()) ? "cdp" : "launch"
-    );
+    throw this.unifiedBrowserError(errors, endpoint, cdpFirst ? "cdp" : "launch");
   }
 
   private unifiedBrowserError(
@@ -641,11 +653,18 @@ export class BrowserSession {
     endpoint: string,
     kind: "cdp" | "launch"
   ): Error {
-    const remoteHeadless = isRemoteHeadlessEnvironment();
-    const hostNote = remoteHeadless
+    const misHosted = isRemoteLinuxWorkspaceHost();
+    // First line is all the user sees in the toast — carry the key insight there.
+    const firstLine = misHosted
+      ? `Could not open a browser — DaVinchi is running on the REMOTE host; install the VSIX locally (badge must show “ui”).\n`
+      : `Could not open a browser.\n`;
+    const hostNote = misHosted
       ? `Remote SSH mis-host: extension is running on the Linux server (workspace), not on your PC.\n` +
-        `Install element-picker-*.vsix on the LOCAL Cursor/VS Code (UI host), then Reload.\n` +
-        `Badge must show: v… · ui · win32  (not workspace · linux).\n\n`
+        `Fix A (recommended): install element-picker-*.vsix on the LOCAL Cursor/VS Code (UI host), then Reload Window.\n` +
+        `Badge must show: v… · ui · win32  (not workspace · linux).\n` +
+        `Fix B (advanced CDP): run “DaVinchi: Start Local Chrome (CDP)” on your PC, reconnect with\n` +
+        `  ssh -R 9222:127.0.0.1:9222 <host>   (or RemoteForward 9222 localhost:9222 in ~/.ssh/config),\n` +
+        `then Open browser again.\n\n`
       : this.isRemoteHost()
         ? `Remote workspace open (${vscode.env.remoteName}); browser still launches on the local UI host.\n` +
           `If Chrome did not start, set elementPicker.browserPath to your local chrome.exe.\n\n`
@@ -655,7 +674,7 @@ export class BrowserSession {
       .join("\n  ");
     return Object.assign(
       new Error(
-        `Could not open a browser.\n` +
+        firstLine +
           hostNote +
           `Platform: ${process.platform} ${os.arch()}\n` +
           `Browsers found here:\n  ${found || "(none)"}\n\n` +

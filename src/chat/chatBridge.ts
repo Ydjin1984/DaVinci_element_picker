@@ -18,6 +18,21 @@ function outputDirPosix(): string {
 }
 
 /**
+ * Absolute path as the WORKSPACE-HOST shell should see it. For a remote
+ * workspace (Remote SSH) on a Windows UI host, `uri.fsPath` comes back with
+ * win32 separators (`\home\user\proj\...`) — garbage for the server-side
+ * agent. Restoring forward slashes yields the real POSIX path on the server.
+ * Local (file-scheme) workspaces keep their native form untouched.
+ */
+function agentPath(p: string): string {
+  const root = vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (!root || root.scheme === "file") {
+    return p;
+  }
+  return p.replace(/\\/g, "/");
+}
+
+/**
  * Build the block that gets pasted into terminal + clipboard.
  */
 export function buildAttachBlock(pick: SavedPick): string {
@@ -49,7 +64,7 @@ export function buildAttachBlock(pick: SavedPick): string {
     );
   }
   for (const p of paths) {
-    if (p) lines.push(quotePath(p));
+    if (p) lines.push(quotePath(agentPath(p)));
   }
 
   lines.push("");

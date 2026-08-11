@@ -121,7 +121,9 @@ export type MessageKey =
   | "cloneOptPageShot"
   | "cloneOptParentShot"
   | "cloneOptComputed"
-  | "cloneOptSvg";
+  | "cloneOptSvg"
+  | "msgWorkspaceHostWarning"
+  | "actionCopyFixSteps";
 
 type Dict = Record<MessageKey, string>;
 
@@ -258,6 +260,9 @@ const en: Dict = {
   treeFullPackBadge: "full pack",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi is installed on the remote host ({0}) — Chrome cannot start on your PC from there. Install the VSIX on your local VS Code/Cursor (badge must show “ui”), then Reload Window.",
+  actionCopyFixSteps: "Copy fix steps",
   sectionCloneSettings: "Clone settings",
   cloneOptFullSite: "Clone the whole page (full reference)",
   cloneOptFullSiteHint:
@@ -410,6 +415,9 @@ const ru: Dict = {
   treeFullPackBadge: "полный пакет",
   statusBarClone: "$(git-compare) Клон: ВКЛ",
   onLabel: "ВКЛ",
+  msgWorkspaceHostWarning:
+    "DaVinchi установлен на удалённом хосте ({0}) — оттуда нельзя запустить Chrome на вашем ПК. Установите VSIX в локальный VS Code/Cursor (бейдж должен показывать «ui») и выполните Reload Window.",
+  actionCopyFixSteps: "Скопировать шаги исправления",
   sectionCloneSettings: "Настройки клона",
   cloneOptFullSite: "Клонировать всю страницу (полный референс)",
   cloneOptFullSiteHint:
@@ -520,6 +528,9 @@ const de: Dict = {
   treeFullPackBadge: "Komplettpaket",
   statusBarClone: "$(git-compare) Klon: AN",
   onLabel: "AN",
+  msgWorkspaceHostWarning:
+    "DaVinchi ist auf dem Remote-Host installiert ({0}) — von dort kann Chrome auf Ihrem PC nicht gestartet werden. Installieren Sie die VSIX im lokalen VS Code/Cursor (Badge muss „ui“ zeigen), dann Reload Window.",
+  actionCopyFixSteps: "Korrekturschritte kopieren",
   sectionCloneSettings: "Klon-Einstellungen",
   cloneOptFullSite: "Ganze Seite klonen (volle Referenz)",
   cloneOptFullSiteHint:
@@ -629,6 +640,9 @@ const es: Dict = {
   treeFullPackBadge: "paquete completo",
   statusBarClone: "$(git-compare) Clon: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi está instalado en el host remoto ({0}): desde ahí no se puede iniciar Chrome en tu PC. Instala el VSIX en el VS Code/Cursor local (la insignia debe mostrar «ui») y ejecuta Reload Window.",
+  actionCopyFixSteps: "Copiar pasos de corrección",
   sectionCloneSettings: "Ajustes de clonación",
   cloneOptFullSite: "Clonar toda la página (referencia completa)",
   cloneOptFullSiteHint:
@@ -737,6 +751,9 @@ const fr: Dict = {
   treeFullPackBadge: "pack complet",
   statusBarClone: "$(git-compare) Clone : ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi est installé sur l'hôte distant ({0}) — impossible de lancer Chrome sur votre PC depuis là. Installez le VSIX dans le VS Code/Cursor local (le badge doit afficher « ui »), puis Reload Window.",
+  actionCopyFixSteps: "Copier les étapes de correction",
   sectionCloneSettings: "Réglages de clonage",
   cloneOptFullSite: "Cloner la page entière (référence complète)",
   cloneOptFullSiteHint:
@@ -845,6 +862,9 @@ const it: Dict = {
   treeFullPackBadge: "pacchetto completo",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi è installato sull'host remoto ({0}): da lì non è possibile avviare Chrome sul tuo PC. Installa il VSIX nel VS Code/Cursor locale (il badge deve mostrare «ui»), poi Reload Window.",
+  actionCopyFixSteps: "Copia i passaggi di correzione",
   sectionCloneSettings: "Impostazioni clonazione",
   cloneOptFullSite: "Clona l'intera pagina (riferimento completo)",
   cloneOptFullSiteHint:
@@ -953,6 +973,9 @@ const ptBR: Dict = {
   treeFullPackBadge: "pacote completo",
   statusBarClone: "$(git-compare) Clone: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "O DaVinchi está instalado no host remoto ({0}) — de lá não é possível iniciar o Chrome no seu PC. Instale o VSIX no VS Code/Cursor local (o selo deve mostrar “ui”) e execute Reload Window.",
+  actionCopyFixSteps: "Copiar passos de correção",
   sectionCloneSettings: "Configurações de clonagem",
   cloneOptFullSite: "Clonar a página inteira (referência completa)",
   cloneOptFullSiteHint:
@@ -1062,6 +1085,9 @@ const nl: Dict = {
   treeFullPackBadge: "volledig pakket",
   statusBarClone: "$(git-compare) Kloon: AAN",
   onLabel: "AAN",
+  msgWorkspaceHostWarning:
+    "DaVinchi is geïnstalleerd op de externe host ({0}) — Chrome kan daarvandaan niet op uw pc starten. Installeer de VSIX in de lokale VS Code/Cursor (badge moet “ui” tonen) en voer Reload Window uit.",
+  actionCopyFixSteps: "Herstelstappen kopiëren",
   sectionCloneSettings: "Kloon-instellingen",
   cloneOptFullSite: "Hele pagina klonen (volledige referentie)",
   cloneOptFullSiteHint:
@@ -1171,6 +1197,9 @@ const pl: Dict = {
   treeFullPackBadge: "pełny pakiet",
   statusBarClone: "$(git-compare) Klon: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi jest zainstalowany na zdalnym hoście ({0}) — nie można stamtąd uruchomić Chrome na Twoim komputerze. Zainstaluj VSIX w lokalnym VS Code/Cursor (plakietka musi pokazywać „ui”), potem Reload Window.",
+  actionCopyFixSteps: "Skopiuj kroki naprawy",
   sectionCloneSettings: "Ustawienia klonowania",
   cloneOptFullSite: "Klonuj całą stronę (pełna referencja)",
   cloneOptFullSiteHint:
@@ -1280,6 +1309,9 @@ const tr: Dict = {
   treeFullPackBadge: "tam paket",
   statusBarClone: "$(git-compare) Klon: AÇIK",
   onLabel: "AÇIK",
+  msgWorkspaceHostWarning:
+    "DaVinchi uzak ana bilgisayarda kurulu ({0}) — oradan bilgisayarınızda Chrome başlatılamaz. VSIX'i yerel VS Code/Cursor'a kurun (rozet “ui” göstermeli), ardından Reload Window çalıştırın.",
+  actionCopyFixSteps: "Düzeltme adımlarını kopyala",
   sectionCloneSettings: "Klon ayarları",
   cloneOptFullSite: "Tüm sayfayı klonla (tam referans)",
   cloneOptFullSiteHint:
@@ -1389,6 +1421,9 @@ const vi: Dict = {
   treeFullPackBadge: "gói đầy đủ",
   statusBarClone: "$(git-compare) Clone: BẬT",
   onLabel: "BẬT",
+  msgWorkspaceHostWarning:
+    "DaVinchi được cài trên máy chủ từ xa ({0}) — không thể khởi động Chrome trên PC của bạn từ đó. Hãy cài VSIX vào VS Code/Cursor cục bộ (huy hiệu phải hiển thị “ui”), rồi chạy Reload Window.",
+  actionCopyFixSteps: "Sao chép các bước khắc phục",
   sectionCloneSettings: "Cài đặt nhân bản",
   cloneOptFullSite: "Nhân bản toàn bộ trang (tham chiếu đầy đủ)",
   cloneOptFullSiteHint:
@@ -1497,6 +1532,9 @@ const id: Dict = {
   treeFullPackBadge: "paket lengkap",
   statusBarClone: "$(git-compare) Klon: AKTIF",
   onLabel: "AKTIF",
+  msgWorkspaceHostWarning:
+    "DaVinchi terpasang di host jarak jauh ({0}) — Chrome tidak dapat dijalankan di PC Anda dari sana. Pasang VSIX di VS Code/Cursor lokal (lencana harus menampilkan “ui”), lalu jalankan Reload Window.",
+  actionCopyFixSteps: "Salin langkah perbaikan",
   sectionCloneSettings: "Pengaturan kloning",
   cloneOptFullSite: "Klon seluruh halaman (referensi penuh)",
   cloneOptFullSiteHint:
@@ -1605,6 +1643,9 @@ const ca: Dict = {
   treeFullPackBadge: "paquet complet",
   statusBarClone: "$(git-compare) Clon: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi està instal·lat a l'amfitrió remot ({0}): des d'allà no es pot iniciar Chrome al teu PC. Instal·la el VSIX al VS Code/Cursor local (la insígnia ha de mostrar «ui») i executa Reload Window.",
+  actionCopyFixSteps: "Copia els passos de correcció",
   sectionCloneSettings: "Configuració de clonació",
   cloneOptFullSite: "Clona tota la pàgina (referència completa)",
   cloneOptFullSiteHint:
@@ -1714,6 +1755,9 @@ const hi: Dict = {
   treeFullPackBadge: "पूरा पैक",
   statusBarClone: "$(git-compare) क्लोन: चालू",
   onLabel: "चालू",
+  msgWorkspaceHostWarning:
+    "DaVinchi रिमोट होस्ट ({0}) पर इंस्टॉल है — वहाँ से आपके PC पर Chrome शुरू नहीं हो सकता। VSIX को लोकल VS Code/Cursor में इंस्टॉल करें (बैज में “ui” दिखना चाहिए), फिर Reload Window करें।",
+  actionCopyFixSteps: "समाधान चरण कॉपी करें",
   sectionCloneSettings: "क्लोन सेटिंग्स",
   cloneOptFullSite: "पूरा पेज क्लोन करें (पूर्ण संदर्भ)",
   cloneOptFullSiteHint:
@@ -1823,6 +1867,9 @@ const ja: Dict = {
   treeFullPackBadge: "フルパック",
   statusBarClone: "$(git-compare) クローン: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi はリモートホスト（{0}）にインストールされています — そこからローカル PC の Chrome は起動できません。ローカルの VS Code/Cursor に VSIX をインストールし（バッジが「ui」と表示されること）、Reload Window を実行してください。",
+  actionCopyFixSteps: "修正手順をコピー",
   sectionCloneSettings: "クローン設定",
   cloneOptFullSite: "ページ全体をクローン（完全リファレンス）",
   cloneOptFullSiteHint:
@@ -1932,6 +1979,9 @@ const ko: Dict = {
   treeFullPackBadge: "풀 팩",
   statusBarClone: "$(git-compare) 클론: ON",
   onLabel: "ON",
+  msgWorkspaceHostWarning:
+    "DaVinchi가 원격 호스트({0})에 설치되어 있어 로컬 PC에서 Chrome을 시작할 수 없습니다. 로컬 VS Code/Cursor에 VSIX를 설치하고(배지가 “ui”로 표시되어야 함) Reload Window를 실행하세요.",
+  actionCopyFixSteps: "해결 단계 복사",
   sectionCloneSettings: "클론 설정",
   cloneOptFullSite: "전체 페이지 클론 (완전한 레퍼런스)",
   cloneOptFullSiteHint:
@@ -2036,6 +2086,9 @@ const zhCN: Dict = {
   treeFullPackBadge: "完整包",
   statusBarClone: "$(git-compare) 克隆: 开",
   onLabel: "开",
+  msgWorkspaceHostWarning:
+    "DaVinchi 安装在远程主机（{0}）上——无法从那里在本机启动 Chrome。请在本地 VS Code/Cursor 安装 VSIX（徽章须显示“ui”），然后执行 Reload Window。",
+  actionCopyFixSteps: "复制修复步骤",
   sectionCloneSettings: "克隆设置",
   cloneOptFullSite: "克隆整个页面（完整参考）",
   cloneOptFullSiteHint:
@@ -2139,6 +2192,9 @@ const zhTW: Dict = {
   treeFullPackBadge: "完整包",
   statusBarClone: "$(git-compare) 克隆: 開",
   onLabel: "開",
+  msgWorkspaceHostWarning:
+    "DaVinchi 安裝在遠端主機（{0}）上——無法從那裡在本機啟動 Chrome。請在本機 VS Code/Cursor 安裝 VSIX（徽章須顯示「ui」），然後執行 Reload Window。",
+  actionCopyFixSteps: "複製修復步驟",
   sectionCloneSettings: "克隆設定",
   cloneOptFullSite: "克隆整個頁面（完整參考）",
   cloneOptFullSiteHint:
