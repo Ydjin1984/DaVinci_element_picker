@@ -39,7 +39,7 @@ function isPlaywrightCachePath(executablePath: string): boolean {
 }
 
 /**
- * Real system Chrome/Edge only (not Playwright cache).
+ * Real system Chrome only (not Playwright cache).
  * Playwright binaries on Linux SSH often miss GUI libs and have no DISPLAY —
  * pinning them breaks Remote SSH until the user clears browserPath.
  */
@@ -47,13 +47,11 @@ export function findPreferredBrowserPath(): string {
   const list = discoverBrowserExecutables({ includePlaywright: false });
   const chrome = list.find((x) => x.label === "chrome");
   if (chrome) return chrome.executablePath;
-  const edge = list.find((x) => x.label === "msedge");
-  if (edge) return edge.executablePath;
   return list[0]?.executablePath || "";
 }
 
 /**
- * Resolve a usable Chrome/Edge path. Never pin Playwright-cache paths.
+ * Resolve a usable Chrome path. Never pin Playwright-cache paths.
  * On Remote SSH workspace hosts (Linux, no DISPLAY) do not suggest a server binary —
  * Chrome must run on the local UI PC (or attach via CDP).
  * Does not write User settings (explicit browserPath only).
@@ -181,7 +179,7 @@ function playwrightCacheRoot(): string {
   return path.join(home, ".cache", "ms-playwright");
 }
 
-/** Common install locations for system Chrome / Edge (Windows user-local, Linux, macOS). */
+/** Common install locations for system Chrome (Windows user-local, Linux, macOS). */
 function discoverBrowserExecutables(
   opts: { includePlaywright?: boolean } = {}
 ): Array<{ label: string; executablePath: string }> {
@@ -207,29 +205,11 @@ function discoverBrowserExecutables(
       label: "chrome",
       executablePath: path.join(pf86, "Google", "Chrome", "Application", "chrome.exe"),
     },
-    // Windows Edge
-    {
-      label: "msedge",
-      executablePath: path.join(pf86, "Microsoft", "Edge", "Application", "msedge.exe"),
-    },
-    {
-      label: "msedge",
-      executablePath: path.join(pf, "Microsoft", "Edge", "Application", "msedge.exe"),
-    },
-    {
-      label: "msedge",
-      executablePath: path.join(local, "Microsoft", "Edge", "Application", "msedge.exe"),
-    },
     // macOS
     {
       label: "chrome",
       executablePath:
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    },
-    {
-      label: "msedge",
-      executablePath:
-        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
     },
     // Linux system packages (not user wrappers pointing at Playwright)
     { label: "chrome", executablePath: "/usr/bin/google-chrome-stable" },
@@ -238,8 +218,6 @@ function discoverBrowserExecutables(
     { label: "chrome", executablePath: "/usr/bin/chromium" },
     { label: "chrome", executablePath: "/snap/bin/chromium" },
     { label: "chrome", executablePath: "/usr/bin/chrome" },
-    { label: "msedge", executablePath: "/usr/bin/microsoft-edge" },
-    { label: "msedge", executablePath: "/usr/bin/microsoft-edge-stable" },
   ];
 
   for (const c of candidates) {
@@ -359,9 +337,10 @@ export class BrowserSession {
     const ch = vscode.workspace
       .getConfiguration("elementPicker")
       .get<string>("browserChannel", "chrome");
-    if (ch === "msedge" || ch === "chromium" || ch === "chrome") {
+    if (ch === "chromium" || ch === "chrome") {
       return ch;
     }
+    // Legacy setting "msedge" is ignored — Chrome only.
     return "chrome";
   }
 
@@ -406,10 +385,8 @@ export class BrowserSession {
 
   /**
    * PowerShell script for the USER'S WINDOWS PC (always), even when extension
-   * host is Remote SSH Linux. Starts Chrome with --remote-debugging-port.
-   * Chrome is searched in every standard install location FIRST; Edge is a
-   * last-resort fallback only (the old 2-path probe kept starting Edge for
-   * users whose Chrome lives in Program Files (x86) or a custom dir).
+   * host is Remote SSH Linux. Starts Google Chrome with --remote-debugging-port.
+   * Searches standard Chrome install locations only (no Edge fallback).
    */
   static localChromeDebugCommand(url: string, port = 9222): string {
     // Quote-strip + drop control chars so the PowerShell single-quoted string stays safe.
@@ -435,14 +412,10 @@ export class BrowserSession {
       ...(custom ? [`  '${custom}',`] : []),
       `  (Join-Path $env:LOCALAPPDATA 'Google\\Chrome\\Application\\chrome.exe'),`,
       `  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',`,
-      `  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',`,
-      `  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',`,
-      `  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',`,
-      `  (Join-Path $env:LOCALAPPDATA 'Microsoft\\Edge\\Application\\msedge.exe')`,
+      `  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'`,
       `)`,
       `$chrome = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1`,
-      `if (-not $chrome) { throw 'Chrome/Edge not found. Install Google Chrome.' }`,
-      `if ($chrome -like '*msedge*') { Write-Host 'NOTE: Chrome not found in standard locations — starting Edge instead.' }`,
+      `if (-not $chrome) { throw 'Google Chrome not found. Install Google Chrome.' }`,
       `$dir = Join-Path $env:TEMP 'davinci-chrome-profile'`,
       `New-Item -ItemType Directory -Force -Path $dir | Out-Null`,
       `Write-Host "Starting: $chrome"`,
@@ -500,7 +473,7 @@ export class BrowserSession {
   }
 
   /**
-   * Launch system Chrome/Edge on the extension-host machine.
+   * Launch system Google Chrome on the extension-host machine.
    */
   private async launchLocalBrowser(): Promise<{ browser: Browser; how: string }> {
     const channel = this.channel();
@@ -517,14 +490,13 @@ export class BrowserSession {
     // headless is useless for element pick.
 
     const attempts: Array<{ how: string; opts: LaunchOptions }> = [];
-    const prefer = channel === "msedge" ? "msedge" : "chrome";
 
     const custom = this.configuredBrowserPath();
     if (custom && !isPlaywrightCachePath(custom)) {
       if (!fs.existsSync(custom)) {
         throw new Error(
           `elementPicker.browserPath not found:\n  ${custom}\n` +
-            `Fix the path to chrome.exe / google-chrome / msedge.`
+            `Fix the path to chrome.exe / google-chrome.`
         );
       }
       attempts.push({
@@ -533,15 +505,15 @@ export class BrowserSession {
       });
     }
 
-    // Paths FIRST — prefer real system Chrome/Edge over Playwright cache.
+    // Paths FIRST — prefer real system Chrome over Playwright cache.
     const discovered = discoverBrowserExecutables({
       includePlaywright: true,
     }).sort((a, b) => {
       const aPw = isPlaywrightCachePath(a.executablePath) ? 1 : 0;
       const bPw = isPlaywrightCachePath(b.executablePath) ? 1 : 0;
       if (aPw !== bPw) return aPw - bPw;
-      if (a.label === prefer && b.label !== prefer) return -1;
-      if (b.label === prefer && a.label !== prefer) return 1;
+      if (a.label === "chrome" && b.label !== "chrome") return -1;
+      if (b.label === "chrome" && a.label !== "chrome") return 1;
       return 0;
     });
     for (const d of discovered) {
@@ -556,17 +528,10 @@ export class BrowserSession {
     }
 
     // Playwright channel (uses OS registration; can fail on Linux servers)
-    if (channel === "chrome" || channel === "msedge") {
+    if (channel === "chrome") {
       attempts.push({
-        how: `channel=${channel}`,
-        opts: { headless: false, channel, args: launchArgs },
-      });
-    }
-    for (const fb of ["chrome", "msedge"] as const) {
-      if (fb === channel) continue;
-      attempts.push({
-        how: `channel=${fb}`,
-        opts: { headless: false, channel: fb, args: launchArgs },
+        how: "channel=chrome",
+        opts: { headless: false, channel: "chrome", args: launchArgs },
       });
     }
 
@@ -583,13 +548,6 @@ export class BrowserSession {
     for (const attempt of attempts) {
       try {
         const browser = await chromium.launch(attempt.opts);
-        // Notify when Playwright channel fell back to a different browser.
-        const m = /^channel=(chrome|msedge|chromium)$/.exec(attempt.how);
-        if (m && m[1] !== channel) {
-          void vscode.window.showInformationMessage(
-            t("browserChannelFallback", m[1], channel)
-          );
-        }
         return { browser, how: attempt.how };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -623,7 +581,7 @@ export class BrowserSession {
    *
    * DaVinchi is a **UI** extension: the host is the local PC even under Remote SSH
    * (`remoteName` may be set, but `process.platform` is win32/darwin). Always launch
-   * system Chrome/Edge on that local host first — same as 0.1.22.
+   * system Chrome on that local host first — same as 0.1.22.
    *
    * CDP is only a fallback (or explicit browserMode=cdp). Never prefer server-side
    * Playwright Chromium on a headless Linux workspace host.
@@ -755,7 +713,7 @@ export class BrowserSession {
             ? `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +
               `(CDP endpoint tried: ${endpoint})`
             : `Fix:\n` +
-              `1) Install Google Chrome or Edge on this PC (the UI machine)\n` +
+              `1) Install Google Chrome on this PC (the UI machine)\n` +
               `2) Settings → elementPicker.browserPath = full path to chrome.exe\n` +
               `3) Advanced only: browserMode=cdp + local Chrome --remote-debugging-port=9222\n\n` +
               `Attempts:\n  ${errors.slice(0, 8).join("\n  ") || "(none)"}\n` +

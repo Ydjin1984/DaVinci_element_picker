@@ -570,7 +570,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // server) makes Open Browser dead on arrival — warn once, with copy-steps.
   warnIfWorkspaceHosted(host);
 
-  // Resolve Chrome/Edge path on the UI host (clears poisoned Playwright paths)
+  // Resolve Chrome path on the UI host (clears poisoned Playwright paths)
   void ensureBrowserPathSetting().then((p) => {
     if (p) {
       console.log(

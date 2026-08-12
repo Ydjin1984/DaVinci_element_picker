@@ -2,6 +2,15 @@
 
 All notable changes to **DaVinchi** are documented in this file.
 
+## [0.1.33] — 2026-08-12
+
+### Removed
+- **Microsoft Edge support** — discovery paths, Playwright `msedge` channel, CDP PowerShell Edge fallback, and `elementPicker.browserChannel: msedge` are gone. DaVinchi launches **Google Chrome only** (optional bundled Chromium via `browserChannel: chromium`)
+
+### Changed
+- CDP helper script searches Chrome install locations only; missing Chrome fails with a clear install message (no silent Edge start)
+- Settings / error copy updated to Chrome-only wording
+
 ## [0.1.32] — 2026-08-11
 
 ### Added

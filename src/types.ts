@@ -201,7 +201,7 @@ export interface SavedCloneAsset {
   selector?: string;
 }
 
-export type BrowserChannel = "chromium" | "chrome" | "msedge";
+export type BrowserChannel = "chromium" | "chrome";
 
 /**
  * How to attach to a browser:

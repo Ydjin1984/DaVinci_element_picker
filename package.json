@@ -2,7 +2,7 @@
   "name": "element-picker",
   "displayName": "DaVinchi",
   "description": "DaVinchi — Element Picker for VS Code & Cursor. Click a DOM element, capture screenshot + HTML/CSS context, feed any terminal AI agent.",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "publisher": "coin-rebalancer",
   "license": "MIT",
   "extensionKind": [
@@ -230,17 +230,16 @@
           "type": "string",
           "enum": [
             "chromium",
-            "chrome",
-            "msedge"
+            "chrome"
           ],
           "default": "chrome",
-          "description": "Preferred browser for Playwright: system Chrome, Edge, or bundled Chromium.",
+          "description": "Preferred browser for Playwright: system Google Chrome or bundled Chromium.",
           "scope": "application"
         },
         "elementPicker.browserPath": {
           "type": "string",
           "default": "",
-          "description": "Optional full path to chrome.exe / msedge.exe when browserMode=launch. Application-scoped so a workspace cannot inject an executable path.",
+          "description": "Optional full path to chrome.exe / google-chrome when browserMode=launch. Application-scoped so a workspace cannot inject an executable path.",
           "scope": "application"
         },
         "elementPicker.browserMode": {
@@ -252,8 +251,8 @@
           ],
           "default": "auto",
           "enumDescriptions": [
-            "Launch system Chrome/Edge on this PC if found; else try CDP. Works for local and Remote SSH (extension runs as UI on your machine).",
-            "Always spawn Chrome/Edge on this machine.",
+            "Launch system Google Chrome on this PC if found; else try CDP. Works for local and Remote SSH (extension runs as UI on your machine).",
+            "Always spawn Google Chrome on this machine.",
             "Only connect to an existing Chrome at cdpEndpoint (advanced)."
           ],
           "description": "How to attach the browser. Default auto works for both local folders and Remote SSH.",

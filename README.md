@@ -38,7 +38,7 @@
 
 AI agents fix UI better when they **see** the element, not only a description of it.
 
-DaVinchi opens a real Chrome/Edge window, lets you click any DOM node, and writes ready-to-paste artifacts for Claude Code, Cursor agents, Codex, and other terminal tools.
+DaVinchi opens a real Google Chrome window, lets you click any DOM node, and writes ready-to-paste artifacts for Claude Code, Cursor agents, Codex, and other terminal tools.
 
 | Artifact | What it holds |
 |----------|---------------|
@@ -65,7 +65,7 @@ Or through the UI: Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX
 ### Requirements
 
 - VS Code **1.85+** or Cursor
-- **Google Chrome** (Edge works as a fallback)
+- **Google Chrome**
 - An open **workspace folder** — picks are saved inside the project
 
 > **Where to install it.** Install DaVinchi on the machine **you are sitting at**. That machine has the browser, and the browser is what the picker drives. This holds even when your project lives on an SSH server: the extension still saves every pick into the server-side project. See [Working on a remote server](#working-on-a-remote-server) if you would rather run the extension on the server itself.
@@ -188,7 +188,7 @@ macOS/Linux clients: the helper script is Windows-only for now, but the mechanis
 
 ## Features
 
-- Playwright session — Chrome / Edge / Chromium
+- Playwright session — Google Chrome / Chromium
 - Hover highlight and one-click capture
 - **Select** and **Clone** modes (clone pack with granular settings)
 - Rich CSS collection: sources, media queries, children, pseudo-states
@@ -234,8 +234,8 @@ macOS/Linux clients: the helper script is Windows-only for now, but the mechanis
 | `elementPicker.maxHtmlBytes` | `100000` | `outerHTML` truncation size in `context.md` |
 | `elementPicker.browserMode` | `auto` | `auto` / `launch` / `cdp` |
 | `elementPicker.cdpEndpoint` | `http://localhost:9222` | Debug endpoint. Chrome answers on `localhost`, **not** on `127.0.0.1` |
-| `elementPicker.browserChannel` | `chrome` | `chrome` / `msedge` / `chromium` |
-| `elementPicker.browserPath` | *(empty)* | Full path to `chrome.exe` / `msedge` if discovery fails |
+| `elementPicker.browserChannel` | `chrome` | `chrome` / `chromium` |
+| `elementPicker.browserPath` | *(empty)* | Full path to `chrome.exe` / `google-chrome` if discovery fails |
 | `elementPicker.cloneZip` | `false` | Write `clone.zip` |
 | `elementPicker.cloneLatest` | `true` | Mirror the pack into `latest/` |
 | `elementPicker.clonePreviewHtml` | `true` | Self-contained `clone/preview.html` |
