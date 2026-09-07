@@ -5,24 +5,24 @@
 <h1 align="center">DaVinchi</h1>
 
 <p align="center">
-  <strong>Element Picker for VS Code &amp; Cursor</strong><br />
-  Click a DOM element → screenshot + HTML/CSS context → feed any terminal AI agent.
+  <strong>Пикер DOM-элементов для VS Code и Cursor</strong><br />
+  Клик по элементу → скриншот + HTML/CSS-контекст → любому терминальному ИИ-агенту.
 </p>
 
 <p align="center">
-  <a href="#install">Install</a>
+  [English](README.en.md)
   ·
-  <a href="#quick-start">Quick start</a>
+  <a href="#установка">Установка</a>
   ·
-  <a href="#working-on-a-remote-server">Remote server</a>
+  <a href="#быстрый-старт">Быстрый старт</a>
   ·
-  <a href="#settings">Settings</a>
+  <a href="#работа-на-удалённом-сервере">Удалённый сервер</a>
   ·
-  <a href="#troubleshooting">Troubleshooting</a>
+  <a href="#настройки">Настройки</a>
+  ·
+  <a href="#решение-проблем">Решение проблем</a>
   ·
   <a href="CHANGELOG.md">Changelog</a>
-  ·
-  <a href="docs/INSTALL.ru.md">Русская инструкция</a>
 </p>
 
 <p align="center">
@@ -34,25 +34,25 @@
 
 ---
 
-## Why DaVinchi?
+## Зачем нужен DaVinchi?
 
-AI agents fix UI better when they **see** the element, not only a description of it.
+ИИ-агенты чинят интерфейсы лучше, когда **видят** элемент, а не только его описание.
 
-DaVinchi opens a real Google Chrome window, lets you click any DOM node, and writes ready-to-paste artifacts for Claude Code, Cursor agents, Codex, and other terminal tools.
+DaVinchi открывает настоящее окно Google Chrome, позволяет кликнуть любой DOM-узел и готовит готовые к вставке артефакты для Claude Code, агентов Cursor, Codex и других терминальных инструментов.
 
-| Artifact | What it holds |
-|----------|---------------|
-| `element.png` | Cropped screenshot of the target |
-| `context.md` | Selector, HTML path, outerHTML, matched CSS, resolved styles, canvas metrics |
-| Terminal + clipboard | Paths ready to `@mention` or paste into any agent |
+| Артефакт | Что внутри |
+|----------|------------|
+| `element.png` | Обрезанный скриншот цели |
+| `context.md` | Селектор, HTML-путь, outerHTML, подходящие CSS, вычисленные стили, метрики canvas |
+| Терминал + буфер обмена | Пути, готовые для `@mention` или вставки любому агенту |
 
-No Copilot lock-in. Agent-agnostic.
+Без привязки к Copilot. Агент-агностик.
 
 ---
 
-## Install
+## Установка
 
-Download **`element-picker-0.1.32.vsix`** from the [latest release](https://github.com/Ydjin1984/DaVinci_element_picker/releases/latest), then run **on your own computer**:
+Скачайте **`element-picker-0.1.32.vsix`** из [последнего релиза](https://github.com/Ydjin1984/DaVinci_element_picker/releases/latest) и установите **на своём компьютере**:
 
 ```powershell
 code --install-extension element-picker-0.1.32.vsix --force
@@ -60,58 +60,58 @@ code --install-extension element-picker-0.1.32.vsix --force
 cursor --install-extension element-picker-0.1.32.vsix --force
 ```
 
-Or through the UI: Extensions (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…** → reload the window.
+Или через интерфейс: Расширения (`Ctrl+Shift+X`) → `⋯` → **Install from VSIX…** → перезагрузить окно.
 
-### Requirements
+### Требования
 
-- VS Code **1.85+** or Cursor
+- VS Code **1.85+** или Cursor
 - **Google Chrome**
-- An open **workspace folder** — picks are saved inside the project
+- Открытая **папка рабочего пространства** — выборки сохраняются внутри проекта
 
-> **Where to install it.** Install DaVinchi on the machine **you are sitting at**. That machine has the browser, and the browser is what the picker drives. This holds even when your project lives on an SSH server: the extension still saves every pick into the server-side project. See [Working on a remote server](#working-on-a-remote-server) if you would rather run the extension on the server itself.
+> **Куда устанавливать.** Ставьте DaVinchi на машину, **за которой сидите**. На ней браузер, и именно им управляет пикер. Это работает, даже если проект живёт на SSH-сервере: расширение всё равно сохраняет выборки в серверный проект. См. [Работа на удалённом сервере](#работа-на-удалённом-сервере), если хотите запускать расширение на самом сервере.
 
 ---
 
-## Quick start
+## Быстрый старт
 
-1. Open the **DaVinchi** icon in the Activity Bar, then the **Controls** view.
-2. **Open browser** → paste any URL.
-3. **Select mode** (`Ctrl+Shift+E`) → hover → click an element.
-   Or **Clone mode** (`Ctrl+Shift+Alt+C`) for a full pack (HTML/CSS/assets).
-4. Files land in your project:
+1. Откройте иконку **DaVinchi** в Activity Bar и представление **Controls**.
+2. **Open browser** → вставьте любой URL.
+3. Режим **Select** (`Ctrl+Shift+E`) → наведите → кликните элемент.
+   Или режим **Clone** (`Ctrl+Shift+Alt+C`) для полного пакета (HTML/CSS/ресурсы).
+4. Файлы появятся в проекте:
 
 ```text
 .element-picks/<timestamp>/context.md
 .element-picks/<timestamp>/element.png
-.element-picks/latest/          → last pick (or clone pack)
+.element-picks/latest/          → последняя выборка (или clone-пакет)
 ```
 
-5. The paths are inserted into the active terminal and the clipboard — add your question and send it to the agent.
+5. Пути вставляются в активный терминал и буфер обмена — добавьте свой вопрос и отправьте агенту.
 
-| Shortcut | Action |
+| Горячая клавиша | Действие |
 |----------|--------|
-| `Ctrl+Shift+E` | Toggle Select mode |
-| `Ctrl+Shift+Alt+C` | Toggle Clone mode |
-| `Ctrl+Shift+Alt+E` | Action menu (also in the status bar) |
+| `Ctrl+Shift+E` | Переключить режим Select |
+| `Ctrl+Shift+Alt+C` | Переключить режим Clone |
+| `Ctrl+Shift+Alt+E` | Меню действий (также в строке состояния) |
 
-The panel, status bar, Controls tree, and action menu all show a **version badge** such as `v0.1.32 · ui · win32`. The middle part tells you where the extension is running: `ui` = your machine, `workspace` = the SSH server.
+Панель, строка состояния, дерево Controls и меню действий показывают **бейдж версии** вида `v0.1.32 · ui · win32`. Средняя часть говорит, где запущено расширение: `ui` = ваша машина, `workspace` = SSH-сервер.
 
 ---
 
-## What you get
+## Что вы получаете
 
-### Real capture (canvas chart)
+### Реальная съёмка (canvas-графики)
 
 <p align="center">
-  <img src="media/screenshot-element-canvas.png" alt="Captured chart canvas" width="860" />
+  <img src="media/screenshot-element-canvas.png" alt="Захваченный canvas графика" width="860" />
 </p>
 
-### Context the agent actually needs
+### Контекст, который реально нужен агенту
 
-- **HTML Path** with ids (`div#mainChart > … > canvas`)
-- **Matched CSS** with sources, media queries, children and variants
-- **Resolved values** filtered to non-defaults
-- **Canvas metrics** — CSS box vs bitmap vs `devicePixelRatio`
+- **HTML-путь** с id (`div#mainChart > … > canvas`)
+- **Подходящие CSS** с источниками, media-запросами, детьми и вариантами
+- **Вычисленные значения**, отфильтрованные по не-дефолтным
+- **Метрики canvas** — CSS-бокс против bitmap и `devicePixelRatio`
 
 ```markdown
 Element: canvas
@@ -125,155 +125,148 @@ Canvas metrics:
 - status: ok
 ```
 
-### Tabs / layout elements
+### Вкладки / элементы layout
 
 <p align="center">
-  <img src="media/screenshot-element-tabs.png" alt="Captured navigation tabs" width="720" />
+  <img src="media/screenshot-element-tabs.png" alt="Захваченные вкладки навигации" width="720" />
 </p>
 
 ---
 
-## Working on a remote server
+## Работа на удалённом сервере
 
-Your project is on an SSH host, but the browser has to be on your screen. Two setups do that, and both save picks into the server-side project. Pick one.
+Проект на SSH-хосте, но браузер должен быть на вашем экране. Две схемы — обе сохраняют выборки в серверный проект. Выберите одну.
 
-### A. Extension on your machine — recommended, nothing to configure
+### A. Расширение на вашей машине — рекомендовано, ничего настраивать не нужно
 
-Install the VSIX **locally** (the command above, run on your own PC — not from an SSH window). Open the remote folder as usual; the badge shows `ui`. Press **Open browser** and Chrome starts right there on your desktop. Picks are written straight into the remote project through the editor's own file API.
+Установите VSIX **локально** (команда выше — на своём ПК, не в SSH-окне). Откройте удалённую папку как обычно; бейдж показывает `ui`. Нажмите **Open browser** — Chrome запустится прямо на вашем рабочем столе. Выборки пишутся в удалённый проект через файловый API редактора.
 
-Nothing else is needed: no tunnels, no ports, no extra processes.
+Больше ничего не нужно: ни туннелей, ни портов, ни лишних процессов.
 
-> If the badge shows `workspace · linux`, the extension is installed on the server instead. Either uninstall it there (Extensions view → the entry under “SSH: … — Installed” → Uninstall), or switch to setup B below.
+> Если бейдж показывает `workspace · linux` — расширение установлено на сервере. Либо удалите его там (Extensions → запись под «SSH: … — Installed» → Uninstall), либо перейдите к схеме B.
 
-### B. Extension on the server — one command to prepare your PC
+### B. Расширение на сервере — одна команда для подготовки вашего ПК
 
-Choose this when the extension itself should live on the SSH host. It cannot launch a browser on your machine directly, so it drives the browser over a debug port that SSH forwards back to you.
+Выбирайте, когда расширение должно жить на SSH-хосте. Оно не может запустить браузер на вашей машине напрямую, поэтому управляет браузером через debug-порт, который SSH пробрасывает к вам.
 
-**Step 1 — on the server:** install the VSIX in the SSH window (Extensions → Install from VSIX), or from your PC:
+**Шаг 1 — на сервере:** установите VSIX в SSH-окне (Extensions → Install from VSIX) или с вашего ПК:
 
 ```powershell
 code --remote ssh-remote+<host> --install-extension element-picker-0.1.32.vsix --force
 ```
 
-**Step 2 — on your PC (Windows), one command:**
+**Шаг 2 — на вашем ПК (Windows), одна команда:**
 
 ```powershell
-# from the cloned repo
+# из клонированного репозитория
 .\scripts\setup-windows-cdp.ps1 -SshHost <host>
 
-# or without cloning
-iwr -useb https://raw.githubusercontent.com/Ydjin1984/DaVinci_element_picker/main/scripts/setup-windows-cdp.ps1 -OutFile "$env:TEMP\davinchi-setup.ps1"
+# или без клонирования
+iwr -useb https://raw.githubusercontent.com/Ydjin1984/DaVinci_element_picker/master/scripts/setup-windows-cdp.ps1 -OutFile "$env:TEMP\davinchi-setup.ps1"
 & "$env:TEMP\davinchi-setup.ps1" -SshHost <host>
 ```
 
-No administrator rights needed. It sets up:
+Права администратора не нужны. Скрипт настраивает:
 
-| What | Why |
-|------|-----|
-| `%LOCALAPPDATA%\DaVinchi\start-chrome-cdp.cmd` | starts Chrome with `--remote-debugging-port=9222` in a **separate profile** — since Chrome 136 the debug port is refused on your everyday profile |
-| Startup entry | Chrome is ready right after you log in |
-| Scheduled task `DaVinchi Chrome CDP` | brings it back within 2 minutes if you close it |
-| URI handler `davinchi-chrome:` | lets **Open browser** on the server start that Chrome on your PC |
-| `RemoteForward 9222` in `~/.ssh/config` | the server reaches your debug port (added for the host you name) |
+| Что | Зачем |
+|-----|-------|
+| `%LOCALAPPDATA%\DaVinchi\start-chrome-cdp.cmd` | запускает Chrome с `--remote-debugging-port=9222` в **отдельном профиле** — с Chrome 136 debug-порт не работает на обычном профиле |
+| Автозапуск | Chrome готов сразу после входа в систему |
+| Планировщик `DaVinchi Chrome CDP` | возвращает Chrome в течение 2 минут, если его закрыли |
+| URI-обработчик `davinchi-chrome:` | позволяет **Open browser** на сервере запускать этот Chrome на вашем ПК |
+| `RemoteForward 9222` в `~/.ssh/config` | сервер достаёт ваш debug-порт (добавляется для указанного хоста) |
 
-**Step 3:** reconnect the SSH window. The tunnel is created when the connection is made, so a window reload is not enough.
+**Шаг 3:** переподключите SSH-окно. Туннель создаётся при установке соединения, поэтому перезагрузки окна недостаточно.
 
-Then press **Open browser**. If Chrome is not running, the extension asks your machine to start it and waits for it.
+Затем нажмите **Open browser**. Если Chrome не запущен, расширение попросит вашу машину запустить его и подождёт.
 
-To undo everything: `.\scripts\setup-windows-cdp.ps1 -Uninstall`.
+Полный откат: `.\scripts\setup-windows-cdp.ps1 -Uninstall`.
 
-macOS/Linux clients: the helper script is Windows-only for now, but the mechanism is portable — start Chrome with `--remote-debugging-port=9222 --user-data-dir=<separate dir>` and add `RemoteForward 9222 localhost:9222` to `~/.ssh/config`.
-
----
-
-## Features
-
-- Playwright session — Google Chrome / Chromium
-- Hover highlight and one-click capture
-- **Select** and **Clone** modes (clone pack with granular settings)
-- Rich CSS collection: sources, media queries, children, pseudo-states
-- Canvas / DPR metrics for chart-heavy UIs
-- Multi-language UI (18 locales)
-- Version badge in panel, status bar, Controls, action menu
-- Controls tree + command palette + status bar (no Service Worker dependency)
-- Optional rich webview UI, editor panel, and a cache repair command
+Клиенты macOS/Linux: вспомогательный скрипт пока только для Windows, но механизм переносим — запустите Chrome с `--remote-debugging-port=9222 --user-data-dir=<отдельная папка>` и добавьте `RemoteForward 9222 localhost:9222` в `~/.ssh/config`.
 
 ---
 
-## Commands
+## Возможности
 
-| Command | Description |
-|---------|-------------|
-| `DaVinchi: Open Panel` | Focus the Controls view |
-| `DaVinchi: Open Browser` | Open a URL in the managed browser |
+- Сессия Playwright — Google Chrome / Chromium
+- Подсветка при наведении и захват в один клик
+- Режимы **Select** и **Clone** (clone-пакет с детальными настройками)
+- Богатый сбор CSS: источники, media-запросы, дети, псевдосостояния
+- Метрики canvas / DPR для UI с графиками
+- Многоязычный интерфейс (18 локалей)
+- Бейдж версии в панели, строке состояния, Controls и меню действий
+- Дерево Controls + палитра команд + строка состояния (без зависимости от Service Worker)
+- Опциональный rich-webview UI, панель редактора и команда починки кэша
+
+---
+
+## Команды
+
+| Команда | Описание |
+|---------|----------|
+| `DaVinchi: Open Panel` | Фокус на представление Controls |
+| `DaVinchi: Open Browser` | Открыть URL в управляемом браузере |
 | `DaVinchi: Toggle Select Mode` | `Ctrl+Shift+E` |
 | `DaVinchi: Toggle Clone Mode` | `Ctrl+Shift+Alt+C` |
 | `DaVinchi: Show Action Menu` | `Ctrl+Shift+Alt+E` |
-| `DaVinchi: Attach Last Pick to Terminal` | Paste the paths into the active terminal |
-| `DaVinchi: Copy Last Paths to Clipboard` | Copy the attach block |
-| `DaVinchi: Reveal Last Pick Folder` | Open the last capture folder |
-| `DaVinchi: Close Browser` | Disconnect / close the managed session |
-| `DaVinchi: Open Rich UI in Editor` | Editor webview panel |
-| `DaVinchi: Reload Webview UI` | Remount if the webview gets stuck |
-| `DaVinchi: Fix Webview Cache` | Repair the Service Worker cache (Windows) |
-| `DaVinchi: Select Language` | UI language (saved in User settings) |
-| `DaVinchi: Start Local Chrome (CDP)` | Start Chrome with the debug port |
-| `DaVinchi: Copy Local Chrome CDP Command` | Copy that start script to the clipboard |
+| `DaVinchi: Attach Last Pick to Terminal` | Вставить пути в активный терминал |
+| `DaVinchi: Copy Last Paths to Clipboard` | Скопировать блок путей |
+| `DaVinchi: Reveal Last Pick Folder` | Открыть папку последнего захвата |
+| `DaVinchi: Close Browser` | Отключить/закрыть управляемую сессию |
+| `DaVinchi: Open Rich UI in Editor` | Webview-панель в редакторе |
+| `DaVinchi: Reload Webview UI` | Перемонтировать, если webview завис |
+| `DaVinchi: Fix Webview Cache` | Починить кэш Service Worker (Windows) |
+| `DaVinchi: Select Language` | Язык интерфейса (сохраняется в User settings) |
+| `DaVinchi: Start Local Chrome (CDP)` | Запустить Chrome с debug-портом |
+| `DaVinchi: Copy Local Chrome CDP Command` | Скопировать команду запуска в буфер |
 
 ---
 
-## Settings
+## Настройки
 
-| Setting | Default | Meaning |
-|---------|---------|---------|
-| `elementPicker.language` | `en` | UI language, 18 locales (`ca` … `zh-TW`) |
-| `elementPicker.defaultUrl` | *(empty)* | Optional preferred URL |
-| `elementPicker.outputDir` | `.element-picks` | Save folder, workspace-relative |
-| `elementPicker.autoAttach` | `true` | Terminal + clipboard after each pick |
-| `elementPicker.terminalPrompt` | *(localized)* | Prefix before the paths |
-| `elementPicker.maxHtmlBytes` | `100000` | `outerHTML` truncation size in `context.md` |
+| Настройка | По умолчанию | Значение |
+|-----------|--------------|----------|
+| `elementPicker.language` | `en` | Язык интерфейса, 18 локалей |
+| `elementPicker.defaultUrl` | *(пусто)* | Предпочтительный URL |
+| `elementPicker.outputDir` | `.element-picks` | Папка сохранения (относительно workspace) |
+| `elementPicker.autoAttach` | `true` | Терминал + буфер после каждой выборки |
+| `elementPicker.maxHtmlBytes` | `100000` | Лимит усечения `outerHTML` в `context.md` |
 | `elementPicker.browserMode` | `auto` | `auto` / `launch` / `cdp` |
-| `elementPicker.cdpEndpoint` | `http://localhost:9222` | Debug endpoint. Chrome answers on `localhost`, **not** on `127.0.0.1` |
+| `elementPicker.cdpEndpoint` | `http://localhost:9222` | Debug-эндпоинт. Chrome отвечает на `localhost`, **не** на `127.0.0.1` |
 | `elementPicker.browserChannel` | `chrome` | `chrome` / `chromium` |
-| `elementPicker.browserPath` | *(empty)* | Full path to `chrome.exe` / `google-chrome` if discovery fails |
-| `elementPicker.cloneZip` | `false` | Write `clone.zip` |
-| `elementPicker.cloneLatest` | `true` | Mirror the pack into `latest/` |
-| `elementPicker.clonePreviewHtml` | `true` | Self-contained `clone/preview.html` |
-| `elementPicker.cloneAssets` | `true` | Download images/fonts/icons |
-| `elementPicker.clonePageScreenshot` | `true` | Full-page `page.png` |
-| `elementPicker.cloneParentScreenshot` | `true` | Parent-area `parent.png` |
+| `elementPicker.browserPath` | *(пусто)* | Полный путь к `chrome.exe`/`google-chrome`, если автоопределение не сработало |
+| `elementPicker.cloneZip` | `false` | Писать `clone.zip` |
+| `elementPicker.cloneLatest` | `true` | Зеркалить пакет в `latest/` |
+| `elementPicker.clonePreviewHtml` | `true` | Самодостаточный `clone/preview.html` |
+| `elementPicker.cloneAssets` | `true` | Скачивать изображения/шрифты/иконки |
+| `elementPicker.clonePageScreenshot` | `true` | Полностраничный `page.png` |
+| `elementPicker.cloneParentScreenshot` | `true` | Скриншот родительской области `parent.png` |
 | `elementPicker.cloneComputedJson` | `true` | `computed.json` + `fonts.json` |
-| `elementPicker.cloneInlineSvgs` | `true` | Write inline SVG files |
-| `elementPicker.cloneFullSite` | `false` | Capture the whole page on any click |
-| `elementPicker.cloneOneShot` | `false` | Leave Clone mode after one capture |
+| `elementPicker.cloneInlineSvgs` | `true` | Писать инлайновые SVG-файлы |
+| `elementPicker.cloneFullSite` | `false` | Захват всей страницы при любом клике |
+| `elementPicker.cloneOneShot` | `false` | Выход из Clone-режима после одного захвата |
 
-Browser settings are application-scoped, so a workspace cannot point the extension at an executable of its choosing. All `clone*` toggles are also editable in the panel's **Clone settings** section.
-
----
-
-## Troubleshooting
-
-**The badge says `workspace · linux` and Open browser fails.**
-The extension is running on the SSH server. Either install it on your own machine (setup A) or prepare your PC with `scripts/setup-windows-cdp.ps1` (setup B).
-
-**“local Chrome is not reachable at http://localhost:9222”.**
-The debug Chrome is not running, or the tunnel is missing. Check from the SSH terminal: `curl -s http://localhost:9222/json/version` must print JSON with a `Browser` field. If it does not, run the launcher on your PC and reconnect the SSH window.
-
-**The debug port never answers even though Chrome is open.**
-An ordinary Chrome window will not do — since Chrome 136 the debug port is refused on the default profile. Use the launcher, which starts Chrome with a separate profile.
-
-**Chrome keeps closing.**
-The watchdog task restores it within two minutes. Closing the last tab closes the window, so keep the `about:blank` tab open.
-
-**Clicks inside an `<iframe>` are not captured.**
-Known and deliberate: the picker is injected into the main frame only.
-
-**The webview panel shows a Service Worker error.**
-An editor-side limitation, not the picker. Use the **Controls** view or the status-bar menu; the commands **Reload Webview UI** and **Fix Webview Cache** repair it.
+Настройки браузера — уровня приложения, поэтому рабочее пространство не может указать расширению свой исполняемый файл. Все переключатели `clone*` также доступны в секции **Clone settings** панели.
 
 ---
 
-## Develop
+## Решение проблем
+
+**Бейдж показывает `workspace · linux`, и Open browser не работает.** Расширение запущено на SSH-сервере. Либо установите его на свою машину (схема A), либо подготовьте ПК скриптом `scripts/setup-windows-cdp.ps1` (схема B).
+
+**«local Chrome is not reachable at http://localhost:9222».** Debug-Chrome не запущен или нет туннеля. Проверьте из SSH-терминала: `curl -s http://localhost:9222/json/version` должен выдать JSON с полем `Browser`. Если нет — запустите лаунчер на ПК и переподключите SSH-окно.
+
+**Debug-порт не отвечает, хотя Chrome открыт.** Обычное окно Chrome не подойдёт — с Chrome 136 debug-порт не работает на профиле по умолчанию. Используйте лаунчер, который запускает Chrome с отдельным профилем.
+
+**Chrome постоянно закрывается.** Сторожевой процесс возвращает его в течение двух минут. Закрытие последней вкладки закрывает окно — держите открытой вкладку `about:blank`.
+
+**Клики внутри `<iframe>` не захватываются.** Известное и намеренное ограничение: пикер внедряется только в главный фрейм.
+
+**Webview-панель показывает ошибку Service Worker.** Это ограничение редактора, а не пикера. Используйте представление **Controls** или меню в строке состояния; команды **Reload Webview UI** и **Fix Webview Cache** чинят это.
+
+---
+
+## Разработка
 
 ```powershell
 git clone https://github.com/Ydjin1984/DaVinci_element_picker.git
@@ -284,6 +277,6 @@ npm run compile
 
 - **F5** → Extension Development Host
 - `npm run package` → `element-picker-0.1.32.vsix`
-- Preflight checks: `node .claude/skills/davinchi-release/scripts/preflight.js`
+- Предварительные проверки: `node .claude/skills/davinchi-release/scripts/preflight.js`
 
-Contributions: [CONTRIBUTING.md](CONTRIBUTING.md) · License: [MIT](LICENSE)
+Вклад: [CONTRIBUTING.md](CONTRIBUTING.md) · Лицензия: [MIT](LICENSE)
